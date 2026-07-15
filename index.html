@@ -1,0 +1,1171 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>aiEDU Programs Dashboard</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300..700;1,9..40,300..700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+<style>
+:root {
+  --ground:#edf2f1; --surface:#ffffff; --surface2:#f3f8f7; --surface3:#e8efee;
+  --ink:#142d27; --ink2:#3d6860; --ink3:#7da09a;
+  --teal:#0d7a6b; --teal-d:#065040; --teal-l:rgba(13,122,107,0.10);
+  --good:#1a7a4a; --warn:#b97a0a; --crit:#c43535;
+  --s1:#0d7a6b; --s2:#d4840a; --s3:#3a6baf; --s4:#22a878; --s5:#c43535; --s6:#7a8f9a;
+  --border:#d4e0de; --shadow:0 1px 3px rgba(20,45,39,0.08);
+  --radius:8px; --topbar-h:52px; --statsbar-h:42px;
+  font-family:'DM Sans',system-ui,sans-serif;
+}
+@media(prefers-color-scheme:dark){:root{
+  --ground:#0e1e1b; --surface:#162420; --surface2:#1c2e2a; --surface3:#233632;
+  --ink:#d8ecea; --ink2:#8dbdb7; --ink3:#507870;
+  --teal:#22c9ae; --teal-d:#3af0d0; --teal-l:rgba(34,201,174,0.12);
+  --good:#3dd68c; --warn:#f5c842; --crit:#f47272;
+  --border:#2a3e3a; --shadow:0 1px 3px rgba(0,0,0,0.3);
+}}
+:root[data-theme="dark"]{
+  --ground:#0e1e1b; --surface:#162420; --surface2:#1c2e2a; --surface3:#233632;
+  --ink:#d8ecea; --ink2:#8dbdb7; --ink3:#507870;
+  --teal:#22c9ae; --teal-d:#3af0d0; --teal-l:rgba(34,201,174,0.12);
+  --good:#3dd68c; --warn:#f5c842; --crit:#f47272;
+  --border:#2a3e3a; --shadow:0 1px 3px rgba(0,0,0,0.3);
+}
+:root[data-theme="light"]{
+  --ground:#edf2f1; --surface:#ffffff; --surface2:#f3f8f7; --surface3:#e8efee;
+  --ink:#142d27; --ink2:#3d6860; --ink3:#7da09a;
+  --teal:#0d7a6b; --teal-d:#065040; --teal-l:rgba(13,122,107,0.10);
+  --good:#1a7a4a; --warn:#b97a0a; --crit:#c43535;
+  --border:#d4e0de; --shadow:0 1px 3px rgba(20,45,39,0.08);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--ground);color:var(--ink);font-size:14px;line-height:1.5;}
+a{color:var(--teal);text-decoration:none;}
+button{cursor:pointer;font-family:inherit;}
+/* Topbar */
+#topbar{
+  position:sticky;top:0;z-index:100;height:var(--topbar-h);
+  background:var(--surface);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:12px;padding:0 20px;
+}
+.logo{display:flex;align-items:center;gap:8px;font-weight:700;font-size:15px;color:var(--ink);white-space:nowrap;}
+.logo-mark{width:28px;height:28px;background:var(--teal);border-radius:6px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:13px;flex-shrink:0;}
+#nav{display:flex;gap:2px;flex:1;justify-content:center;overflow-x:auto;}
+.nav-tab{
+  padding:6px 13px;border-radius:6px;border:none;background:transparent;
+  color:var(--ink2);font-size:13px;font-weight:500;
+  transition:background .15s,color .15s;white-space:nowrap;
+}
+.nav-tab:hover{background:var(--surface2);color:var(--ink);}
+.nav-tab.active{background:var(--teal-l);color:var(--teal);font-weight:600;}
+.topbar-actions{display:flex;align-items:center;gap:8px;white-space:nowrap;}
+.icon-btn{
+  width:32px;height:32px;border-radius:6px;border:none;
+  background:var(--surface2);color:var(--ink2);
+  display:flex;align-items:center;justify-content:center;font-size:15px;
+  transition:background .15s;
+}
+.icon-btn:hover{background:var(--surface3);color:var(--ink);}
+.lead-btn{
+  height:32px;padding:0 12px;border-radius:6px;border:1px solid var(--border);
+  background:var(--surface);color:var(--ink2);font-size:12px;font-weight:500;
+  display:flex;align-items:center;gap:5px;transition:all .15s;
+}
+.lead-btn:hover{border-color:var(--teal);color:var(--teal);}
+.lead-btn.active{background:var(--teal);color:#fff;border-color:var(--teal);}
+/* Stats bar */
+#statsbar{
+  height:var(--statsbar-h);background:var(--surface);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;padding:0 20px;overflow-x:auto;gap:0;
+}
+.stat-item{display:flex;align-items:baseline;gap:6px;padding:0 16px;border-right:1px solid var(--border);}
+.stat-item:first-child{padding-left:0;}
+.stat-item:last-child{border-right:none;}
+.stat-val{font-size:17px;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums;}
+.stat-lbl{font-size:11px;color:var(--ink3);text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;}
+/* Content */
+#content{padding:20px;max-width:1400px;margin:0 auto;}
+.tab-panel{display:none;}
+.tab-panel.active{display:block;}
+/* Card */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);}
+/* Grids */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+@media(max-width:900px){.grid-4{grid-template-columns:repeat(2,1fr);}.grid-3{grid-template-columns:1fr 1fr;}.grid-2{grid-template-columns:1fr;}}
+@media(max-width:600px){.grid-4,.grid-3,.grid-2{grid-template-columns:1fr;}}
+/* Section header */
+.section-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.section-title{font-size:15px;font-weight:600;color:var(--ink);}
+.section-sub{font-size:12px;color:var(--ink3);margin-top:2px;}
+/* KPI tile */
+.kpi-tile{padding:16px 20px;}
+.kpi-val{font-size:30px;font-weight:700;line-height:1.1;font-variant-numeric:tabular-nums;color:var(--ink);}
+.kpi-lbl{font-size:12px;color:var(--ink3);margin-top:4px;}
+/* Table */
+.data-table{width:100%;border-collapse:collapse;font-size:13px;}
+.data-table th{
+  text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.04em;
+  color:var(--ink3);font-weight:600;padding:8px 12px;border-bottom:2px solid var(--border);white-space:nowrap;
+}
+.data-table td{padding:9px 12px;border-bottom:1px solid var(--border);vertical-align:middle;}
+.data-table tr:last-child td{border-bottom:none;}
+.data-table tr:hover td{background:var(--surface2);}
+.table-wrap{overflow-x:auto;}
+/* Pills */
+.pill{display:inline-flex;align-items:center;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:500;}
+.pill-teal{background:var(--teal-l);color:var(--teal);}
+.pill-good{background:rgba(26,122,74,.12);color:var(--good);}
+.pill-warn{background:rgba(185,122,10,.12);color:var(--warn);}
+.pill-crit{background:rgba(196,53,53,.12);color:var(--crit);}
+.pill-gray{background:var(--surface3);color:var(--ink2);}
+/* Chart card */
+.chart-card{padding:20px;}
+.chart-card canvas{max-height:240px;}
+/* Lead panel */
+#lead-panel{
+  margin-bottom:20px;background:var(--teal-l);
+  border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;
+}
+.portfolio-cards{display:flex;gap:12px;overflow-x:auto;padding-bottom:4px;margin-top:12px;}
+.portfolio-card{
+  min-width:280px;max-width:320px;flex-shrink:0;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:14px 16px;
+}
+.pc-name{font-size:13px;font-weight:600;color:var(--ink);margin-bottom:6px;}
+.pc-row{display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--ink2);margin-bottom:4px;}
+.prog-wrap{height:4px;background:var(--surface3);border-radius:2px;margin:6px 0;}
+.prog-fill{height:100%;background:var(--teal);border-radius:2px;}
+.days-chip{font-size:11px;font-weight:600;padding:2px 6px;border-radius:10px;}
+.days-g{background:rgba(26,122,74,.12);color:var(--good);}
+.days-y{background:rgba(185,122,10,.12);color:var(--warn);}
+.days-r{background:rgba(196,53,53,.12);color:var(--crit);}
+.next-action{font-size:11px;color:var(--teal-d);background:var(--teal-l);padding:4px 8px;border-radius:4px;margin-top:6px;}
+.pc-actions{display:flex;gap:6px;margin-top:10px;}
+/* Buttons */
+.btn-sm{
+  height:28px;padding:0 10px;border-radius:5px;font-size:12px;font-weight:500;
+  border:1px solid var(--border);background:var(--surface2);color:var(--ink2);
+  display:inline-flex;align-items:center;gap:4px;transition:all .15s;
+}
+.btn-sm:hover{border-color:var(--teal);color:var(--teal);}
+.btn-sm.primary{background:var(--teal);color:#fff;border-color:var(--teal);}
+.btn-sm.primary:hover{background:var(--teal-d);}
+/* Drawer */
+#drawer-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;}
+#drawer-overlay.open{display:block;}
+#drawer{
+  position:fixed;top:0;right:-500px;width:460px;height:100vh;
+  background:var(--surface);border-left:1px solid var(--border);
+  box-shadow:-4px 0 24px rgba(0,0,0,.12);z-index:201;
+  transition:right .25s ease;overflow-y:auto;padding:24px;
+}
+#drawer.open{right:0;}
+.drawer-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+.drawer-title{font-size:16px;font-weight:600;}
+.form-group{margin-bottom:16px;}
+.form-label{display:block;font-size:11px;font-weight:600;color:var(--ink2);margin-bottom:4px;text-transform:uppercase;letter-spacing:.04em;}
+.form-input,.form-select,.form-textarea{
+  width:100%;padding:8px 10px;border:1px solid var(--border);
+  border-radius:6px;background:var(--surface2);color:var(--ink);
+  font-family:inherit;font-size:13px;
+}
+.form-input:focus,.form-select:focus,.form-textarea:focus{outline:none;border-color:var(--teal);background:var(--surface);}
+.form-textarea{resize:vertical;min-height:80px;}
+/* Toast */
+#toast-wrap{position:fixed;bottom:20px;right:20px;z-index:300;display:flex;flex-direction:column;gap:8px;}
+.toast{padding:10px 16px;border-radius:8px;font-size:13px;font-weight:500;max-width:320px;box-shadow:0 4px 12px rgba(0,0,0,.15);animation:tin .2s ease;}
+.toast-success{background:var(--good);color:#fff;}
+.toast-error{background:var(--crit);color:#fff;}
+.toast-info{background:var(--ink);color:var(--ground);}
+@keyframes tin{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
+/* Score ring */
+.score-ring{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;font-size:12px;font-weight:700;}
+.sr-hi{background:rgba(26,122,74,.12);color:var(--good);}
+.sr-md{background:rgba(185,122,10,.12);color:var(--warn);}
+.sr-lo{background:rgba(196,53,53,.12);color:var(--crit);}
+/* Stage popover */
+.stage-pop{position:fixed;background:var(--surface);border:1px solid var(--border);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.12);padding:5px;min-width:170px;z-index:250;}
+.stage-opt{padding:6px 10px;border-radius:5px;font-size:13px;cursor:pointer;color:var(--ink);display:flex;align-items:center;gap:8px;}
+.stage-opt:hover{background:var(--surface2);}
+/* Login modal */
+#login-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:400;align-items:center;justify-content:center;}
+#login-ov.open{display:flex;}
+#login-modal{background:var(--surface);border-radius:12px;padding:32px;width:340px;box-shadow:0 24px 48px rgba(0,0,0,.2);}
+.modal-title{font-size:18px;font-weight:700;margin-bottom:6px;}
+.modal-sub{font-size:13px;color:var(--ink2);margin-bottom:20px;}
+/* Utils */
+.mt-12{margin-top:12px;}.mt-16{margin-top:16px;}.mt-20{margin-top:20px;}
+.mb-12{margin-bottom:12px;}.mb-16{margin-bottom:16px;}
+.flex{display:flex;}.items-center{align-items:center;}.justify-between{justify-content:space-between;}
+.gap-8{gap:8px;}.gap-12{gap:12px;}.flex-1{flex:1;}
+.empty-state{text-align:center;padding:36px 20px;color:var(--ink3);font-size:13px;}
+.skel{background:linear-gradient(90deg,var(--surface2) 25%,var(--surface3) 50%,var(--surface2) 75%);background-size:200% 100%;animation:sk 1.5s infinite;border-radius:4px;}
+@keyframes sk{0%{background-position:200% 0}100%{background-position:-200% 0}}
+@media(max-width:700px){#nav{justify-content:flex-start;}.logo span{display:none;}}
+</style>
+</head>
+<body>
+
+<header id="topbar">
+  <div class="logo">
+    <div class="logo-mark">ai</div>
+    <span>Programs</span>
+  </div>
+  <nav id="nav">
+    <button class="nav-tab active" data-tab="overview">Overview</button>
+    <button class="nav-tab" data-tab="partnerships">Partnerships</button>
+    <button class="nav-tab" data-tab="contracts">Contracts</button>
+    <button class="nav-tab" data-tab="events">Events</button>
+    <button class="nav-tab" data-tab="feedback">PL Feedback</button>
+    <button class="nav-tab" data-tab="survey">Partner Survey</button>
+  </nav>
+  <div class="topbar-actions">
+    <button class="icon-btn" id="refresh-btn" title="Refresh">↻</button>
+    <button class="icon-btn" id="theme-btn" title="Toggle theme">◑</button>
+    <button class="lead-btn" id="lead-btn"><span>👤</span><span id="lead-lbl">Sr. Lead View</span></button>
+  </div>
+</header>
+
+<div id="statsbar">
+  <div class="stat-item"><span class="stat-val" id="s-partners">—</span><span class="stat-lbl">Partners</span></div>
+  <div class="stat-item"><span class="stat-val" id="s-active">—</span><span class="stat-lbl">Active</span></div>
+  <div class="stat-item"><span class="stat-val" id="s-fees">—</span><span class="stat-lbl">FY26 Fees</span></div>
+  <div class="stat-item"><span class="stat-val" id="s-events">—</span><span class="stat-lbl">Events</span></div>
+  <div class="stat-item"><span class="stat-val" id="s-parts">—</span><span class="stat-lbl">Participants</span></div>
+  <div class="stat-item"><span class="stat-val" id="s-nps">—</span><span class="stat-lbl">Avg NPS</span></div>
+  <div class="stat-item"><span class="stat-val" id="s-sat">—</span><span class="stat-lbl">Avg Sat</span></div>
+</div>
+
+<main id="content">
+
+  <!-- OVERVIEW -->
+  <div class="tab-panel active" id="tab-overview">
+    <div id="lead-panel" style="display:none">
+      <div class="flex items-center justify-between">
+        <div>
+          <div class="section-title">My Work — <span id="lead-name-disp"></span></div>
+          <div class="section-sub">Your partnerships &amp; sessions</div>
+        </div>
+        <button class="btn-sm" id="lead-logout">Sign out</button>
+      </div>
+      <div class="portfolio-cards" id="portfolio-cards"><div class="empty-state" style="min-width:200px">Loading…</div></div>
+      <div class="mt-16">
+        <div class="section-title mb-12">My Events</div>
+        <div class="table-wrap">
+          <table class="data-table" id="my-evt-tbl">
+            <thead><tr><th>Event</th><th>Date</th><th>Partner</th><th>Participants</th><th>Sat</th><th>NPS</th></tr></thead>
+            <tbody><tr><td colspan="6" class="empty-state">Loading…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-4 mb-16">
+      <div class="card kpi-tile"><div class="kpi-val" id="ov-partners">—</div><div class="kpi-lbl">Total Partners</div></div>
+      <div class="card kpi-tile"><div class="kpi-val" id="ov-fees">—</div><div class="kpi-lbl">FY26 Pipeline Fees</div></div>
+      <div class="card kpi-tile"><div class="kpi-val" id="ov-events">—</div><div class="kpi-lbl">Events This Year</div></div>
+      <div class="card kpi-tile"><div class="kpi-val" id="ov-nps">—</div><div class="kpi-lbl">Avg NPS</div></div>
+    </div>
+    <div class="grid-2 mb-16">
+      <div class="card chart-card">
+        <div class="section-hd"><div><div class="section-title">Pipeline by Stage</div><div class="section-sub">Partnerships per stage</div></div></div>
+        <div><canvas id="ch-pipeline"></canvas></div>
+      </div>
+      <div class="card chart-card">
+        <div class="section-hd"><div><div class="section-title">FY26 Fees by Stage</div><div class="section-sub">Fee pipeline breakdown</div></div></div>
+        <div><canvas id="ch-fees-stage"></canvas></div>
+      </div>
+    </div>
+    <div class="grid-2">
+      <div class="card chart-card">
+        <div class="section-hd"><div><div class="section-title">Partners by State</div><div class="section-sub">Geographic distribution</div></div></div>
+        <div><canvas id="ch-states"></canvas></div>
+      </div>
+      <div class="card chart-card">
+        <div class="section-hd"><div><div class="section-title">Events by Month</div><div class="section-sub">Sessions delivered</div></div></div>
+        <div><canvas id="ch-evt-month"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PARTNERSHIPS -->
+  <div class="tab-panel" id="tab-partnerships">
+    <div class="section-hd mb-12">
+      <div class="section-title">All Partnerships</div>
+      <div class="flex gap-8 items-center" style="flex-wrap:wrap">
+        <select class="form-select" id="f-stage" style="width:auto"><option value="">All Stages</option></select>
+        <select class="form-select" id="f-state" style="width:auto"><option value="">All States</option></select>
+        <input class="form-input" id="f-search" placeholder="Search…" style="width:160px">
+      </div>
+    </div>
+    <div class="card table-wrap">
+      <table class="data-table" id="prt-tbl">
+        <thead><tr><th>Partner</th><th>Stage</th><th>State</th><th>FY26 Fees</th><th>Contract End</th><th>Team</th><th>Missing</th><th></th></tr></thead>
+        <tbody><tr><td colspan="8" class="empty-state">Loading…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- CONTRACTS -->
+  <div class="tab-panel" id="tab-contracts">
+    <div class="section-hd mb-12">
+      <div class="section-title">Contracts &amp; MOUs</div>
+      <div class="flex gap-8 items-center">
+        <select class="form-select" id="f-mou-stage" style="width:auto"><option value="">All Stages</option></select>
+        <input class="form-input" id="f-mou-search" placeholder="Search…" style="width:160px">
+      </div>
+    </div>
+    <div class="grid-2 mb-16">
+      <div class="card chart-card">
+        <div class="section-title mb-12">FY26 Fee Pipeline</div>
+        <div><canvas id="ch-fees-pipe"></canvas></div>
+      </div>
+      <div class="card" style="padding:16px">
+        <div class="section-title mb-12">Renewals — Next 90 Days</div>
+        <div id="renewals-list"><div class="empty-state">Loading…</div></div>
+      </div>
+    </div>
+    <div class="card table-wrap">
+      <table class="data-table" id="mou-tbl">
+        <thead><tr><th>Partner</th><th>Stage</th><th>Begins</th><th>Ends</th><th>Signed</th><th>Amount</th><th>Team</th><th></th></tr></thead>
+        <tbody><tr><td colspan="8" class="empty-state">Loading…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- EVENTS -->
+  <div class="tab-panel" id="tab-events">
+    <div class="section-hd mb-12">
+      <div class="section-title">Events</div>
+      <div class="flex gap-8 items-center">
+        <select class="form-select" id="f-evt-type" style="width:auto"><option value="">All Types</option></select>
+        <input class="form-input" id="f-evt-search" placeholder="Search…" style="width:160px">
+      </div>
+    </div>
+    <div class="grid-4 mb-16">
+      <div class="card kpi-tile"><div class="kpi-val" id="ev-total">—</div><div class="kpi-lbl">Total Events</div></div>
+      <div class="card kpi-tile"><div class="kpi-val" id="ev-parts">—</div><div class="kpi-lbl">Participants</div></div>
+      <div class="card kpi-tile"><div class="kpi-val" id="ev-sat">—</div><div class="kpi-lbl">Avg Satisfaction</div></div>
+      <div class="card kpi-tile"><div class="kpi-val" id="ev-nps">—</div><div class="kpi-lbl">Avg NPS</div></div>
+    </div>
+    <div class="card table-wrap">
+      <table class="data-table" id="evt-tbl">
+        <thead><tr><th>Event</th><th>Date</th><th>Facilitator</th><th>Format</th><th>Participants</th><th>Sat</th><th>NPS</th><th>Obj Met</th></tr></thead>
+        <tbody><tr><td colspan="8" class="empty-state">Loading…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- PL FEEDBACK -->
+  <div class="tab-panel" id="tab-feedback">
+    <div class="section-hd mb-12">
+      <div class="section-title">PL Feedback</div>
+    </div>
+    <div class="grid-3 mb-16">
+      <div class="card chart-card"><div class="section-title mb-12">Satisfaction Distribution</div><div><canvas id="ch-sat-dist"></canvas></div></div>
+      <div class="card chart-card"><div class="section-title mb-12">NPS Trend by Month</div><div><canvas id="ch-nps-trend"></canvas></div></div>
+      <div class="card chart-card"><div class="section-title mb-12">Facilitator Effectiveness</div><div><canvas id="ch-fac-eff"></canvas></div></div>
+    </div>
+    <div class="card table-wrap">
+      <table class="data-table" id="fb-tbl">
+        <thead><tr><th>Session</th><th>Date</th><th>Facilitator</th><th>Responses</th><th>Sat</th><th>NPS</th><th>Before→After</th><th>Obj Met</th><th>Fac Eff</th></tr></thead>
+        <tbody><tr><td colspan="9" class="empty-state">Loading…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- PARTNER SURVEY -->
+  <div class="tab-panel" id="tab-survey">
+    <div class="section-hd mb-12">
+      <div class="section-title">Partner Survey Results</div>
+      <select class="form-select" id="f-season" style="width:auto"><option value="">All Seasons</option></select>
+    </div>
+    <div class="grid-4 mb-16">
+      <div class="card kpi-tile"><div class="kpi-val" id="sv-sat">—</div><div class="kpi-lbl">Avg Satisfaction</div></div>
+      <div class="card kpi-tile"><div class="kpi-val" id="sv-comm">—</div><div class="kpi-lbl">Communication</div></div>
+      <div class="card kpi-tile"><div class="kpi-val" id="sv-res">—</div><div class="kpi-lbl">Resources</div></div>
+      <div class="card kpi-tile"><div class="kpi-val" id="sv-rec">—</div><div class="kpi-lbl">Recommend Rating</div></div>
+    </div>
+    <div class="grid-2 mb-16">
+      <div class="card chart-card"><div class="section-title mb-12">Scores by Dimension</div><div><canvas id="ch-sv-dims"></canvas></div></div>
+      <div class="card chart-card"><div class="section-title mb-12">Satisfaction by District</div><div><canvas id="ch-sv-dist"></canvas></div></div>
+    </div>
+    <div class="card table-wrap">
+      <table class="data-table" id="sv-tbl">
+        <thead><tr><th>District</th><th>Season</th><th>Satisfaction</th><th>Communication</th><th>Resources</th><th>Objectives</th><th>AI Confidence</th><th>Recommend</th></tr></thead>
+        <tbody><tr><td colspan="8" class="empty-state">Loading…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+</main>
+
+<!-- Drawer -->
+<div id="drawer-overlay"></div>
+<aside id="drawer">
+  <div class="drawer-hd">
+    <div class="drawer-title" id="drawer-title">Edit</div>
+    <button class="icon-btn" id="drawer-close">✕</button>
+  </div>
+  <div class="form-group">
+    <label class="form-label">Pipeline Stage</label>
+    <select class="form-select" id="edit-pipeline">
+      <option>Prospect</option><option>Outreach</option><option>Proposal</option>
+      <option>Negotiation</option><option>Active</option><option>Renewal</option><option>Lost</option>
+    </select>
+  </div>
+  <div class="form-group">
+    <label class="form-label">Start Date</label>
+    <input type="date" class="form-input" id="edit-start">
+  </div>
+  <div class="form-group">
+    <label class="form-label">End Date</label>
+    <input type="date" class="form-input" id="edit-end">
+  </div>
+  <div class="form-group" id="notes-group">
+    <label class="form-label">Notes</label>
+    <textarea class="form-textarea" id="edit-notes" rows="4"></textarea>
+  </div>
+  <div class="flex gap-8 mt-16">
+    <button class="btn-sm primary flex-1" id="drawer-save">Save Changes</button>
+    <button class="btn-sm" id="drawer-cancel">Cancel</button>
+  </div>
+</aside>
+
+<div id="toast-wrap"></div>
+
+<!-- Login modal -->
+<div id="login-ov">
+  <div id="login-modal">
+    <div class="modal-title">Sr. Lead Sign In</div>
+    <div class="modal-sub">Select your name to view your personalized portfolio and sessions.</div>
+    <div class="form-group">
+      <label class="form-label">Your Name</label>
+      <select class="form-select" id="lead-select"><option value="">— Choose —</option></select>
+    </div>
+    <div class="flex gap-8 mt-16">
+      <button class="btn-sm primary flex-1" id="login-ok">View My Dashboard</button>
+      <button class="btn-sm" id="login-cancel">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Config ───────────────────────────────────────────────────────────────────
+const BASE  = 'appgdtYPttWwiBZzA';
+const EBASE = 'apptKJnbKllpLEA8u';
+const T = {
+  acc:'tbliOUsLsV3k6hy8g', prt:'tbl9CLNpNz0oOfAzV', log:'tblA1wXyoO3pjeto5',
+  fee:'tblgRodZdvORj3P9q', mou:'tbl0r7iGdBFEsqoJd', evt:'tblgLGSJhm0nB9Lhf',
+  srv:'tblmccdSXvckLRT5O', stf:'tblTngHWDZOIeIR0p'
+};
+const FP = {
+  name:'fldpkporCZ8A6HZTT', pipeline:'fldEoTQtHQMygOKT3', start:'fldZtu03mx9rpSMEl',
+  end:'fldmO78r4NxmHW8wn', missing:'fldNc1hZCyd0GiKwF', team:'fldl6l6te8tgmiENL',
+  services:'fldqOMuPRf0UojJEZ', totalFees:'fldQU0pTL7oL8SarE', fy26:'fld6oXfY8rqrcqtJM',
+  state:'fldYAFg4ulmMnfsqh', cultStart:'fldqhva6jf1Lm6dSx', notes:'fldokpiDBitEeKtgb'
+};
+const FF = {
+  name:'fldm0J2jZ5FNoeij4', amount:'fld74B4jxPOYfABSr', fy:'fldueOo2EOiAGsWev',
+  pipeline:'fldEz8N4Ct9efAPcl', team:'fld0orJul8RatY2gf'
+};
+const FM = {
+  contract:'fldwdDFVJ51CcOqxv', begins:'fldxzUbvz1RYElzjG', ends:'fldEANQWfvf7PTYEV',
+  signed:'fldTQ1LXC9SiUaWms', partner:'fldONduCdYmYYJTAS', pipeline:'fldWzaeTDZccoICrN',
+  team:'fldg4K8tf6dWQR1d9', amount:'fld2IArT6QESgA5Va'
+};
+const FE = {
+  name:'fldNuW61rIMewY8ep', nameT:'fld3QjwVpB51hC4yq', date:'fldW8DuSsdxVAf2RJ',
+  parts:'fldLybnO5Vycut2ih', fac:'fldVGdgxPiG4pFvnv', facDisp:'fldTHT5tGm8T7s7qU',
+  partner:'fld7n8KZUu5X6Ee1h', sat:'fldhfkqQBEFQV9dRU', nps:'fldZAj3DoEyHVyBmE',
+  before:'fldxq9yY6H9cID9s2', after:'fldbxJOLftLmyH98D', facEff:'fldSlD4em8xVaS3xT',
+  contRel:'fldOEIKxWuSu6w0WB', objMet:'fld2MEcFlrSFQuJuV', format:'fldlMSFVbJIaogWau',
+  plType:'fld2n02ofIL7eFgBE', fbCount:'fldmBU2sUNSxX2NiN', dur:'flduKbVdPIXN5SvMd'
+};
+const FS = {
+  name:'fldTYrXYvXejikT51', season:'fldKFteQSdn1Y5SPB', district:'flddsEyZeSAcX7CG4',
+  owner:'fldRFH3iuCClYHXNZ', satPct:'fldyAVBAIbl1aBGVO', commPct:'fldWgaNecjCNYwTqF',
+  resPct:'fld8X2zvhDzgIx4KX', objPct:'fldWr9LoaT6FHJI54', aiPct:'fld45HKCatlvjCaKq',
+  recRating:'fldR1T5JOetNKbsAC'
+};
+const FST = {
+  name:'fldpmvWNm6cmygmVS', role:'fldtPyBVQFJyK0Pja',
+  status:'fldqKfGLiTPAJp27T', type:'fldpOPwPNOf1gY3op'
+};
+const STAGE_COLORS = {
+  Prospect:'#7a8f9a', Outreach:'#3a6baf', Proposal:'#d4840a',
+  Negotiation:'#c43535', Active:'#0d7a6b', Renewal:'#22a878', Lost:'#aaa'
+};
+const STAGE_ORDER = ['Prospect','Outreach','Proposal','Negotiation','Active','Renewal','Lost'];
+
+// ── State ────────────────────────────────────────────────────────────────────
+let D = { partners:[], fees:[], mous:[], events:[], surveys:[], staff:[] };
+let LEAD = null;
+let CHARTS = {};
+let DRAWER = null;
+let POPOVER = null;
+
+// ── API ───────────────────────────────────────────────────────────────────────
+async function atFetch(baseId, tableId, params={}) {
+  const recs = []; let offset = null;
+  do {
+    const p = new URLSearchParams({ returnFieldsByFieldId:'true', pageSize:'100', ...params });
+    if (offset) p.set('offset', offset);
+    const res = await fetch(`/api/v0/${baseId}/${tableId}?${p}`);
+    if (!res.ok) throw new Error(await res.text());
+    const j = await res.json();
+    if (j.error) throw new Error(j.error.message || JSON.stringify(j.error));
+    recs.push(...(j.records || []));
+    offset = j.offset;
+  } while (offset);
+  return recs;
+}
+
+async function apiWrite(method, baseId, tableId, payload) {
+  const url = `/api/v0/${baseId}/${tableId}`;
+  const endpoint = method === 'POST' ? url : `${url}/${payload.id}`;
+  const body = method === 'POST'
+    ? { records: [{ fields: payload.fields }] }
+    : { fields: payload.fields };
+  const res = await fetch(endpoint, {
+    method, headers: { 'Content-Type':'application/json' },
+    body: JSON.stringify(body)
+  });
+  const j = await res.json();
+  if (!res.ok || j.error) throw new Error(j.error?.message || 'Write failed');
+  return j;
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+const gf  = (r,f) => r?.fields?.[f] ?? null;
+const ga  = (r,f) => { const v = r?.fields?.[f]; return Array.isArray(v) ? v : (v ? [v] : []); };
+const f$  = v => v==null ? '—' : '$'+Math.round(+v).toLocaleString();
+const fpct= v => v==null ? '—' : Math.round(+v)+'%';
+const fdt = v => { if(!v) return '—'; const d=new Date(v+'T00:00:00'); return d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); };
+const fsc = v => v==null||isNaN(+v) ? '—' : (+v).toFixed(1);
+const daysTo = v => { if(!v) return null; return Math.round((new Date(v+'T00:00:00')-Date.now())/86400000); };
+const clamp = (v,a,b) => Math.min(b,Math.max(a,v));
+
+function toast(msg, type='info') {
+  const el = document.createElement('div');
+  el.className = `toast toast-${type}`;
+  el.textContent = msg;
+  document.getElementById('toast-wrap').appendChild(el);
+  setTimeout(() => el.remove(), 3500);
+}
+
+function stagePill(s) {
+  const m = { Active:'pill-teal', Renewal:'pill-good', Proposal:'pill-warn',
+    Negotiation:'pill-crit', Prospect:'pill-gray', Outreach:'pill-gray', Lost:'pill-gray' };
+  return `<span class="pill ${m[s]||'pill-gray'}">${s||'—'}</span>`;
+}
+
+function daysChip(d) {
+  if(d==null) return '<span style="color:var(--ink3)">—</span>';
+  const cls = d>90?'days-g':d>30?'days-y':'days-r';
+  return `<span class="days-chip ${cls}">${d>0?d+'d':'Expired'}</span>`;
+}
+
+function scoreRing(v, max=5) {
+  if(v==null||isNaN(+v)||+v<=0) return '<span style="color:var(--ink3)">—</span>';
+  const n=+v, pct=n/max;
+  const cls = pct>=.8?'sr-hi':pct>=.6?'sr-md':'sr-lo';
+  return `<span class="score-ring ${cls}">${n.toFixed(1)}</span>`;
+}
+
+function nextAction(p) {
+  const stage = gf(p,FP.pipeline);
+  const days  = daysTo(gf(p,FP.end));
+  if(gf(p,FP.missing)) return 'Complete missing info: '+gf(p,FP.missing);
+  if(days!=null&&days<=30) return 'Urgent: initiate renewal conversation';
+  if(days!=null&&days<=90) return 'Schedule renewal check-in';
+  if(stage==='Prospect')    return 'Send initial outreach email';
+  if(stage==='Outreach')    return 'Follow up on introduction';
+  if(stage==='Proposal')    return 'Send partnership proposal';
+  if(stage==='Negotiation') return 'Finalize contract terms';
+  if(stage==='Active')      return 'Check in on program progress';
+  return 'Review partnership status';
+}
+
+function cssVar(n) { return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+
+// ── Chart helper ──────────────────────────────────────────────────────────────
+function mkChart(id, type, labels, data, colors, label) {
+  if(CHARTS[id]){CHARTS[id].destroy();delete CHARTS[id];}
+  const el = document.getElementById(id);
+  if(!el) return;
+  const ink3 = cssVar('--ink3'), border = cssVar('--border');
+  const isLine = type==='line';
+  CHARTS[id] = new Chart(el, {
+    type,
+    data: { labels, datasets:[{
+      label, data,
+      backgroundColor: isLine ? 'transparent' : colors,
+      borderColor: isLine ? (colors[0]||cssVar('--teal')) : colors,
+      borderWidth: isLine?2:0, borderRadius: isLine?0:4,
+      pointRadius: isLine?4:0, pointHoverRadius: isLine?6:0,
+      tension: isLine?.35:0,
+    }]},
+    options: {
+      responsive:true, maintainAspectRatio:true,
+      plugins:{
+        legend:{display:false},
+        tooltip:{callbacks:{label:ctx=>{ const v=ctx.raw; return label.includes('$')?' '+f$(v):' '+v; }}}
+      },
+      scales:{
+        x:{ticks:{color:ink3,font:{size:11}},grid:{display:false}},
+        y:{ticks:{color:ink3,font:{size:11}},grid:{color:border},beginAtZero:true}
+      }
+    }
+  });
+}
+
+function refreshChartColors() {
+  const ink3=cssVar('--ink3'), border=cssVar('--border');
+  Object.values(CHARTS).forEach(c=>{
+    if(!c) return;
+    c.options.scales.x.ticks.color = ink3;
+    c.options.scales.y.ticks.color = ink3;
+    c.options.scales.y.grid.color  = border;
+    c.update();
+  });
+}
+
+// ── Load ──────────────────────────────────────────────────────────────────────
+async function loadAll() {
+  try {
+    const [partners, fees, mous, staff, surveys, events] = await Promise.all([
+      atFetch(BASE, T.prt),
+      atFetch(BASE, T.fee),
+      atFetch(BASE, T.mou),
+      atFetch(BASE, T.stf),
+      atFetch(BASE, T.srv),
+      atFetch(EBASE, T.evt),
+    ]);
+    D = { partners, fees, mous, staff, surveys, events };
+    renderAll();
+  } catch(err) {
+    toast('Failed to load: '+err.message, 'error');
+    console.error(err);
+  }
+}
+
+function renderAll() {
+  renderStats();
+  renderOverview();
+  renderPartnerships();
+  renderContracts();
+  renderEvents();
+  renderFeedback();
+  renderSurveys();
+  if(LEAD) renderLeadPanel();
+}
+
+// ── Stats bar ─────────────────────────────────────────────────────────────────
+function renderStats() {
+  const active  = D.partners.filter(p=>gf(p,FP.pipeline)==='Active').length;
+  const fy26    = D.fees.filter(f=>gf(f,FF.fy)==='FY26').reduce((s,f)=>s+(+gf(f,FF.amount)||0),0);
+  const parts   = D.events.reduce((s,e)=>s+(+gf(e,FE.parts)||0),0);
+  const npsArr  = D.events.map(e=>+gf(e,FE.nps)).filter(v=>v>0);
+  const satArr  = D.events.map(e=>+gf(e,FE.sat)).filter(v=>v>0);
+  const avgNps  = npsArr.length ? npsArr.reduce((a,b)=>a+b)/npsArr.length : null;
+  const avgSat  = satArr.length ? satArr.reduce((a,b)=>a+b)/satArr.length : null;
+  document.getElementById('s-partners').textContent = D.partners.length;
+  document.getElementById('s-active').textContent   = active;
+  document.getElementById('s-fees').textContent     = f$(fy26);
+  document.getElementById('s-events').textContent   = D.events.length;
+  document.getElementById('s-parts').textContent    = parts.toLocaleString();
+  document.getElementById('s-nps').textContent      = avgNps ? avgNps.toFixed(1) : '—';
+  document.getElementById('s-sat').textContent      = avgSat ? avgSat.toFixed(1) : '—';
+}
+
+// ── Overview ──────────────────────────────────────────────────────────────────
+function renderOverview() {
+  const fy26    = D.fees.filter(f=>gf(f,FF.fy)==='FY26').reduce((s,f)=>s+(+gf(f,FF.amount)||0),0);
+  const npsArr  = D.events.map(e=>+gf(e,FE.nps)).filter(v=>v>0);
+  const avgNps  = npsArr.length ? npsArr.reduce((a,b)=>a+b)/npsArr.length : null;
+  document.getElementById('ov-partners').textContent = D.partners.length;
+  document.getElementById('ov-fees').textContent     = f$(fy26);
+  document.getElementById('ov-events').textContent   = D.events.length;
+  document.getElementById('ov-nps').textContent      = avgNps ? avgNps.toFixed(1) : '—';
+
+  // Pipeline counts
+  const byStage = {};
+  D.partners.forEach(p=>{ const s=gf(p,FP.pipeline)||'Unknown'; byStage[s]=(byStage[s]||0)+1; });
+  const sLabels = STAGE_ORDER.filter(s=>byStage[s]);
+  mkChart('ch-pipeline','bar',sLabels,sLabels.map(s=>byStage[s]),sLabels.map(s=>STAGE_COLORS[s]||'#999'),'Partnerships');
+
+  // Fees by stage
+  const fByStage = {};
+  D.fees.filter(f=>gf(f,FF.fy)==='FY26').forEach(f=>{ const s=gf(f,FF.pipeline)||'Unknown'; fByStage[s]=(fByStage[s]||0)+(+gf(f,FF.amount)||0); });
+  const fsL = STAGE_ORDER.filter(s=>fByStage[s]);
+  mkChart('ch-fees-stage','bar',fsL,fsL.map(s=>fByStage[s]),fsL.map(s=>STAGE_COLORS[s]||'#999'),'FY26 Fees ($)');
+
+  // States
+  const bySt = {};
+  D.partners.forEach(p=>{ const s=gf(p,FP.state)||'Unknown'; bySt[s]=(bySt[s]||0)+1; });
+  const stSorted = Object.entries(bySt).sort((a,b)=>b[1]-a[1]).slice(0,12);
+  mkChart('ch-states','bar',stSorted.map(x=>x[0]),stSorted.map(x=>x[1]),stSorted.map(()=>cssVar('--teal')),'Partners');
+
+  // Events by month
+  const byMo = {};
+  D.events.forEach(e=>{ const d=gf(e,FE.date); if(!d) return; const k=d.slice(0,7); byMo[k]=(byMo[k]||0)+1; });
+  const mos = Object.keys(byMo).sort().slice(-12);
+  mkChart('ch-evt-month','line',
+    mos.map(m=>new Date(m+'-01').toLocaleDateString('en-US',{month:'short',year:'2-digit'})),
+    mos.map(m=>byMo[m]),[cssVar('--teal')],'Events');
+}
+
+// ── Partnerships ──────────────────────────────────────────────────────────────
+function renderPartnerships(f={}) {
+  // Populate filters
+  const stages = [...new Set(D.partners.map(p=>gf(p,FP.pipeline)).filter(Boolean))].sort();
+  const states = [...new Set(D.partners.map(p=>gf(p,FP.state)).filter(Boolean))].sort();
+  const stageEl = document.getElementById('f-stage'), curSt=stageEl.value;
+  stageEl.innerHTML = '<option value="">All Stages</option>'+stages.map(s=>`<option${s===curSt?' selected':''}>${s}</option>`).join('');
+  const stateEl = document.getElementById('f-state'), curSta=stateEl.value;
+  stateEl.innerHTML = '<option value="">All States</option>'+states.map(s=>`<option${s===curSta?' selected':''}>${s}</option>`).join('');
+
+  let rows = D.partners;
+  if(f.stage) rows=rows.filter(r=>gf(r,FP.pipeline)===f.stage);
+  if(f.state) rows=rows.filter(r=>gf(r,FP.state)===f.state);
+  if(f.search){ const q=f.search.toLowerCase(); rows=rows.filter(r=>(gf(r,FP.name)||'').toLowerCase().includes(q)); }
+  rows.sort((a,b)=>(gf(a,FP.name)||'').localeCompare(gf(b,FP.name)||''));
+
+  const tbody = document.querySelector('#prt-tbl tbody');
+  tbody.innerHTML = rows.length===0 ? '<tr><td colspan="8" class="empty-state">No partnerships match</td></tr>' :
+    rows.map(r=>{
+      const days = daysTo(gf(r,FP.end));
+      const team = ga(r,FP.team).join(', ');
+      const missing = gf(r,FP.missing) ? `<span style="color:var(--warn)">⚠ Missing</span>` : '';
+      return `<tr>
+        <td><strong>${gf(r,FP.name)||'—'}</strong></td>
+        <td>${stagePill(gf(r,FP.pipeline))}</td>
+        <td>${gf(r,FP.state)||'—'}</td>
+        <td style="font-variant-numeric:tabular-nums">${f$(gf(r,FP.fy26))}</td>
+        <td>${fdt(gf(r,FP.end))} ${daysChip(days)}</td>
+        <td style="color:var(--ink2);font-size:12px">${team||'—'}</td>
+        <td>${missing}</td>
+        <td><button class="btn-sm" onclick="openPrtDrawer('${r.id}')">Edit</button></td>
+      </tr>`;
+    }).join('');
+}
+
+// ── Contracts ─────────────────────────────────────────────────────────────────
+function renderContracts(f={}) {
+  const stages = [...new Set(D.mous.map(m=>gf(m,FM.pipeline)).filter(Boolean))].sort();
+  const stageEl = document.getElementById('f-mou-stage'), cur=stageEl.value;
+  stageEl.innerHTML = '<option value="">All Stages</option>'+stages.map(s=>`<option${s===cur?' selected':''}>${s}</option>`).join('');
+
+  // Renewals
+  const soon = D.mous.filter(m=>{ const d=daysTo(gf(m,FM.ends)); return d!=null&&d>=0&&d<=90; })
+    .sort((a,b)=>(daysTo(gf(a,FM.ends))||0)-(daysTo(gf(b,FM.ends))||0));
+  const pname = m => { const pid=ga(m,FM.partner)[0]; return pid?(D.partners.find(p=>p.id===pid)||{}).fields?.[FP.name]||'—':'—'; };
+  document.getElementById('renewals-list').innerHTML = soon.length===0
+    ? '<div class="empty-state">No renewals in the next 90 days</div>'
+    : soon.map(m=>`
+        <div class="flex items-center justify-between" style="padding:8px 16px;border-bottom:1px solid var(--border)">
+          <span style="font-size:13px;font-weight:500">${pname(m)}</span>
+          <div class="flex items-center gap-8">
+            <span style="font-size:12px;color:var(--ink3)">${fdt(gf(m,FM.ends))}</span>
+            ${daysChip(daysTo(gf(m,FM.ends)))}
+          </div>
+        </div>`).join('');
+
+  // Fee pipeline chart
+  const fByStage = {};
+  D.fees.filter(f=>gf(f,FF.fy)==='FY26').forEach(f=>{ const s=gf(f,FF.pipeline)||'Other'; fByStage[s]=(fByStage[s]||0)+(+gf(f,FF.amount)||0); });
+  const fsL = STAGE_ORDER.filter(s=>fByStage[s]);
+  mkChart('ch-fees-pipe','bar',fsL,fsL.map(s=>fByStage[s]),fsL.map(s=>STAGE_COLORS[s]||'#999'),'FY26 Fees ($)');
+
+  // Table
+  let rows = D.mous;
+  if(f.stage) rows=rows.filter(r=>gf(r,FM.pipeline)===f.stage);
+  if(f.search){ const q=f.search.toLowerCase(); rows=rows.filter(r=>(pname(r)||'').toLowerCase().includes(q)||(gf(r,FM.contract)||'').toLowerCase().includes(q)); }
+
+  const tbody = document.querySelector('#mou-tbl tbody');
+  tbody.innerHTML = rows.length===0 ? '<tr><td colspan="8" class="empty-state">No contracts found</td></tr>' :
+    rows.map(r=>{
+      const days=daysTo(gf(r,FM.ends)), team=ga(r,FM.team).join(', ');
+      return `<tr>
+        <td><strong>${pname(r)}</strong></td>
+        <td>${stagePill(gf(r,FM.pipeline))}</td>
+        <td>${fdt(gf(r,FM.begins))}</td>
+        <td>${fdt(gf(r,FM.ends))} ${daysChip(days)}</td>
+        <td>${gf(r,FM.signed)?'✓':'—'}</td>
+        <td style="font-variant-numeric:tabular-nums">${f$(gf(r,FM.amount))}</td>
+        <td style="color:var(--ink2);font-size:12px">${team||'—'}</td>
+        <td><button class="btn-sm" onclick="openMouDrawer('${r.id}')">Edit</button></td>
+      </tr>`;
+    }).join('');
+}
+
+// ── Events ────────────────────────────────────────────────────────────────────
+function renderEvents(f={}) {
+  const types = [...new Set(D.events.map(e=>gf(e,FE.plType)).filter(Boolean))].sort();
+  const typeEl = document.getElementById('f-evt-type'), cur=typeEl.value;
+  typeEl.innerHTML = '<option value="">All Types</option>'+types.map(t=>`<option${t===cur?' selected':''}>${t}</option>`).join('');
+
+  let rows = D.events;
+  if(f.type) rows=rows.filter(r=>gf(r,FE.plType)===f.type);
+  if(f.search){ const q=f.search.toLowerCase(); rows=rows.filter(r=>(gf(r,FE.nameT)||gf(r,FE.name)||'').toLowerCase().includes(q)); }
+  rows.sort((a,b)=>(gf(b,FE.date)||'').localeCompare(gf(a,FE.date)||''));
+
+  const parts = rows.reduce((s,e)=>s+(+gf(e,FE.parts)||0),0);
+  const npsV  = rows.map(e=>+gf(e,FE.nps)).filter(v=>v>0);
+  const satV  = rows.map(e=>+gf(e,FE.sat)).filter(v=>v>0);
+  document.getElementById('ev-total').textContent = rows.length;
+  document.getElementById('ev-parts').textContent = parts.toLocaleString();
+  document.getElementById('ev-sat').textContent   = satV.length?(satV.reduce((a,b)=>a+b)/satV.length).toFixed(1):'—';
+  document.getElementById('ev-nps').textContent   = npsV.length?(npsV.reduce((a,b)=>a+b)/npsV.length).toFixed(1):'—';
+
+  const tbody = document.querySelector('#evt-tbl tbody');
+  tbody.innerHTML = rows.length===0 ? '<tr><td colspan="8" class="empty-state">No events found</td></tr>' :
+    rows.slice(0,200).map(r=>{
+      const name=gf(r,FE.nameT)||gf(r,FE.name)||'—';
+      const fac=ga(r,FE.facDisp).join(', ')||'—';
+      return `<tr>
+        <td><strong>${name}</strong></td>
+        <td>${fdt(gf(r,FE.date))}</td>
+        <td style="font-size:12px;color:var(--ink2)">${fac}</td>
+        <td>${gf(r,FE.format)||'—'}</td>
+        <td style="font-variant-numeric:tabular-nums">${gf(r,FE.parts)||'—'}</td>
+        <td>${scoreRing(gf(r,FE.sat))}</td>
+        <td>${scoreRing(gf(r,FE.nps),10)}</td>
+        <td>${gf(r,FE.objMet)!=null?fpct(gf(r,FE.objMet)):'—'}</td>
+      </tr>`;
+    }).join('');
+}
+
+// ── PL Feedback ───────────────────────────────────────────────────────────────
+function renderFeedback() {
+  const rows = [...D.events].sort((a,b)=>(gf(b,FE.date)||'').localeCompare(gf(a,FE.date)||''));
+  const tbody = document.querySelector('#fb-tbl tbody');
+  tbody.innerHTML = rows.length===0 ? '<tr><td colspan="9" class="empty-state">No feedback data</td></tr>' :
+    rows.slice(0,100).map(r=>{
+      const name=gf(r,FE.nameT)||gf(r,FE.name)||'—';
+      const fac=ga(r,FE.facDisp).join(', ')||'—';
+      const bef=gf(r,FE.before), aft=gf(r,FE.after);
+      const arrow = bef!=null&&aft!=null ? `${(+bef).toFixed(1)}→${(+aft).toFixed(1)}` : '—';
+      return `<tr>
+        <td><strong>${name}</strong></td>
+        <td>${fdt(gf(r,FE.date))}</td>
+        <td style="font-size:12px;color:var(--ink2)">${fac}</td>
+        <td style="font-variant-numeric:tabular-nums">${gf(r,FE.fbCount)||'—'}</td>
+        <td>${scoreRing(gf(r,FE.sat))}</td>
+        <td>${scoreRing(gf(r,FE.nps),10)}</td>
+        <td style="font-variant-numeric:tabular-nums;font-size:12px">${arrow}</td>
+        <td>${gf(r,FE.objMet)!=null?fpct(gf(r,FE.objMet)):'—'}</td>
+        <td>${scoreRing(gf(r,FE.facEff))}</td>
+      </tr>`;
+    }).join('');
+
+  // Satisfaction distribution
+  const bkt = {'<3':0,'3–4':0,'4–5':0};
+  D.events.forEach(e=>{ const s=+gf(e,FE.sat); if(isNaN(s)||s<=0) return; s<3?bkt['<3']++:s<4?bkt['3–4']++:bkt['4–5']++; });
+  mkChart('ch-sat-dist','bar',Object.keys(bkt),Object.values(bkt),
+    [cssVar('--crit'),cssVar('--warn'),cssVar('--good')],'Sessions');
+
+  // NPS trend
+  const npsByMo = {};
+  D.events.forEach(e=>{ const d=gf(e,FE.date), n=+gf(e,FE.nps); if(!d||isNaN(n)||n<=0) return; const k=d.slice(0,7); (npsByMo[k]=npsByMo[k]||[]).push(n); });
+  const nMos = Object.keys(npsByMo).sort().slice(-12);
+  mkChart('ch-nps-trend','line',
+    nMos.map(m=>new Date(m+'-01').toLocaleDateString('en-US',{month:'short',year:'2-digit'})),
+    nMos.map(m=>{ const a=npsByMo[m]; return +(a.reduce((x,y)=>x+y)/a.length).toFixed(2); }),
+    [cssVar('--teal')],'Avg NPS');
+
+  // Facilitator effectiveness
+  const facMap = {};
+  D.events.forEach(e=>{ const facs=ga(e,FE.facDisp), eff=+gf(e,FE.facEff); if(!facs.length||isNaN(eff)||eff<=0) return; facs.forEach(f=>(facMap[f]=facMap[f]||[]).push(eff)); });
+  const facSorted = Object.entries(facMap).map(([f,a])=>[f,a.reduce((x,y)=>x+y)/a.length]).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  mkChart('ch-fac-eff','bar',
+    facSorted.map(x=>x[0].split(' ')[0]),
+    facSorted.map(x=>+x[1].toFixed(2)),
+    facSorted.map(()=>cssVar('--teal')),'Avg Eff');
+}
+
+// ── Partner Surveys ───────────────────────────────────────────────────────────
+function renderSurveys(f={}) {
+  const seasons = [...new Set(D.surveys.map(s=>gf(s,FS.season)).filter(Boolean))].sort();
+  const seasEl = document.getElementById('f-season'), cur=seasEl.value;
+  seasEl.innerHTML = '<option value="">All Seasons</option>'+seasons.map(s=>`<option${s===cur?' selected':''}>${s}</option>`).join('');
+
+  let rows = D.surveys;
+  if(f.season) rows=rows.filter(r=>gf(r,FS.season)===f.season);
+
+  const avg = fld => { const a=rows.map(r=>+gf(r,fld)).filter(v=>v>0); return a.length?a.reduce((x,y)=>x+y)/a.length:null; };
+  document.getElementById('sv-sat').textContent  = avg(FS.satPct)?fpct(avg(FS.satPct)):'—';
+  document.getElementById('sv-comm').textContent = avg(FS.commPct)?fpct(avg(FS.commPct)):'—';
+  document.getElementById('sv-res').textContent  = avg(FS.resPct)?fpct(avg(FS.resPct)):'—';
+  document.getElementById('sv-rec').textContent  = avg(FS.recRating)?fsc(avg(FS.recRating)):'—';
+
+  // Dimension bar
+  const dims = [
+    {l:'Satisfaction',f:FS.satPct},{l:'Communication',f:FS.commPct},
+    {l:'Resources',f:FS.resPct},{l:'Objectives',f:FS.objPct},{l:'AI Confidence',f:FS.aiPct}
+  ];
+  mkChart('ch-sv-dims','bar',dims.map(d=>d.l),dims.map(d=>{ const v=avg(d.f); return v?+v.toFixed(1):0; }),
+    ['#0d7a6b','#d4840a','#3a6baf','#22a878','#c43535'],'Avg %');
+
+  // By district
+  const byDist = {};
+  rows.forEach(r=>{ const dist=gf(r,FS.district)||'Unknown', sat=+gf(r,FS.satPct); if(isNaN(sat)||sat<=0) return; (byDist[dist]=byDist[dist]||[]).push(sat); });
+  const dSorted = Object.entries(byDist).map(([d,a])=>[d,a.reduce((x,y)=>x+y)/a.length]).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  mkChart('ch-sv-dist','bar',
+    dSorted.map(x=>x[0].length>14?x[0].slice(0,14)+'…':x[0]),
+    dSorted.map(x=>+x[1].toFixed(1)),
+    dSorted.map(()=>cssVar('--teal')),'Avg Sat %');
+
+  const tbody = document.querySelector('#sv-tbl tbody');
+  tbody.innerHTML = rows.length===0 ? '<tr><td colspan="8" class="empty-state">No survey data</td></tr>' :
+    rows.map(r=>`<tr>
+      <td><strong>${gf(r,FS.district)||'—'}</strong></td>
+      <td>${gf(r,FS.season)||'—'}</td>
+      <td>${fpct(gf(r,FS.satPct))}</td>
+      <td>${fpct(gf(r,FS.commPct))}</td>
+      <td>${fpct(gf(r,FS.resPct))}</td>
+      <td>${fpct(gf(r,FS.objPct))}</td>
+      <td>${fpct(gf(r,FS.aiPct))}</td>
+      <td>${fsc(gf(r,FS.recRating))}</td>
+    </tr>`).join('');
+}
+
+// ── Sr. Lead Panel ────────────────────────────────────────────────────────────
+function renderLeadPanel() {
+  if(!LEAD) return;
+  document.getElementById('lead-panel').style.display='';
+  document.getElementById('lead-name-disp').textContent = LEAD.name;
+  document.getElementById('lead-lbl').textContent       = LEAD.name;
+
+  // My partnerships: where team field contains lead name or id
+  const mine = D.partners.filter(p=>{
+    const t=ga(p,FP.team);
+    return t.some(x=>x===LEAD.id||x===LEAD.name);
+  });
+
+  const cardEl = document.getElementById('portfolio-cards');
+  cardEl.innerHTML = mine.length===0
+    ? '<div class="empty-state" style="min-width:200px">No partnerships assigned to you yet</div>'
+    : mine.map(p=>{
+        const stage = gf(p,FP.pipeline)||'Unknown';
+        const fy26  = +gf(p,FP.fy26)||0;
+        const sd=gf(p,FP.start), ed=gf(p,FP.end), days=daysTo(ed);
+        let pct=0;
+        if(sd&&ed){ pct=clamp((Date.now()-new Date(sd+' '))/(new Date(ed+' ')-new Date(sd+' '))*100,0,100); }
+        const stMap={Active:'pill-teal',Renewal:'pill-good',Proposal:'pill-warn',Negotiation:'pill-crit'};
+        return `<div class="portfolio-card">
+          <div class="pc-name">${gf(p,FP.name)||'—'}</div>
+          <div class="pc-row">
+            <span class="pill ${stMap[stage]||'pill-gray'}">${stage}</span>
+            <span style="font-weight:600">${f$(fy26)}</span>
+          </div>
+          <div class="pc-row">
+            <span style="font-size:11px;color:var(--ink3)">Ends ${fdt(ed)}</span>
+            ${daysChip(days)}
+          </div>
+          <div class="prog-wrap"><div class="prog-fill" style="width:${pct.toFixed(0)}%"></div></div>
+          <div class="next-action">→ ${nextAction(p)}</div>
+          <div class="pc-actions">
+            <button class="btn-sm primary" onclick="openPrtDrawer('${p.id}')">Edit</button>
+            <button class="btn-sm" onclick="showStageMenu(event,'${p.id}')">Stage ▾</button>
+          </div>
+        </div>`;
+      }).join('');
+
+  // My events
+  const myEvts = D.events.filter(e=>{
+    return ga(e,FE.fac).some(x=>x===LEAD.id) || ga(e,FE.facDisp).some(x=>x===LEAD.name);
+  }).sort((a,b)=>(gf(b,FE.date)||'').localeCompare(gf(a,FE.date)||''));
+
+  const tbody = document.querySelector('#my-evt-tbl tbody');
+  tbody.innerHTML = myEvts.length===0 ? '<tr><td colspan="6" class="empty-state">No events found for you</td></tr>' :
+    myEvts.slice(0,20).map(r=>{
+      const name=gf(r,FE.nameT)||gf(r,FE.name)||'—';
+      const pids=ga(r,FE.partner);
+      const pn=pids.map(id=>(D.partners.find(p=>p.id===id)||{}).fields?.[FP.name]).filter(Boolean).join(', ')||'—';
+      return `<tr>
+        <td><strong>${name}</strong></td>
+        <td>${fdt(gf(r,FE.date))}</td>
+        <td style="font-size:12px;color:var(--ink2)">${pn}</td>
+        <td style="font-variant-numeric:tabular-nums">${gf(r,FE.parts)||'—'}</td>
+        <td>${scoreRing(gf(r,FE.sat))}</td>
+        <td>${scoreRing(gf(r,FE.nps),10)}</td>
+      </tr>`;
+    }).join('');
+}
+
+// ── Drawers ───────────────────────────────────────────────────────────────────
+function openPrtDrawer(id) {
+  const p=D.partners.find(r=>r.id===id); if(!p) return;
+  DRAWER={table:T.prt, base:BASE, id, isPrt:true};
+  document.getElementById('drawer-title').textContent='Edit: '+(gf(p,FP.name)||'');
+  document.getElementById('edit-pipeline').value=gf(p,FP.pipeline)||'';
+  document.getElementById('edit-start').value=gf(p,FP.start)||'';
+  document.getElementById('edit-end').value=gf(p,FP.end)||'';
+  document.getElementById('edit-notes').value=gf(p,FP.notes)||'';
+  document.getElementById('notes-group').style.display='';
+  openDrawerUI();
+}
+
+function openMouDrawer(id) {
+  const m=D.mous.find(r=>r.id===id); if(!m) return;
+  const pid=ga(m,FM.partner)[0];
+  const pn=pid?(D.partners.find(p=>p.id===pid)||{}).fields?.[FP.name]||'—':'—';
+  DRAWER={table:T.mou, base:BASE, id, isPrt:false};
+  document.getElementById('drawer-title').textContent='Edit Contract: '+pn;
+  document.getElementById('edit-pipeline').value=gf(m,FM.pipeline)||'';
+  document.getElementById('edit-start').value=gf(m,FM.begins)||'';
+  document.getElementById('edit-end').value=gf(m,FM.ends)||'';
+  document.getElementById('notes-group').style.display='none';
+  openDrawerUI();
+}
+
+function openDrawerUI() {
+  document.getElementById('drawer').classList.add('open');
+  document.getElementById('drawer-overlay').classList.add('open');
+}
+function closeDrawer() {
+  document.getElementById('drawer').classList.remove('open');
+  document.getElementById('drawer-overlay').classList.remove('open');
+  DRAWER=null;
+}
+
+document.getElementById('drawer-close').addEventListener('click',closeDrawer);
+document.getElementById('drawer-cancel').addEventListener('click',closeDrawer);
+document.getElementById('drawer-overlay').addEventListener('click',closeDrawer);
+
+document.getElementById('drawer-save').addEventListener('click', async()=>{
+  if(!DRAWER) return;
+  const fields = DRAWER.isPrt
+    ? { [FP.pipeline]:document.getElementById('edit-pipeline').value,
+        [FP.start]:document.getElementById('edit-start').value||null,
+        [FP.end]:document.getElementById('edit-end').value||null,
+        [FP.notes]:document.getElementById('edit-notes').value }
+    : { [FM.pipeline]:document.getElementById('edit-pipeline').value,
+        [FM.begins]:document.getElementById('edit-start').value||null,
+        [FM.ends]:document.getElementById('edit-end').value||null };
+  Object.keys(fields).forEach(k=>{ if(fields[k]===null||fields[k]==='') delete fields[k]; });
+  try {
+    await apiWrite('PATCH',DRAWER.base,DRAWER.table,{id:DRAWER.id,fields});
+    const arr = DRAWER.isPrt ? D.partners : D.mous;
+    const rec = arr.find(r=>r.id===DRAWER.id);
+    if(rec) Object.assign(rec.fields,fields);
+    toast('Saved','success');
+    closeDrawer();
+    renderAll();
+  } catch(err){ toast('Save failed: '+err.message,'error'); }
+});
+
+// ── Stage quick-change ────────────────────────────────────────────────────────
+function showStageMenu(evt,partnerId) {
+  evt.stopPropagation();
+  if(POPOVER){POPOVER.remove();POPOVER=null;return;}
+  const pop=document.createElement('div');
+  pop.className='stage-pop';
+  pop.style.cssText=`top:${evt.clientY+8}px;left:${evt.clientX}px;`;
+  pop.innerHTML=STAGE_ORDER.map(s=>`<div class="stage-opt" onclick="setStage('${partnerId}','${s}')"><span style="width:9px;height:9px;border-radius:50%;background:${STAGE_COLORS[s]||'#999'};display:inline-block"></span>${s}</div>`).join('');
+  document.body.appendChild(pop);
+  POPOVER=pop;
+  setTimeout(()=>document.addEventListener('click',()=>{if(POPOVER){POPOVER.remove();POPOVER=null;}},{once:true}),0);
+}
+
+async function setStage(id,stage) {
+  if(POPOVER){POPOVER.remove();POPOVER=null;}
+  try {
+    await apiWrite('PATCH',BASE,T.prt,{id,fields:{[FP.pipeline]:stage}});
+    const rec=D.partners.find(r=>r.id===id);
+    if(rec) rec.fields[FP.pipeline]=stage;
+    toast('Stage → '+stage,'success');
+    renderAll();
+  } catch(err){ toast('Update failed: '+err.message,'error'); }
+}
+
+// ── Sr. Lead login ────────────────────────────────────────────────────────────
+function showLogin() {
+  const stf = D.staff.filter(s=>gf(s,FST.name));
+  stf.sort((a,b)=>(gf(a,FST.name)||'').localeCompare(gf(b,FST.name)||''));
+  const sel=document.getElementById('lead-select');
+  sel.innerHTML='<option value="">— Choose —</option>'+stf.map(s=>`<option value="${s.id}">${gf(s,FST.name)}</option>`).join('');
+  document.getElementById('login-ov').classList.add('open');
+}
+
+document.getElementById('login-ok').addEventListener('click',()=>{
+  const sel=document.getElementById('lead-select');
+  if(!sel.value){toast('Select your name','info');return;}
+  const rec=D.staff.find(s=>s.id===sel.value);
+  if(!rec) return;
+  LEAD={id:sel.value, name:gf(rec,FST.name)};
+  document.getElementById('login-ov').classList.remove('open');
+  document.getElementById('lead-btn').classList.add('active');
+  document.getElementById('lead-lbl').textContent=LEAD.name;
+  renderLeadPanel();
+  toast('Welcome, '+LEAD.name+'!','success');
+  switchTab('overview');
+});
+
+document.getElementById('login-cancel').addEventListener('click',()=>document.getElementById('login-ov').classList.remove('open'));
+
+document.getElementById('lead-logout').addEventListener('click',()=>{
+  LEAD=null;
+  document.getElementById('lead-panel').style.display='none';
+  document.getElementById('lead-btn').classList.remove('active');
+  document.getElementById('lead-lbl').textContent='Sr. Lead View';
+  toast('Signed out','info');
+});
+
+document.getElementById('lead-btn').addEventListener('click',()=>{
+  if(LEAD){ document.getElementById('lead-logout').click(); }
+  else { showLogin(); }
+});
+
+// ── Tab nav ───────────────────────────────────────────────────────────────────
+function switchTab(name) {
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===name));
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.toggle('active',p.id==='tab-'+name));
+}
+document.querySelectorAll('.nav-tab').forEach(b=>b.addEventListener('click',()=>switchTab(b.dataset.tab)));
+
+// ── Theme toggle ──────────────────────────────────────────────────────────────
+document.getElementById('theme-btn').addEventListener('click',()=>{
+  const root=document.documentElement;
+  const dark=root.dataset.theme==='dark'||(!root.dataset.theme&&window.matchMedia('(prefers-color-scheme:dark)').matches);
+  root.dataset.theme=dark?'light':'dark';
+  refreshChartColors();
+});
+
+// ── Refresh ───────────────────────────────────────────────────────────────────
+document.getElementById('refresh-btn').addEventListener('click',()=>{
+  D={partners:[],fees:[],mous:[],events:[],surveys:[],staff:[]};
+  loadAll().then(()=>toast('Refreshed','info'));
+});
+
+// ── Filter wiring ─────────────────────────────────────────────────────────────
+const wire=(ids,fn,getF)=>ids.forEach(id=>{
+  const el=document.getElementById(id);
+  if(el) el.addEventListener('change',()=>fn(getF()));
+  if(el) el.addEventListener('input',()=>fn(getF()));
+});
+wire(['f-stage','f-state','f-search'],renderPartnerships,()=>({
+  stage:document.getElementById('f-stage').value,
+  state:document.getElementById('f-state').value,
+  search:document.getElementById('f-search').value,
+}));
+wire(['f-mou-stage','f-mou-search'],renderContracts,()=>({
+  stage:document.getElementById('f-mou-stage').value,
+  search:document.getElementById('f-mou-search').value,
+}));
+wire(['f-evt-type','f-evt-search'],renderEvents,()=>({
+  type:document.getElementById('f-evt-type').value,
+  search:document.getElementById('f-evt-search').value,
+}));
+wire(['f-season'],renderSurveys,()=>({season:document.getElementById('f-season').value}));
+
+// ── Boot ──────────────────────────────────────────────────────────────────────
+loadAll();
+</script>
+</body>
+</html>
