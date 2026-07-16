@@ -219,8 +219,7 @@ button{cursor:pointer;font-family:inherit;}
     <button class="nav-tab" data-tab="partnerships">Partnerships</button>
     <button class="nav-tab" data-tab="contracts">Contracts</button>
     <button class="nav-tab" data-tab="events">Events</button>
-    <button class="nav-tab" data-tab="feedback">PL Feedback</button>
-    <button class="nav-tab" data-tab="survey">Partner Survey</button>
+    <button class="nav-tab" data-tab="feedback">Partner Feedback</button>
   </nav>
   <div class="topbar-actions">
     <button class="icon-btn" id="refresh-btn" title="Refresh">↻</button>
@@ -359,45 +358,51 @@ button{cursor:pointer;font-family:inherit;}
     </div>
   </div>
 
-  <!-- PL FEEDBACK -->
+  <!-- PARTNER FEEDBACK (PL sessions + Partner survey combined) -->
   <div class="tab-panel" id="tab-feedback">
-    <div class="section-hd mb-12">
-      <div class="section-title">PL Feedback</div>
+    <!-- Subtab toggle -->
+    <div class="flex gap-8 mb-16" id="fb-subtabs">
+      <button class="btn-sm primary" data-fbtab="pl" id="fbt-pl">PL Session Feedback</button>
+      <button class="btn-sm" data-fbtab="survey" id="fbt-survey">Partner Survey</button>
     </div>
-    <div class="grid-3 mb-16">
-      <div class="card chart-card"><div class="section-title mb-12">Satisfaction Distribution</div><div><canvas id="ch-sat-dist"></canvas></div></div>
-      <div class="card chart-card"><div class="section-title mb-12">NPS Trend by Month</div><div><canvas id="ch-nps-trend"></canvas></div></div>
-      <div class="card chart-card"><div class="section-title mb-12">Facilitator Effectiveness</div><div><canvas id="ch-fac-eff"></canvas></div></div>
-    </div>
-    <div class="card table-wrap">
-      <table class="data-table" id="fb-tbl">
-        <thead><tr><th>Session</th><th>Date</th><th>Facilitator</th><th>Responses</th><th>Sat</th><th>NPS</th><th>Before→After</th><th>Obj Met</th><th>Fac Eff</th></tr></thead>
-        <tbody><tr><td colspan="9" class="empty-state">Loading…</td></tr></tbody>
-      </table>
-    </div>
-  </div>
 
-  <!-- PARTNER SURVEY -->
-  <div class="tab-panel" id="tab-survey">
-    <div class="section-hd mb-12">
-      <div class="section-title">Partner Survey Results</div>
-      <select class="form-select" id="f-season" style="width:auto"><option value="">All Seasons</option></select>
+    <!-- PL SESSION FEEDBACK -->
+    <div id="fb-pl-view">
+      <div class="grid-3 mb-16">
+        <div class="card chart-card"><div class="section-title mb-12">Satisfaction Distribution</div><div><canvas id="ch-sat-dist"></canvas></div></div>
+        <div class="card chart-card"><div class="section-title mb-12">NPS Trend by Month</div><div><canvas id="ch-nps-trend"></canvas></div></div>
+        <div class="card chart-card"><div class="section-title mb-12">Facilitator Effectiveness</div><div><canvas id="ch-fac-eff"></canvas></div></div>
+      </div>
+      <div class="card table-wrap">
+        <table class="data-table" id="fb-tbl">
+          <thead><tr><th>Session</th><th>Date</th><th>Facilitator</th><th>Responses</th><th>Sat</th><th>NPS</th><th>Before→After</th><th>Obj Met</th><th>Fac Eff</th></tr></thead>
+          <tbody><tr><td colspan="9" class="empty-state">Loading…</td></tr></tbody>
+        </table>
+      </div>
     </div>
-    <div class="grid-4 mb-16">
-      <div class="card kpi-tile"><div class="kpi-val" id="sv-sat">—</div><div class="kpi-lbl">Avg Satisfaction</div></div>
-      <div class="card kpi-tile"><div class="kpi-val" id="sv-comm">—</div><div class="kpi-lbl">Communication</div></div>
-      <div class="card kpi-tile"><div class="kpi-val" id="sv-res">—</div><div class="kpi-lbl">Resources</div></div>
-      <div class="card kpi-tile"><div class="kpi-val" id="sv-rec">—</div><div class="kpi-lbl">Recommend Rating</div></div>
-    </div>
-    <div class="grid-2 mb-16">
-      <div class="card chart-card"><div class="section-title mb-12">Scores by Dimension</div><div><canvas id="ch-sv-dims"></canvas></div></div>
-      <div class="card chart-card"><div class="section-title mb-12">Satisfaction by District</div><div><canvas id="ch-sv-dist"></canvas></div></div>
-    </div>
-    <div class="card table-wrap">
-      <table class="data-table" id="sv-tbl">
-        <thead><tr><th>District</th><th>Season</th><th>Satisfaction</th><th>Communication</th><th>Resources</th><th>Objectives</th><th>AI Confidence</th><th>Recommend</th></tr></thead>
-        <tbody><tr><td colspan="8" class="empty-state">Loading…</td></tr></tbody>
-      </table>
+
+    <!-- PARTNER SURVEY -->
+    <div id="fb-survey-view" style="display:none">
+      <div class="section-hd mb-12">
+        <div></div>
+        <select class="form-select" id="f-season" style="width:auto"><option value="">All Seasons</option></select>
+      </div>
+      <div class="grid-4 mb-16">
+        <div class="card kpi-tile"><div class="kpi-val" id="sv-sat">—</div><div class="kpi-lbl">Avg Satisfaction</div></div>
+        <div class="card kpi-tile"><div class="kpi-val" id="sv-comm">—</div><div class="kpi-lbl">Communication</div></div>
+        <div class="card kpi-tile"><div class="kpi-val" id="sv-res">—</div><div class="kpi-lbl">Resources</div></div>
+        <div class="card kpi-tile"><div class="kpi-val" id="sv-rec">—</div><div class="kpi-lbl">Recommend Rating</div></div>
+      </div>
+      <div class="grid-2 mb-16">
+        <div class="card chart-card"><div class="section-title mb-12">Scores by Dimension</div><div><canvas id="ch-sv-dims"></canvas></div></div>
+        <div class="card chart-card"><div class="section-title mb-12">Satisfaction by District</div><div><canvas id="ch-sv-dist"></canvas></div></div>
+      </div>
+      <div class="card table-wrap">
+        <table class="data-table" id="sv-tbl">
+          <thead><tr><th>District</th><th>Season</th><th>Satisfaction</th><th>Communication</th><th>Resources</th><th>Objectives</th><th>AI Confidence</th><th>Recommend</th></tr></thead>
+          <tbody><tr><td colspan="8" class="empty-state">Loading…</td></tr></tbody>
+        </table>
+      </div>
     </div>
   </div>
 
@@ -512,11 +517,26 @@ const FST = {
   name:'fldpmvWNm6cmygmVS', role:'fldtPyBVQFJyK0Pja',
   status:'fldqKfGLiTPAJp27T', type:'fldpOPwPNOf1gY3op'
 };
+// Real pipeline stages from Airtable singleSelect schema
 const STAGE_COLORS = {
-  Prospect:'#7a8f9a', Outreach:'#3a6baf', Proposal:'#d4840a',
-  Negotiation:'#c43535', Active:'#0d7a6b', Renewal:'#22a878', Lost:'#aaa'
+  'Relationship Building':'#7da09a',
+  'Initial Contact':      '#3a6baf',
+  'Early Exploration':    '#3a6baf',
+  'Proposal/SOW Writing': '#9b5ca5',
+  'SOW sent':             '#d4840a',
+  'Verbal Agreement':     '#e07c2a',
+  'Collaboration':        '#22a878',
+  'MOU Sent':             '#0d7a6b',
+  'MOU Signed':           '#065040',
+  'On Ice':               '#c43535',
+  'Rejected':             '#aaa',
+  'MOU Complete':         '#1a7a4a',
 };
-const STAGE_ORDER = ['Prospect','Outreach','Proposal','Negotiation','Active','Renewal','Lost'];
+const STAGE_ORDER = [
+  'Relationship Building','Initial Contact','Early Exploration',
+  'Proposal/SOW Writing','SOW sent','Verbal Agreement','Collaboration',
+  'MOU Sent','MOU Signed','MOU Complete','On Ice','Rejected'
+];
 
 // ── State ────────────────────────────────────────────────────────────────────
 let D = { partners:[], fees:[], mous:[], events:[], feedback:[], surveys:[], staff:[] };
@@ -576,8 +596,13 @@ function toast(msg, type='info') {
 }
 
 function stagePill(s) {
-  const m = { Active:'pill-teal', Renewal:'pill-good', Proposal:'pill-warn',
-    Negotiation:'pill-crit', Prospect:'pill-gray', Outreach:'pill-gray', Lost:'pill-gray' };
+  const m = {
+    'MOU Signed':'pill-teal', 'MOU Complete':'pill-good', 'Collaboration':'pill-good',
+    'SOW sent':'pill-warn', 'Verbal Agreement':'pill-warn', 'Proposal/SOW Writing':'pill-warn',
+    'MOU Sent':'pill-teal',
+    'On Ice':'pill-crit', 'Rejected':'pill-gray',
+    'Relationship Building':'pill-gray', 'Initial Contact':'pill-gray', 'Early Exploration':'pill-gray',
+  };
   return `<span class="pill ${m[s]||'pill-gray'}">${s||'—'}</span>`;
 }
 
@@ -767,30 +792,36 @@ function renderOverview() {
 
 // ── Partnerships ──────────────────────────────────────────────────────────────
 function renderPartnerships(f={}) {
-  // Populate filters
-  const stages = [...new Set(D.partners.map(p=>gf(p,FP.pipeline)).filter(Boolean))].sort();
-  const states = [...new Set(D.partners.map(p=>gf(p,FP.state)).filter(Boolean))].sort();
+  // Populate stage filter
+  const stages = [...new Set(D.partners.map(p=>gf(p,FP.pipeline)).filter(Boolean))];
+  const stagesSorted = STAGE_ORDER.filter(s=>stages.includes(s));
   const stageEl = document.getElementById('f-stage'), curSt=stageEl.value;
-  stageEl.innerHTML = '<option value="">All Stages</option>'+stages.map(s=>`<option${s===curSt?' selected':''}>${s}</option>`).join('');
-  const stateEl = document.getElementById('f-state'), curSta=stateEl.value;
-  stateEl.innerHTML = '<option value="">All States</option>'+states.map(s=>`<option${s===curSta?' selected':''}>${s}</option>`).join('');
+  stageEl.innerHTML = '<option value="">All Stages</option>'+stagesSorted.map(s=>`<option${s===curSt?' selected':''}>${s}</option>`).join('');
 
   let rows = D.partners;
-  if(f.stage) rows=rows.filter(r=>gf(r,FP.pipeline)===f.stage);
-  if(f.state) rows=rows.filter(r=>gf(r,FP.state)===f.state);
+  // FP.state is multipleLookupValues → returns array through REST API
+  const stateOf = r => ga(r, FP.state).map(v => typeof v==='object'?v.name:v).join(', ');
+  if(f.stage)  rows=rows.filter(r=>gf(r,FP.pipeline)===f.stage);
+  if(f.state)  rows=rows.filter(r=>stateOf(r).includes(f.state));
   if(f.search){ const q=f.search.toLowerCase(); rows=rows.filter(r=>(gf(r,FP.name)||'').toLowerCase().includes(q)); }
   rows.sort((a,b)=>(gf(a,FP.name)||'').localeCompare(gf(b,FP.name)||''));
+
+  // Populate state filter from actual data
+  const stateEl = document.getElementById('f-state'), curSta=stateEl.value;
+  const allStates = [...new Set(D.partners.flatMap(p=>ga(p,FP.state).map(v=>typeof v==='object'?v.name:v)).filter(Boolean))].sort();
+  stateEl.innerHTML = '<option value="">All States</option>'+allStates.map(s=>`<option${s===curSta?' selected':''}>${s}</option>`).join('');
 
   const tbody = document.querySelector('#prt-tbl tbody');
   tbody.innerHTML = rows.length===0 ? '<tr><td colspan="8" class="empty-state">No partnerships match</td></tr>' :
     rows.map(r=>{
       const days = daysTo(gf(r,FP.end));
-      const team = ga(r,FP.team).join(', ');
+      // Sr. Lead lookup returns array of names via REST API
+      const team = ga(r,FP.team).map(v=>typeof v==='object'?v.name:v).join(', ');
       const missing = gf(r,FP.missing) ? `<span style="color:var(--warn)">⚠ Missing</span>` : '';
       return `<tr>
         <td><strong>${gf(r,FP.name)||'—'}</strong></td>
         <td>${stagePill(gf(r,FP.pipeline))}</td>
-        <td>${gf(r,FP.state)||'—'}</td>
+        <td>${stateOf(r)||'—'}</td>
         <td style="font-variant-numeric:tabular-nums">${f$(gf(r,FP.fy26))}</td>
         <td>${fdt(gf(r,FP.end))} ${daysChip(days)}</td>
         <td style="color:var(--ink2);font-size:12px">${team||'—'}</td>
@@ -1003,11 +1034,11 @@ function renderLeadPanel() {
   document.getElementById('lead-name-disp').textContent = LEAD.name;
   document.getElementById('lead-lbl').textContent       = LEAD.name;
 
-  // My partnerships: where team field contains lead name or id
-  const mine = D.partners.filter(p=>{
-    const t=ga(p,FP.team);
-    return t.some(x=>x===LEAD.id||x===LEAD.name);
-  });
+  const teamNames = p => ga(p,FP.team).map(v=>typeof v==='object'?v.name:v);
+  // FP.team is multipleLookupValues → array of name strings through REST API
+  const mine = D.partners.filter(p=>
+    teamNames(p).some(x=>x.trim().toLowerCase()===LEAD.name.trim().toLowerCase())
+  );
 
   const cardEl = document.getElementById('portfolio-cards');
   cardEl.innerHTML = mine.length===0
@@ -1225,7 +1256,23 @@ wire(['f-evt-type','f-evt-search'],renderEvents,()=>({
   type:document.getElementById('f-evt-type').value,
   search:document.getElementById('f-evt-search').value,
 }));
-wire(['f-season'],renderSurveys,()=>({season:document.getElementById('f-season').value}));
+wire(['f-season'],f=>renderSurveys(f),()=>({season:document.getElementById('f-season').value}));
+
+// ── Feedback subtabs ──────────────────────────────────────────────────────────
+document.querySelectorAll('[data-fbtab]').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    const tab=btn.dataset.fbtab;
+    document.getElementById('fb-pl-view').style.display     = tab==='pl'?'':'none';
+    document.getElementById('fb-survey-view').style.display = tab==='survey'?'':'none';
+    document.querySelectorAll('[data-fbtab]').forEach(b=>{
+      b.classList.toggle('primary', b.dataset.fbtab===tab);
+      b.classList.toggle('btn-sm', true);
+    });
+    // Re-render charts when switching to survey (canvas may have been hidden)
+    if(tab==='survey') renderSurveys({season:document.getElementById('f-season').value});
+    if(tab==='pl') renderFeedback();
+  });
+});
 
 // ── Boot ──────────────────────────────────────────────────────────────────────
 loadAll();
