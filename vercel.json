@@ -1,7 +1,12 @@
 {
+  "buildCommand": "",
+  "outputDirectory": ".",
   "functions": {
     "api/**/*.js": {
       "maxDuration": 15
     }
-  }
+  },
+  "rewrites": [
+    { "source": "/api/:path*", "destination": "/api/[...slug]" }
+  ]
 }
