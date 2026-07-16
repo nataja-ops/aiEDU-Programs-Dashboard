@@ -455,12 +455,11 @@ button{cursor:pointer;font-family:inherit;}
 
 <script>
 // ── Config ───────────────────────────────────────────────────────────────────
-const BASE  = 'appgdtYPttWwiBZzA';
-const EBASE = 'apptKJnbKllpLEA8u';
+const BASE = 'appgdtYPttWwiBZzA'; // aiEDU Programs base — single source of truth
 const T = {
   acc:'tbliOUsLsV3k6hy8g', prt:'tbl9CLNpNz0oOfAzV', log:'tblA1wXyoO3pjeto5',
   fee:'tblgRodZdvORj3P9q', mou:'tbl0r7iGdBFEsqoJd', evt:'tblgLGSJhm0nB9Lhf',
-  srv:'tblmccdSXvckLRT5O', stf:'tblTngHWDZOIeIR0p'
+  fb:'tblWTdC7kk80jfMOO',  srv:'tblmccdSXvckLRT5O', stf:'tblTngHWDZOIeIR0p'
 };
 const FP = {
   name:'fldpkporCZ8A6HZTT', pipeline:'fldEoTQtHQMygOKT3', start:'fldZtu03mx9rpSMEl',
@@ -477,13 +476,31 @@ const FM = {
   signed:'fldTQ1LXC9SiUaWms', partner:'fldONduCdYmYYJTAS', pipeline:'fldWzaeTDZccoICrN',
   team:'fldg4K8tf6dWQR1d9', amount:'fld2IArT6QESgA5Va'
 };
+// Events table — fields confirmed against live schema
 const FE = {
-  name:'fldNuW61rIMewY8ep', nameT:'fld3QjwVpB51hC4yq', date:'fldW8DuSsdxVAf2RJ',
-  parts:'fldLybnO5Vycut2ih', fac:'fldVGdgxPiG4pFvnv', facDisp:'fldTHT5tGm8T7s7qU',
-  partner:'fld7n8KZUu5X6Ee1h', sat:'fldhfkqQBEFQV9dRU', nps:'fldZAj3DoEyHVyBmE',
-  before:'fldxq9yY6H9cID9s2', after:'fldbxJOLftLmyH98D', facEff:'fldSlD4em8xVaS3xT',
-  contRel:'fldOEIKxWuSu6w0WB', objMet:'fld2MEcFlrSFQuJuV', format:'fldlMSFVbJIaogWau',
-  plType:'fld2n02ofIL7eFgBE', fbCount:'fldmBU2sUNSxX2NiN', dur:'flduKbVdPIXN5SvMd'
+  name:'fldNuW61rIMewY8ep',    // "Event" (legacy name field)
+  nameT:'fld3QjwVpB51hC4yq',   // "Event Name" (clean display name)
+  date:'fldW8DuSsdxVAf2RJ',    // "Date"
+  parts:'fldLybnO5Vycut2ih',   // "Number of Participants"
+  fac:'fldVGdgxPiG4pFvnv',     // "Facilitator / Presenter"
+  facDisp:'fldTHT5tGm8T7s7qU', // "Facilitator (Display)" (lookup)
+  partner:'fld7n8KZUu5X6Ee1h', // "Partner Account"
+  format:'fldlMSFVbJIaogWau',  // "In-person v. Virtual"
+  plType:'fld2n02ofIL7eFgBE',  // "PL Type"
+  fbCount:'fldmBU2sUNSxX2NiN', // "# Feedback Submissions"
+  npsAuto:'fldmbXdTKC1Tkg8f2', // "NPS (Auto)" rollup from feedback
+};
+// Event Feedback table — scores that join back to Events via FFB.event link
+const FFB = {
+  event:'fldy5LJWzAtqa5qF2',   // "Events" (link to Events table)
+  sat:'fldXVrM0YgFcYgXbe',     // "Satisfaction Score"
+  facEff:'fldSiMpZ5Ui0DKL7e',  // "Facilitator Effectiveness"
+  contRel:'fldKXHd6j8pRuaynL', // "Content Relevance"
+  objMet:'fldylB01feWFUS4KQ',  // "#: To what extent...objectives...met?"
+  before:'fld6SSdvoLTOZRIXl',  // "#: How would you rate your current knowledge?"
+  after:'fldlT3NknTour9QRd',   // "#: After...how knowledgeable do you feel?"
+  npsPoints:'fldqUq8DMi3LzQHFB', // "NPS Points (+1/0/-1)"
+  recRating:'fldSNdIfKcLWXi9IK', // "Recommendation Rating (#)"
 };
 const FS = {
   name:'fldTYrXYvXejikT51', season:'fldKFteQSdn1Y5SPB', district:'flddsEyZeSAcX7CG4',
@@ -502,7 +519,8 @@ const STAGE_COLORS = {
 const STAGE_ORDER = ['Prospect','Outreach','Proposal','Negotiation','Active','Renewal','Lost'];
 
 // ── State ────────────────────────────────────────────────────────────────────
-let D = { partners:[], fees:[], mous:[], events:[], surveys:[], staff:[] };
+let D = { partners:[], fees:[], mous:[], events:[], feedback:[], surveys:[], staff:[] };
+let EVT_SCORES = {}; // eventId → { sat, facEff, objMet, before, after, nps }
 let LEAD = null;
 let CHARTS = {};
 let DRAWER = null;
@@ -634,18 +652,45 @@ function refreshChartColors() {
   });
 }
 
+// ── Build per-event score aggregates from feedback records ────────────────────
+function buildEventScores() {
+  const map = {};
+  D.feedback.forEach(fb => {
+    ga(fb, FFB.event).forEach(evId => {
+      if (!map[evId]) map[evId] = { sat:[], facEff:[], objMet:[], before:[], after:[], nps:[] };
+      const s = map[evId];
+      const push = (arr, val) => { const v=+val; if(!isNaN(v)&&v>0) arr.push(v); };
+      push(s.sat,    gf(fb, FFB.sat));
+      push(s.facEff, gf(fb, FFB.facEff));
+      push(s.objMet, gf(fb, FFB.objMet));
+      push(s.before, gf(fb, FFB.before));
+      push(s.after,  gf(fb, FFB.after));
+      const np = +gf(fb, FFB.npsPoints); if(!isNaN(np)) s.nps.push(np);
+    });
+  });
+  const avg = arr => arr.length ? arr.reduce((a,b)=>a+b)/arr.length : null;
+  const scores = {};
+  Object.entries(map).forEach(([id,s]) => {
+    scores[id] = { sat:avg(s.sat), facEff:avg(s.facEff), objMet:avg(s.objMet),
+                   before:avg(s.before), after:avg(s.after), nps:avg(s.nps) };
+  });
+  return scores;
+}
+
 // ── Load ──────────────────────────────────────────────────────────────────────
 async function loadAll() {
   try {
-    const [partners, fees, mous, staff, surveys, events] = await Promise.all([
+    const [partners, fees, mous, staff, surveys, events, feedback] = await Promise.all([
       atFetch(BASE, T.prt),
       atFetch(BASE, T.fee),
       atFetch(BASE, T.mou),
       atFetch(BASE, T.stf),
       atFetch(BASE, T.srv),
-      atFetch(EBASE, T.evt),
+      atFetch(BASE, T.evt),
+      atFetch(BASE, T.fb),
     ]);
-    D = { partners, fees, mous, staff, surveys, events };
+    D = { partners, fees, mous, events, feedback, surveys, staff };
+    EVT_SCORES = buildEventScores();
     renderAll();
   } catch(err) {
     toast('Failed to load: '+err.message, 'error');
@@ -669,8 +714,9 @@ function renderStats() {
   const active  = D.partners.filter(p=>gf(p,FP.pipeline)==='Active').length;
   const fy26    = D.fees.filter(f=>gf(f,FF.fy)==='FY26').reduce((s,f)=>s+(+gf(f,FF.amount)||0),0);
   const parts   = D.events.reduce((s,e)=>s+(+gf(e,FE.parts)||0),0);
-  const npsArr  = D.events.map(e=>+gf(e,FE.nps)).filter(v=>v>0);
-  const satArr  = D.events.map(e=>+gf(e,FE.sat)).filter(v=>v>0);
+  const allScores = Object.values(EVT_SCORES);
+  const npsArr  = allScores.map(s=>s.nps).filter(v=>v!=null);
+  const satArr  = allScores.map(s=>s.sat).filter(v=>v!=null);
   const avgNps  = npsArr.length ? npsArr.reduce((a,b)=>a+b)/npsArr.length : null;
   const avgSat  = satArr.length ? satArr.reduce((a,b)=>a+b)/satArr.length : null;
   document.getElementById('s-partners').textContent = D.partners.length;
@@ -685,7 +731,7 @@ function renderStats() {
 // ── Overview ──────────────────────────────────────────────────────────────────
 function renderOverview() {
   const fy26    = D.fees.filter(f=>gf(f,FF.fy)==='FY26').reduce((s,f)=>s+(+gf(f,FF.amount)||0),0);
-  const npsArr  = D.events.map(e=>+gf(e,FE.nps)).filter(v=>v>0);
+  const npsArr  = Object.values(EVT_SCORES).map(s=>s.nps).filter(v=>v!=null);
   const avgNps  = npsArr.length ? npsArr.reduce((a,b)=>a+b)/npsArr.length : null;
   document.getElementById('ov-partners').textContent = D.partners.length;
   document.getElementById('ov-fees').textContent     = f$(fy26);
@@ -763,7 +809,8 @@ function renderContracts(f={}) {
   // Renewals
   const soon = D.mous.filter(m=>{ const d=daysTo(gf(m,FM.ends)); return d!=null&&d>=0&&d<=90; })
     .sort((a,b)=>(daysTo(gf(a,FM.ends))||0)-(daysTo(gf(b,FM.ends))||0));
-  const pname = m => { const pid=ga(m,FM.partner)[0]; return pid?(D.partners.find(p=>p.id===pid)||{}).fields?.[FP.name]||'—':'—'; };
+  // FM.partner is a multipleLookupValues field — returns name strings directly
+  const pname = m => ga(m,FM.partner).join(', ') || '—';
   document.getElementById('renewals-list').innerHTML = soon.length===0
     ? '<div class="empty-state">No renewals in the next 90 days</div>'
     : soon.map(m=>`
@@ -815,8 +862,9 @@ function renderEvents(f={}) {
   rows.sort((a,b)=>(gf(b,FE.date)||'').localeCompare(gf(a,FE.date)||''));
 
   const parts = rows.reduce((s,e)=>s+(+gf(e,FE.parts)||0),0);
-  const npsV  = rows.map(e=>+gf(e,FE.nps)).filter(v=>v>0);
-  const satV  = rows.map(e=>+gf(e,FE.sat)).filter(v=>v>0);
+  const rowScores = rows.map(r=>EVT_SCORES[r.id]).filter(Boolean);
+  const satV  = rowScores.map(s=>s.sat).filter(v=>v!=null);
+  const npsV  = rowScores.map(s=>s.nps).filter(v=>v!=null);
   document.getElementById('ev-total').textContent = rows.length;
   document.getElementById('ev-parts').textContent = parts.toLocaleString();
   document.getElementById('ev-sat').textContent   = satV.length?(satV.reduce((a,b)=>a+b)/satV.length).toFixed(1):'—';
@@ -827,65 +875,79 @@ function renderEvents(f={}) {
     rows.slice(0,200).map(r=>{
       const name=gf(r,FE.nameT)||gf(r,FE.name)||'—';
       const fac=ga(r,FE.facDisp).join(', ')||'—';
+      const sc=EVT_SCORES[r.id]||{};
       return `<tr>
         <td><strong>${name}</strong></td>
         <td>${fdt(gf(r,FE.date))}</td>
         <td style="font-size:12px;color:var(--ink2)">${fac}</td>
         <td>${gf(r,FE.format)||'—'}</td>
         <td style="font-variant-numeric:tabular-nums">${gf(r,FE.parts)||'—'}</td>
-        <td>${scoreRing(gf(r,FE.sat))}</td>
-        <td>${scoreRing(gf(r,FE.nps),10)}</td>
-        <td>${gf(r,FE.objMet)!=null?fpct(gf(r,FE.objMet)):'—'}</td>
+        <td>${scoreRing(sc.sat)}</td>
+        <td>${scoreRing(sc.nps!=null?sc.nps+1:null,2)}</td>
+        <td>${sc.objMet!=null?fpct(sc.objMet*20):'—'}</td>
       </tr>`;
     }).join('');
 }
 
 // ── PL Feedback ───────────────────────────────────────────────────────────────
 function renderFeedback() {
-  const rows = [...D.events].sort((a,b)=>(gf(b,FE.date)||'').localeCompare(gf(a,FE.date)||''));
+  // Show one row per event, with aggregated scores from the Event Feedback table
+  const evtMap = Object.fromEntries(D.events.map(e=>[e.id,e]));
+  const rows = [...D.events]
+    .filter(e=>EVT_SCORES[e.id]) // only events that have feedback
+    .sort((a,b)=>(gf(b,FE.date)||'').localeCompare(gf(a,FE.date)||''));
+
   const tbody = document.querySelector('#fb-tbl tbody');
-  tbody.innerHTML = rows.length===0 ? '<tr><td colspan="9" class="empty-state">No feedback data</td></tr>' :
+  tbody.innerHTML = rows.length===0 ? '<tr><td colspan="9" class="empty-state">No feedback data yet</td></tr>' :
     rows.slice(0,100).map(r=>{
+      const sc=EVT_SCORES[r.id]||{};
       const name=gf(r,FE.nameT)||gf(r,FE.name)||'—';
       const fac=ga(r,FE.facDisp).join(', ')||'—';
-      const bef=gf(r,FE.before), aft=gf(r,FE.after);
-      const arrow = bef!=null&&aft!=null ? `${(+bef).toFixed(1)}→${(+aft).toFixed(1)}` : '—';
+      const arrow = sc.before!=null&&sc.after!=null
+        ? `${sc.before.toFixed(1)}→${sc.after.toFixed(1)}` : '—';
       return `<tr>
         <td><strong>${name}</strong></td>
         <td>${fdt(gf(r,FE.date))}</td>
         <td style="font-size:12px;color:var(--ink2)">${fac}</td>
         <td style="font-variant-numeric:tabular-nums">${gf(r,FE.fbCount)||'—'}</td>
-        <td>${scoreRing(gf(r,FE.sat))}</td>
-        <td>${scoreRing(gf(r,FE.nps),10)}</td>
+        <td>${scoreRing(sc.sat)}</td>
+        <td>${sc.nps!=null?scoreRing(sc.nps+1,2):'<span style="color:var(--ink3)">—</span>'}</td>
         <td style="font-variant-numeric:tabular-nums;font-size:12px">${arrow}</td>
-        <td>${gf(r,FE.objMet)!=null?fpct(gf(r,FE.objMet)):'—'}</td>
-        <td>${scoreRing(gf(r,FE.facEff))}</td>
+        <td>${sc.objMet!=null?fpct(sc.objMet*20):'—'}</td>
+        <td>${scoreRing(sc.facEff)}</td>
       </tr>`;
     }).join('');
 
-  // Satisfaction distribution
+  // Satisfaction distribution (from individual feedback records)
   const bkt = {'<3':0,'3–4':0,'4–5':0};
-  D.events.forEach(e=>{ const s=+gf(e,FE.sat); if(isNaN(s)||s<=0) return; s<3?bkt['<3']++:s<4?bkt['3–4']++:bkt['4–5']++; });
+  D.feedback.forEach(fb=>{ const s=+gf(fb,FFB.sat); if(isNaN(s)||s<=0) return; s<3?bkt['<3']++:s<4?bkt['3–4']++:bkt['4–5']++; });
   mkChart('ch-sat-dist','bar',Object.keys(bkt),Object.values(bkt),
-    [cssVar('--crit'),cssVar('--warn'),cssVar('--good')],'Sessions');
+    [cssVar('--crit'),cssVar('--warn'),cssVar('--good')],'Submissions');
 
-  // NPS trend
+  // NPS trend by month (aggregate per-event NPS across months)
   const npsByMo = {};
-  D.events.forEach(e=>{ const d=gf(e,FE.date), n=+gf(e,FE.nps); if(!d||isNaN(n)||n<=0) return; const k=d.slice(0,7); (npsByMo[k]=npsByMo[k]||[]).push(n); });
+  D.events.forEach(e=>{
+    const d=gf(e,FE.date); const sc=EVT_SCORES[e.id];
+    if(!d||!sc||sc.nps==null) return;
+    const k=d.slice(0,7); (npsByMo[k]=npsByMo[k]||[]).push(sc.nps);
+  });
   const nMos = Object.keys(npsByMo).sort().slice(-12);
   mkChart('ch-nps-trend','line',
     nMos.map(m=>new Date(m+'-01').toLocaleDateString('en-US',{month:'short',year:'2-digit'})),
     nMos.map(m=>{ const a=npsByMo[m]; return +(a.reduce((x,y)=>x+y)/a.length).toFixed(2); }),
     [cssVar('--teal')],'Avg NPS');
 
-  // Facilitator effectiveness
+  // Facilitator effectiveness (avg per facilitator from EVT_SCORES joined to events)
   const facMap = {};
-  D.events.forEach(e=>{ const facs=ga(e,FE.facDisp), eff=+gf(e,FE.facEff); if(!facs.length||isNaN(eff)||eff<=0) return; facs.forEach(f=>(facMap[f]=facMap[f]||[]).push(eff)); });
+  D.events.forEach(e=>{
+    const sc=EVT_SCORES[e.id]; if(!sc||sc.facEff==null) return;
+    ga(e,FE.facDisp).forEach(f=>(facMap[f]=facMap[f]||[]).push(sc.facEff));
+  });
   const facSorted = Object.entries(facMap).map(([f,a])=>[f,a.reduce((x,y)=>x+y)/a.length]).sort((a,b)=>b[1]-a[1]).slice(0,8);
   mkChart('ch-fac-eff','bar',
     facSorted.map(x=>x[0].split(' ')[0]),
     facSorted.map(x=>+x[1].toFixed(2)),
-    facSorted.map(()=>cssVar('--teal')),'Avg Eff');
+    facSorted.map(()=>cssVar('--teal')),'Avg Effectiveness');
 }
 
 // ── Partner Surveys ───────────────────────────────────────────────────────────
@@ -992,8 +1054,8 @@ function renderLeadPanel() {
         <td>${fdt(gf(r,FE.date))}</td>
         <td style="font-size:12px;color:var(--ink2)">${pn}</td>
         <td style="font-variant-numeric:tabular-nums">${gf(r,FE.parts)||'—'}</td>
-        <td>${scoreRing(gf(r,FE.sat))}</td>
-        <td>${scoreRing(gf(r,FE.nps),10)}</td>
+        <td>${scoreRing((EVT_SCORES[r.id]||{}).sat)}</td>
+        <td>${scoreRing((EVT_SCORES[r.id]||{}).nps!=null?(EVT_SCORES[r.id].nps+1):null,2)}</td>
       </tr>`;
     }).join('');
 }
@@ -1139,7 +1201,8 @@ document.getElementById('theme-btn').addEventListener('click',()=>{
 
 // ── Refresh ───────────────────────────────────────────────────────────────────
 document.getElementById('refresh-btn').addEventListener('click',()=>{
-  D={partners:[],fees:[],mous:[],events:[],surveys:[],staff:[]};
+  D={partners:[],fees:[],mous:[],events:[],feedback:[],surveys:[],staff:[]};
+  EVT_SCORES={};
   loadAll().then(()=>toast('Refreshed','info'));
 });
 
