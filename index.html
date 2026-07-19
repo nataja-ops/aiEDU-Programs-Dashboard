@@ -261,7 +261,7 @@ button{cursor:pointer;font-family:inherit;}
     <div id="lead-panel" style="display:none">
       <div class="flex items-center justify-between">
         <div>
-          <div class="section-title">My Work — <span id="lead-name-disp"></span></div>
+          <div class="section-title">My Workspace — <span id="lead-name-disp"></span></div>
           <div class="section-sub">Your partnerships &amp; sessions</div>
         </div>
         <button class="btn-sm" id="lead-logout">Sign out</button>
@@ -522,7 +522,17 @@ const BASE = 'appgdtYPttWwiBZzA'; // aiEDU Programs base — single source of tr
 const T = {
   acc:'tbliOUsLsV3k6hy8g', prt:'tbl9CLNpNz0oOfAzV', log:'tblA1wXyoO3pjeto5',
   fee:'tblgRodZdvORj3P9q', mou:'tbl0r7iGdBFEsqoJd', evt:'tblgLGSJhm0nB9Lhf',
-  fb:'tblWTdC7kk80jfMOO',  srv:'tblmccdSXvckLRT5O', stf:'tblTngHWDZOIeIR0p'
+  fb:'tblWTdC7kk80jfMOO',  srv:'tblmccdSXvckLRT5O', stf:'tblTngHWDZOIeIR0p',
+  cat:'tblk39heoW6mkzLYI'  // Community Catalyst Applications
+};
+// Catalyst Application fields
+const FCAT = {
+  pathway:  'fldX8RcFIcGOKSgx1',
+  grant:    'fld3pINW7F3bgHtjk', // allocated grant amount — non-null = awarded
+  students: 'fld0R3mbTTA4hTKkU',
+  educators:'fldc7zaTop1F4Ix5T',
+  state:    'fldWv0dymp1fnBnSW',
+  orgType:  'fldI6AyFOvRJOZACL',
 };
 const FP = {
   name:'fldpkporCZ8A6HZTT', pipeline:'fldEoTQtHQMygOKT3', start:'fldZtu03mx9rpSMEl',
@@ -793,7 +803,9 @@ async function fetchFresh() {
   const evtFilter = { filterByFormula: `AND(IS_AFTER({${FE.date}},'${FY26_START}'),IS_BEFORE({${FE.date}},'${FY26_END}'))` };
   const feeFilter = { filterByFormula: `{${FF.fy}}='FY26'` };
 
-  const [partners, fees, mous, staff, surveys, events, feedback] = await Promise.all([
+  const fCat = Object.values(FCAT);
+
+  const [partners, fees, mous, staff, surveys, events, feedback, catalyst] = await Promise.all([
     atFetch(BASE, T.prt, fPrt),
     atFetch(BASE, T.fee, fFee, feeFilter),
     atFetch(BASE, T.mou, fMou),
@@ -801,8 +813,9 @@ async function fetchFresh() {
     atFetch(BASE, T.srv, fSrv),
     atFetch(BASE, T.evt, fEvt, evtFilter),
     atFetch(BASE, T.fb,  fFb),
+    atFetch(BASE, T.cat, fCat),
   ]);
-  return { partners, fees, mous, events, feedback, surveys, staff };
+  return { partners, fees, mous, events, feedback, surveys, staff, catalyst };
 }
 
 async function loadAll() {
@@ -914,11 +927,13 @@ function renderOverview() {
   if (peerBar) { peerBar.style.width=peerPct+'%'; peerBar.className='okr-bar-fill'+(peerPct>=100?' good':peerPct<60?' warn':''); }
   if (document.getElementById('okr-peer-pct')) document.getElementById('okr-peer-pct').textContent = peerMous+' of 5';
 
-  // ── OKR 4b: Catalyst (placeholder — Catalyst table not yet loaded)
-  const catCount = 0;
-  if (document.getElementById('okr-cat-val')) document.getElementById('okr-cat-val').textContent = '—';
-  if (document.getElementById('okr-cat-bar')) document.getElementById('okr-cat-bar').style.width='0%';
-  if (document.getElementById('okr-cat-pct')) document.getElementById('okr-cat-pct').textContent = '— of 10';
+  // ── OKR 4b: Catalyst — count awarded grants (non-null grant amount)
+  const catCount = (D.catalyst||[]).filter(r => gf(r, FCAT.grant) != null && gf(r, FCAT.grant) !== '').length;
+  const catPct   = Math.min(100, Math.round(catCount / 10 * 100));
+  if (document.getElementById('okr-cat-val')) document.getElementById('okr-cat-val').textContent = catCount;
+  const catBar = document.getElementById('okr-cat-bar');
+  if (catBar) { catBar.style.width = catPct+'%'; catBar.className = 'okr-bar-fill'+(catPct>=100?' good':catPct<60?' warn':''); }
+  if (document.getElementById('okr-cat-pct')) document.getElementById('okr-cat-pct').textContent = catCount+' of 10';
 
   // ── OKR 5: Earned revenue — sum of FY26 awarded fees on partnerships
   const earnedRev  = D.partners.reduce((s,p)=>s+(+gf(p,FP.fy26)||0),0);
@@ -1199,7 +1214,7 @@ function renderLeadPanel() {
   if(!LEAD) return;
   document.getElementById('lead-panel').style.display='';
   document.getElementById('lead-name-disp').textContent = LEAD.name;
-  document.getElementById('lead-lbl').textContent       = LEAD.name;
+  document.getElementById('lead-lbl').textContent       = LEAD.name + "'s Workspace";
 
   const teamNames = p => ga(p,FP.team).map(v=>typeof v==='object'?v.name:v);
   // FP.team is multipleLookupValues → array of name strings through REST API
@@ -1361,7 +1376,7 @@ document.getElementById('login-ok').addEventListener('click',()=>{
   LEAD={id:sel.value, name:gf(rec,FST.name)};
   document.getElementById('login-ov').classList.remove('open');
   document.getElementById('lead-btn').classList.add('active');
-  document.getElementById('lead-lbl').textContent=LEAD.name;
+  document.getElementById('lead-lbl').textContent = LEAD.name + "'s Workspace";
   renderLeadPanel();
   toast('Welcome, '+LEAD.name+'!','success');
   switchTab('overview');
