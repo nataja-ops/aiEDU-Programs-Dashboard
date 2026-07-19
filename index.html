@@ -103,6 +103,22 @@ button{cursor:pointer;font-family:inherit;}
 .kpi-tile{padding:16px 20px;}
 .kpi-val{font-size:30px;font-weight:700;line-height:1.1;font-variant-numeric:tabular-nums;color:var(--ink);}
 .kpi-lbl{font-size:12px;color:var(--ink3);margin-top:4px;}
+/* OKR progress tiles */
+.okr-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:20px;}
+@media(max-width:1100px){.okr-grid{grid-template-columns:repeat(3,1fr);}}
+@media(max-width:700px){.okr-grid{grid-template-columns:repeat(2,1fr);}}
+.okr-tile{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;}
+.okr-eyebrow{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--teal);margin-bottom:6px;}
+.okr-current{font-size:26px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums;color:var(--ink);}
+.okr-target{font-size:11px;color:var(--ink3);margin-top:3px;margin-bottom:10px;}
+.okr-bar-bg{height:6px;background:var(--border);border-radius:3px;overflow:hidden;margin-bottom:5px;}
+.okr-bar-fill{height:100%;border-radius:3px;background:var(--teal);transition:width .5s ease;}
+.okr-bar-fill.warn{background:#e07b1e;}
+.okr-bar-fill.good{background:#1a9a5a;}
+.okr-pct{font-size:11px;color:var(--ink3);font-variant-numeric:tabular-nums;}
+.okr-sub{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px;}
+.okr-sub-item{font-size:11px;color:var(--ink3);}
+.okr-sub-val{font-size:14px;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums;}
 /* Table */
 .data-table{width:100%;border-collapse:collapse;font-size:13px;}
 .data-table th{
@@ -262,11 +278,53 @@ button{cursor:pointer;font-family:inherit;}
       </div>
     </div>
 
-    <div class="grid-4 mb-16">
-      <div class="card kpi-tile"><div class="kpi-val" id="ov-partners">—</div><div class="kpi-lbl">Total Partners</div></div>
-      <div class="card kpi-tile"><div class="kpi-val" id="ov-fees">—</div><div class="kpi-lbl">FY26 Pipeline Fees</div></div>
-      <div class="card kpi-tile"><div class="kpi-val" id="ov-events">—</div><div class="kpi-lbl">Events This Year</div></div>
-      <div class="card kpi-tile"><div class="kpi-val" id="ov-nps">—</div><div class="kpi-lbl">Avg NPS</div></div>
+    <div class="okr-grid" id="okr-row">
+      <div class="okr-tile">
+        <div class="okr-eyebrow">FY26 Goal</div>
+        <div class="okr-current" id="okr-comp-val">—</div>
+        <div class="okr-target">Target: 80% · Competency Improvement</div>
+        <div class="okr-bar-bg"><div class="okr-bar-fill" id="okr-comp-bar" style="width:0%"></div></div>
+        <div class="okr-pct" id="okr-comp-pct">— of educators/students improved</div>
+      </div>
+      <div class="okr-tile">
+        <div class="okr-eyebrow">FY26 Goal</div>
+        <div class="okr-current" id="okr-mou-val">—</div>
+        <div class="okr-target">Target: 15 · Service MOUs</div>
+        <div class="okr-bar-bg"><div class="okr-bar-fill" id="okr-mou-bar" style="width:0%"></div></div>
+        <div class="okr-pct" id="okr-mou-pct">MOU Signed or Complete</div>
+      </div>
+      <div class="okr-tile">
+        <div class="okr-eyebrow">FY26 Goal</div>
+        <div class="okr-current" id="okr-edu-val">—</div>
+        <div class="okr-target">Target: 2,000 · Educators Trained</div>
+        <div class="okr-bar-bg"><div class="okr-bar-fill" id="okr-edu-bar" style="width:0%"></div></div>
+        <div class="okr-pct" id="okr-edu-pct">PL session participants</div>
+      </div>
+      <div class="okr-tile">
+        <div class="okr-eyebrow">FY26 Goal</div>
+        <div class="okr-sub">
+          <div>
+            <div class="okr-sub-item">Partnership MOUs</div>
+            <div class="okr-sub-val" id="okr-peer-val">—</div>
+            <div class="okr-bar-bg" style="margin-top:5px"><div class="okr-bar-fill" id="okr-peer-bar" style="width:0%"></div></div>
+            <div class="okr-pct" id="okr-peer-pct">of 5</div>
+          </div>
+          <div>
+            <div class="okr-sub-item">Catalyst</div>
+            <div class="okr-sub-val" id="okr-cat-val">—</div>
+            <div class="okr-bar-bg" style="margin-top:5px"><div class="okr-bar-fill" id="okr-cat-bar" style="width:0%"></div></div>
+            <div class="okr-pct" id="okr-cat-pct">of 10</div>
+          </div>
+        </div>
+        <div class="okr-target" style="margin-top:8px;margin-bottom:0">Peer Organization MOUs</div>
+      </div>
+      <div class="okr-tile">
+        <div class="okr-eyebrow">FY26 Goal</div>
+        <div class="okr-current" id="okr-rev-val">—</div>
+        <div class="okr-target">Target: $900,000 · Earned Revenue</div>
+        <div class="okr-bar-bg"><div class="okr-bar-fill" id="okr-rev-bar" style="width:0%"></div></div>
+        <div class="okr-pct" id="okr-rev-pct">FY26 awarded fees</div>
+      </div>
     </div>
     <div class="grid-2 mb-16">
       <div class="card chart-card">
@@ -470,7 +528,8 @@ const FP = {
   name:'fldpkporCZ8A6HZTT', pipeline:'fldEoTQtHQMygOKT3', start:'fldZtu03mx9rpSMEl',
   end:'fldmO78r4NxmHW8wn', missing:'fldNc1hZCyd0GiKwF', team:'fldl6l6te8tgmiENL',
   services:'fldqOMuPRf0UojJEZ', totalFees:'fldQU0pTL7oL8SarE', fy26:'fld6oXfY8rqrcqtJM',
-  state:'fldYAFg4ulmMnfsqh', cultStart:'fldqhva6jf1Lm6dSx', notes:'fldokpiDBitEeKtgb'
+  state:'fldYAFg4ulmMnfsqh', cultStart:'fldqhva6jf1Lm6dSx', notes:'fldokpiDBitEeKtgb',
+  partType:'fld9PMifRyYVooTob'
 };
 const FF = {
   name:'fldm0J2jZ5FNoeij4', amount:'fld74B4jxPOYfABSr', fy:'fldueOo2EOiAGsWev',
@@ -753,14 +812,65 @@ function renderStats() {
 }
 
 // ── Overview ──────────────────────────────────────────────────────────────────
+function setOkr(prefix, current, target, fmt) {
+  const pct   = Math.min(100, Math.round(current / target * 100));
+  const color = pct >= 100 ? 'good' : pct >= 60 ? '' : 'warn';
+  const valEl = document.getElementById(`okr-${prefix}-val`);
+  const barEl = document.getElementById(`okr-${prefix}-bar`);
+  const pctEl = document.getElementById(`okr-${prefix}-pct`);
+  if (valEl) valEl.textContent = fmt ? fmt(current) : current.toLocaleString();
+  if (barEl) { barEl.style.width = pct+'%'; barEl.className = 'okr-bar-fill'+(color?' '+color:''); }
+  if (pctEl) pctEl.textContent  = pct+'% toward goal';
+}
+
 function renderOverview() {
+  // ── OKR 1: Competency improvement — % where after knowledge > before knowledge
+  const fbBoth     = D.feedback.filter(f=>gf(f,FFB.before)!=null && gf(f,FFB.after)!=null);
+  const improved   = fbBoth.filter(f=>(+gf(f,FFB.after)||0)>(+gf(f,FFB.before)||0)).length;
+  const compPct    = fbBoth.length ? Math.round(improved/fbBoth.length*100) : 0;
+  setOkr('comp', compPct, 80, v=>v+'%');
+  const compPctEl = document.getElementById('okr-comp-pct');
+  if (compPctEl) compPctEl.textContent = `${improved} of ${fbBoth.length} respondents improved`;
+
+  // ── OKR 2: Service MOUs — MOU Signed or Complete
+  const mouStages  = new Set(['MOU Signed','MOU Complete']);
+  const mouCount   = D.partners.filter(p=>mouStages.has(gf(p,FP.pipeline))).length;
+  setOkr('mou', mouCount, 15);
+  const mouPctEl = document.getElementById('okr-mou-pct');
+  if (mouPctEl) mouPctEl.textContent = `${mouCount} MOU Signed or Complete`;
+
+  // ── OKR 3: Educators trained — sum of PL session participants
+  const eduCount   = D.events.reduce((s,e)=>s+(+gf(e,FE.parts)||0),0);
+  setOkr('edu', eduCount, 2000);
+  const eduPctEl = document.getElementById('okr-edu-pct');
+  if (eduPctEl) eduPctEl.textContent = `${eduCount.toLocaleString()} PL session participants`;
+
+  // ── OKR 4a: Peer organization partnership MOUs
+  const peerMous   = D.partners.filter(p=>{
+    const type = (gf(p,FP.partType)||'').toLowerCase();
+    return mouStages.has(gf(p,FP.pipeline)) && (type.includes('peer')||type.includes('org'));
+  }).length;
+  const peerPct = Math.min(100,Math.round(peerMous/5*100));
+  const peerBar = document.getElementById('okr-peer-bar');
+  if (document.getElementById('okr-peer-val')) document.getElementById('okr-peer-val').textContent = peerMous;
+  if (peerBar) { peerBar.style.width=peerPct+'%'; peerBar.className='okr-bar-fill'+(peerPct>=100?' good':peerPct<60?' warn':''); }
+  if (document.getElementById('okr-peer-pct')) document.getElementById('okr-peer-pct').textContent = peerMous+' of 5';
+
+  // ── OKR 4b: Catalyst (placeholder — Catalyst table not yet loaded)
+  const catCount = 0;
+  if (document.getElementById('okr-cat-val')) document.getElementById('okr-cat-val').textContent = '—';
+  if (document.getElementById('okr-cat-bar')) document.getElementById('okr-cat-bar').style.width='0%';
+  if (document.getElementById('okr-cat-pct')) document.getElementById('okr-cat-pct').textContent = '— of 10';
+
+  // ── OKR 5: Earned revenue — sum of FY26 awarded fees on partnerships
+  const earnedRev  = D.partners.reduce((s,p)=>s+(+gf(p,FP.fy26)||0),0);
+  setOkr('rev', earnedRev, 900000, f$);
+  const revPctEl = document.getElementById('okr-rev-pct');
+  if (revPctEl) revPctEl.textContent = `${f$(earnedRev)} of $900k target`;
+
   const fy26    = D.fees.filter(f=>gf(f,FF.fy)==='FY26').reduce((s,f)=>s+(+gf(f,FF.amount)||0),0);
   const npsArr  = Object.values(EVT_SCORES).map(s=>s.nps).filter(v=>v!=null);
   const avgNps  = npsArr.length ? npsArr.reduce((a,b)=>a+b)/npsArr.length : null;
-  document.getElementById('ov-partners').textContent = D.partners.length;
-  document.getElementById('ov-fees').textContent     = f$(fy26);
-  document.getElementById('ov-events').textContent   = D.events.length;
-  document.getElementById('ov-nps').textContent      = avgNps ? avgNps.toFixed(1) : '—';
 
   // Pipeline counts
   const byStage = {};
