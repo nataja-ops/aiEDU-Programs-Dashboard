@@ -119,6 +119,14 @@ button{cursor:pointer;font-family:inherit;}
 .okr-sub{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px;}
 .okr-sub-item{font-size:11px;color:var(--ink3);}
 .okr-sub-val{font-size:14px;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums;}
+/* Toggle group */
+.toggle-group{display:flex;gap:0;border:1px solid var(--border);border-radius:6px;overflow:hidden;}
+.toggle-btn{padding:4px 10px;font-size:11px;font-weight:600;background:transparent;border:none;color:var(--ink3);cursor:pointer;transition:background .15s,color .15s;}
+.toggle-btn.active{background:var(--teal);color:#fff;}
+.toggle-btn:hover:not(.active){background:var(--surface2);}
+/* My Workspace stats */
+.my-stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;}
+@media(max-width:700px){.my-stat-row{grid-template-columns:repeat(2,1fr);}}
 /* Table */
 .data-table{width:100%;border-collapse:collapse;font-size:13px;}
 .data-table th{
@@ -259,14 +267,48 @@ button{cursor:pointer;font-family:inherit;}
   <!-- OVERVIEW -->
   <div class="tab-panel active" id="tab-overview">
     <div id="lead-panel" style="display:none">
-      <div class="flex items-center justify-between">
+      <div class="flex items-center justify-between mb-16">
         <div>
           <div class="section-title">My Workspace — <span id="lead-name-disp"></span></div>
           <div class="section-sub">Your partnerships &amp; sessions</div>
         </div>
         <button class="btn-sm" id="lead-logout">Sign out</button>
       </div>
+
+      <!-- Personal KPIs -->
+      <div class="my-stat-row">
+        <div class="card kpi-tile"><div class="kpi-val" id="my-prt-count">—</div><div class="kpi-lbl">My Partnerships</div></div>
+        <div class="card kpi-tile"><div class="kpi-val" id="my-fees-val">—</div><div class="kpi-lbl">FY26 Awarded</div></div>
+        <div class="card kpi-tile"><div class="kpi-val" id="my-evt-count">—</div><div class="kpi-lbl">My Events</div></div>
+        <div class="card kpi-tile"><div class="kpi-val" id="my-sat-val">—</div><div class="kpi-lbl">Avg Satisfaction</div></div>
+      </div>
+
+      <!-- My Charts -->
+      <div class="grid-2 mb-16">
+        <div class="card chart-card">
+          <div class="section-hd">
+            <div class="section-title">My Pipeline</div>
+            <div class="section-sub">Partnerships by stage</div>
+          </div>
+          <div><canvas id="ch-my-pipeline"></canvas></div>
+        </div>
+        <div class="card chart-card">
+          <div class="section-hd">
+            <div><div class="section-title">My Fees</div><div class="section-sub">FY26 fee pipeline</div></div>
+            <div class="toggle-group">
+              <button class="toggle-btn active" id="tbtn-awarded" onclick="setMyFeesMode('awarded')">Awarded</button>
+              <button class="toggle-btn" id="tbtn-proposed" onclick="setMyFeesMode('proposed')">Proposed</button>
+            </div>
+          </div>
+          <div><canvas id="ch-my-fees"></canvas></div>
+        </div>
+      </div>
+
+      <!-- My Partnerships -->
+      <div class="section-title mb-12">My Partnerships</div>
       <div class="portfolio-cards" id="portfolio-cards"><div class="empty-state" style="min-width:200px">Loading…</div></div>
+
+      <!-- My Events -->
       <div class="mt-16">
         <div class="section-title mb-12">My Events</div>
         <div class="table-wrap">
@@ -539,7 +581,7 @@ const FP = {
   end:'fldmO78r4NxmHW8wn', missing:'fldNc1hZCyd0GiKwF', team:'fldl6l6te8tgmiENL',
   services:'fldqOMuPRf0UojJEZ', totalFees:'fldQU0pTL7oL8SarE', fy26:'fld6oXfY8rqrcqtJM',
   state:'fldYAFg4ulmMnfsqh', cultStart:'fldqhva6jf1Lm6dSx', notes:'fldokpiDBitEeKtgb',
-  partType:'fld9PMifRyYVooTob'
+  partType:'fld9PMifRyYVooTob', proposed:'fld1X2wDQlOPKjBmB'
 };
 const FF = {
   name:'fldm0J2jZ5FNoeij4', amount:'fld74B4jxPOYfABSr', fy:'fldueOo2EOiAGsWev',
@@ -1210,6 +1252,15 @@ function renderSurveys(f={}) {
 }
 
 // ── Sr. Lead Panel ────────────────────────────────────────────────────────────
+let MY_FEES_MODE = 'awarded';
+
+function setMyFeesMode(mode) {
+  MY_FEES_MODE = mode;
+  document.getElementById('tbtn-awarded').classList.toggle('active', mode==='awarded');
+  document.getElementById('tbtn-proposed').classList.toggle('active', mode==='proposed');
+  renderLeadPanel();
+}
+
 function renderLeadPanel() {
   if(!LEAD) return;
   document.getElementById('lead-panel').style.display='';
@@ -1217,10 +1268,38 @@ function renderLeadPanel() {
   document.getElementById('lead-lbl').textContent       = LEAD.name + "'s Workspace";
 
   const teamNames = p => ga(p,FP.team).map(v=>typeof v==='object'?v.name:v);
-  // FP.team is multipleLookupValues → array of name strings through REST API
   const mine = D.partners.filter(p=>
     teamNames(p).some(x=>x.trim().toLowerCase()===LEAD.name.trim().toLowerCase())
   );
+
+  // ── Personal KPIs ────────────────────────────────────────────────────────
+  const myFees = mine.reduce((s,p)=>s+(+gf(p,FP.fy26)||0),0);
+  const myEvts = D.events.filter(e=>
+    ga(e,FE.fac).some(x=>x===LEAD.id) || ga(e,FE.facDisp).some(x=>x===LEAD.name)
+  );
+  const mySats = myEvts.map(e=>(EVT_SCORES[e.id]||{}).sat).filter(v=>v!=null);
+  const avgSat = mySats.length ? mySats.reduce((a,b)=>a+b)/mySats.length : null;
+
+  document.getElementById('my-prt-count').textContent = mine.length;
+  document.getElementById('my-fees-val').textContent  = f$(myFees);
+  document.getElementById('my-evt-count').textContent = myEvts.length;
+  document.getElementById('my-sat-val').textContent   = avgSat ? avgSat.toFixed(1) : '—';
+
+  // ── My Pipeline chart ────────────────────────────────────────────────────
+  const byStage = {};
+  mine.forEach(p=>{ const s=gf(p,FP.pipeline)||'Unknown'; byStage[s]=(byStage[s]||0)+1; });
+  const sLabels = STAGE_ORDER.filter(s=>byStage[s]);
+  mkChart('ch-my-pipeline','bar',sLabels,sLabels.map(s=>byStage[s]),
+    sLabels.map(s=>STAGE_COLORS[s]||'#999'),'Partnerships');
+
+  // ── My Fees chart (Awarded / Proposed toggle) ────────────────────────────
+  const feeField = MY_FEES_MODE==='awarded' ? FP.fy26 : FP.proposed;
+  const feesByStage = {};
+  mine.forEach(p=>{ const s=gf(p,FP.pipeline)||'Unknown'; feesByStage[s]=(feesByStage[s]||0)+(+gf(p,feeField)||0); });
+  const fsL = STAGE_ORDER.filter(s=>feesByStage[s]);
+  const feeLabel = MY_FEES_MODE==='awarded' ? 'FY26 Awarded ($)' : 'FY26 Proposed ($)';
+  mkChart('ch-my-fees','bar',fsL,fsL.map(s=>feesByStage[s]),
+    fsL.map(s=>STAGE_COLORS[s]||'#999'), feeLabel);
 
   const cardEl = document.getElementById('portfolio-cards');
   cardEl.innerHTML = mine.length===0
@@ -1251,14 +1330,12 @@ function renderLeadPanel() {
         </div>`;
       }).join('');
 
-  // My events
-  const myEvts = D.events.filter(e=>{
-    return ga(e,FE.fac).some(x=>x===LEAD.id) || ga(e,FE.facDisp).some(x=>x===LEAD.name);
-  }).sort((a,b)=>(gf(b,FE.date)||'').localeCompare(gf(a,FE.date)||''));
+  // My events (sorted by date desc)
+  const myEvtsSorted = [...myEvts].sort((a,b)=>(gf(b,FE.date)||'').localeCompare(gf(a,FE.date)||''));
 
   const tbody = document.querySelector('#my-evt-tbl tbody');
-  tbody.innerHTML = myEvts.length===0 ? '<tr><td colspan="6" class="empty-state">No events found for you</td></tr>' :
-    myEvts.slice(0,20).map(r=>{
+  tbody.innerHTML = myEvtsSorted.length===0 ? '<tr><td colspan="6" class="empty-state">No events found for you</td></tr>' :
+    myEvtsSorted.slice(0,20).map(r=>{
       const name=gf(r,FE.nameT)||gf(r,FE.name)||'—';
       const pids=ga(r,FE.partner);
       const pn=pids.map(id=>(D.partners.find(p=>p.id===id)||{}).fields?.[FP.name]).filter(Boolean).join(', ')||'—';
