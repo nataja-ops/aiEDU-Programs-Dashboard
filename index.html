@@ -763,8 +763,10 @@ function buildEventScores() {
 }
 
 // ── Load ──────────────────────────────────────────────────────────────────────
-const CACHE_KEY = 'aiedu_dash_v3';
-const CACHE_TTL = 3 * 60 * 1000; // 3 minutes
+const FY26_START = '2025-12-31';
+const FY26_END   = '2027-01-01';
+const CACHE_KEY  = 'aiedu_dash_v4';
+const CACHE_TTL  = 3 * 60 * 1000; // 3 minutes
 
 function loadProgress(pct) {
   let bar = document.getElementById('load-bar');
@@ -787,13 +789,17 @@ async function fetchFresh() {
   const fEvt = Object.values(FE);
   const fFb  = Object.values(FFB);
 
+  // Filter events and fees to FY26 at the API level — cuts record count dramatically
+  const evtFilter = { filterByFormula: `AND(IS_AFTER({${FE.date}},'${FY26_START}'),IS_BEFORE({${FE.date}},'${FY26_END}'))` };
+  const feeFilter = { filterByFormula: `{${FF.fy}}='FY26'` };
+
   const [partners, fees, mous, staff, surveys, events, feedback] = await Promise.all([
     atFetch(BASE, T.prt, fPrt),
-    atFetch(BASE, T.fee, fFee),
+    atFetch(BASE, T.fee, fFee, feeFilter),
     atFetch(BASE, T.mou, fMou),
     atFetch(BASE, T.stf, fStf),
     atFetch(BASE, T.srv, fSrv),
-    atFetch(BASE, T.evt, fEvt),
+    atFetch(BASE, T.evt, fEvt, evtFilter),
     atFetch(BASE, T.fb,  fFb),
   ]);
   return { partners, fees, mous, events, feedback, surveys, staff };
