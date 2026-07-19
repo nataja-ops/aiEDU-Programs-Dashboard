@@ -1,11 +1,11 @@
 module.exports = async function handler(req, res) {
   if (!process.env.AIRTABLE_API_KEY) {
-    return res.status(500).json({ error: "proxy_error", message: "AIRTABLE_API_KEY is not set in environment variables." });
+    return res.status(500).json({ error: { message: "AIRTABLE_API_KEY is not set in environment variables." } });
   }
-  const slug = req.query.slug;
-  const path = Array.isArray(slug) ? slug.join("/") : (slug || "");
-  const airtableUrl = new URL(`https://api.airtable.com/${path}`);
-  const { slug: _slug, ...rest } = req.query;
+  const { path: atPath, ...rest } = req.query;
+  if (!atPath) return res.status(400).json({ error: { message: "Missing path parameter." } });
+
+  const airtableUrl = new URL(`https://api.airtable.com/${atPath}`);
   for (const [key, value] of Object.entries(rest)) {
     if (Array.isArray(value)) value.forEach(v => airtableUrl.searchParams.append(key, v));
     else airtableUrl.searchParams.append(key, value);
@@ -25,15 +25,15 @@ module.exports = async function handler(req, res) {
     const contentType = upstream.headers.get("content-type") || "";
     if (!contentType.includes("application/json")) {
       const text = await upstream.text();
-      return res.status(upstream.status).json({
-        error: "airtable_non_json",
-        message: `Airtable returned HTTP ${upstream.status} with non-JSON content. Check your API key and token scopes.`,
-        preview: text.slice(0, 300),
+      return res.status(502).json({
+        error: {
+          message: `Airtable returned HTTP ${upstream.status} non-JSON. Check API key and token scopes. Preview: ${text.slice(0, 200)}`,
+        },
       });
     }
     const data = await upstream.json();
     res.status(upstream.status).json(data);
   } catch (err) {
-    res.status(500).json({ error: "proxy_error", message: err.message });
+    res.status(500).json({ error: { message: err.message } });
   }
 }

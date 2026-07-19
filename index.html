@@ -550,9 +550,9 @@ let POPOVER = null;
 async function atFetch(baseId, tableId, params={}) {
   const recs = []; let offset = null;
   do {
-    const p = new URLSearchParams({ returnFieldsByFieldId:'true', pageSize:'100', ...params });
+    const p = new URLSearchParams({ path:`v0/${baseId}/${tableId}`, returnFieldsByFieldId:'true', pageSize:'100', ...params });
     if (offset) p.set('offset', offset);
-    const res = await fetch(`/api/v0/${baseId}/${tableId}?${p}`);
+    const res = await fetch(`/api/airtable?${p}`);
     if (!res.ok) throw new Error(await res.text());
     const j = await res.json();
     if (j.error) throw new Error(j.error.message || JSON.stringify(j.error));
@@ -563,12 +563,11 @@ async function atFetch(baseId, tableId, params={}) {
 }
 
 async function apiWrite(method, baseId, tableId, payload) {
-  const url = `/api/v0/${baseId}/${tableId}`;
-  const endpoint = method === 'POST' ? url : `${url}/${payload.id}`;
+  const atPath = method === 'POST' ? `v0/${baseId}/${tableId}` : `v0/${baseId}/${tableId}/${payload.id}`;
   const body = method === 'POST'
     ? { records: [{ fields: payload.fields }] }
     : { fields: payload.fields };
-  const res = await fetch(endpoint, {
+  const res = await fetch(`/api/airtable?path=${encodeURIComponent(atPath)}`, {
     method, headers: { 'Content-Type':'application/json' },
     body: JSON.stringify(body)
   });
