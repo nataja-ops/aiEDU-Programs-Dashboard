@@ -960,7 +960,7 @@ function renderOverview() {
 
   // ── OKR 4a: Peer organization partnership MOUs
   const peerMous   = D.partners.filter(p=>{
-    const type = (gf(p,FP.partType)||'').toLowerCase();
+    const type = ga(p,FP.partType).map(v=>typeof v==='object'?v.name:v).join(',').toLowerCase();
     return mouStages.has(gf(p,FP.pipeline)) && (type.includes('peer')||type.includes('org'));
   }).length;
   const peerPct = Math.min(100,Math.round(peerMous/5*100));
