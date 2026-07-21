@@ -447,7 +447,10 @@ button{cursor:pointer;font-family:inherit;}
         <div><canvas id="ch-pipeline"></canvas></div>
       </div>
       <div class="card chart-card">
-        <div class="section-hd"><div class="section-title">FY26 Fees by Stage</div><div class="section-sub">Fee pipeline breakdown</div></div>
+        <div class="section-hd">
+          <div><div class="section-title">FY26 Fees by Stage</div><div class="section-sub">Fee pipeline breakdown</div></div>
+          <span id="fy26-proposed-chip" class="pill pill-teal" style="cursor:pointer;font-size:11px" onclick="drillProposedFees()">Proposed: —</span>
+        </div>
         <div><canvas id="ch-fees-stage"></canvas></div>
       </div>
     </div>
@@ -1238,7 +1241,7 @@ function buildEventScores() {
 // ── Load ──────────────────────────────────────────────────────────────────────
 const FY26_START = '2025-12-31';
 const FY26_END   = '2027-01-01';
-const CACHE_KEY  = 'aiedu_dash_v12';
+const CACHE_KEY  = 'aiedu_dash_v13';
 const CACHE_TTL  = 3 * 60 * 1000; // 3 minutes
 
 function loadProgress(pct) {
@@ -1446,6 +1449,15 @@ function renderOverview() {
   mkChart('ch-fees-stage','bar',fsL,fsL.map(s=>fByStage[s]),fsL.map(s=>STAGE_COLORS[s]||'#999'),'FY26 Fees ($)',
     i=>{ const stage=fsL[i]; const rows=D.fees.filter(f=>gf(f,FF.fy)==='FY26'&&ga(f,FF.pipeline).map(v=>typeof v==='object'?v.name:v).join('')===stage).sort((a,b)=>(+gf(b,FF.amount)||0)-(+gf(a,FF.amount)||0)); showDrill('FY26 Fees — '+stage,rows.length+' records',rows,COL_FEES); });
 
+  // Proposed chip
+  const propTotal=D.fees.filter(f=>{
+    if(gf(f,FF.fy)!=='FY26') return false;
+    const fs=ga(f,FF.funding).map(v=>(typeof v==='object'?v.name:v)+'').join(' ').toLowerCase();
+    return fs.includes('proposed');
+  }).reduce((s,f)=>s+(+gf(f,FF.amount)||0),0);
+  const propChip=document.getElementById('fy26-proposed-chip');
+  if(propChip) propChip.textContent='Proposed: '+f$(propTotal);
+
   // States
   const bySt = {};
   D.partners.forEach(p=>{ ga(p,FP.state).map(v=>typeof v==='object'?v.name:v).forEach(s=>{ if(s) bySt[s]=(bySt[s]||0)+1; }); });
@@ -1486,36 +1498,15 @@ function renderSuccessTracker() {
       stages:['MOU Signed'], color:'#0d7a6b' },
     { label:'MOUs Complete', sub:'MOU Complete stage',
       stages:['MOU Complete'], color:'#065040' },
-    { label:'Fees for Service — Proposed (FY26)', sub:'Proposed fees in pipeline',
-      stages:['Proposal/SOW Writing','SOW sent','Verbal Agreement'],
-      isProposedFee:true, color:'rgba(13,122,107,0.5)' },
-    { label:'Fees for Service — Awarded (FY26)', sub:'Awarded revenue this fiscal year',
-      stages:['MOU Sent','MOU Signed','MOU Complete','Verbal Agreement','Collaboration'],
-      isFee:true, target:900000, color:'#1a7a4a' },
     { label:'Other / On Ice', sub:'On Ice · Rejected',
       stages:['On Ice','Rejected'], color:'#7da09a' },
   ];
 
   el.innerHTML = cats.map((c,i)=>{
     const n = count(...c.stages);
-    let pct, display;
-    if(c.isFee){
-      const val = feeSum(...c.stages);
-      pct = Math.min(100, Math.round(val/c.target*100));
-      display = f$(val);
-    } else if(c.isProposedFee){
-      const val = D.fees.filter(f=>{
-        if(gf(f,FF.fy)!=='FY26') return false;
-        const fs=ga(f,FF.funding).map(v=>(typeof v==='object'?v.name:v)+'').join(' ').toLowerCase();
-        return fs.includes('proposed');
-      }).reduce((s,f)=>s+(+gf(f,FF.amount)||0),0);
-      pct = Math.min(100, Math.round(val/900000*100));
-      display = f$(val);
-    } else {
-      pct = Math.min(100, Math.round(n/total*100));
-      display = n.toLocaleString();
-    }
-    const drillFn = c.isProposedFee ? 'drillProposedFees()' : `drillTrackerStages(${JSON.stringify(c.stages)},${JSON.stringify(c.label)})`;
+    const pct = Math.min(100, Math.round(n/total*100));
+    const display = n.toLocaleString();
+    const drillFn = `drillTrackerStages(${JSON.stringify(c.stages)},${JSON.stringify(c.label)})`;
     return `<div class="tracker-row" onclick="${drillFn}">
       <div class="tracker-label">
         <div class="tracker-lbl-main">${c.label}</div>
