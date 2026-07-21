@@ -354,7 +354,7 @@ button{cursor:pointer;font-family:inherit;}
   <div class="stat-item"><span class="stat-val" id="s-fees">—</span><span class="stat-lbl">Fees Awarded</span></div>
   <div class="stat-item"><span class="stat-val" id="s-events">—</span><span class="stat-lbl">Events (PL)</span></div>
   <div class="stat-item"><span class="stat-val" id="s-parts">—</span><span class="stat-lbl">PL Participants</span></div>
-  <div class="stat-item"><span class="stat-val" id="s-nps">—</span><span class="stat-lbl">Avg NPS</span></div>
+  <div class="stat-item"><span class="stat-val" id="s-nps">—</span><span class="stat-lbl">NPS</span></div>
   <div class="stat-item"><span class="stat-val" id="s-sat">—</span><span class="stat-lbl">Avg Sat</span></div>
 </div>
 
@@ -373,14 +373,6 @@ button{cursor:pointer;font-family:inherit;}
       </div>
     </div>
 
-    <!-- My Pipeline -->
-    <div class="section-hd mb-8">
-      <div><div class="section-title">My Pipeline</div><div class="section-sub">Your partnerships by stage — click a row to expand</div></div>
-    </div>
-    <div class="card mb-16" style="padding:16px 20px" id="ws-pipeline">
-      <div class="empty-state">Loading…</div>
-    </div>
-
     <!-- Weekly Ops Panel -->
     <div class="grid-2 mb-16" id="ws-ops">
       <div class="card" style="padding:16px 20px">
@@ -393,6 +385,14 @@ button{cursor:pointer;font-family:inherit;}
         <div class="section-sub mb-12">Missing fields on your partnerships — click any item to open and update</div>
         <div id="ws-missing"><div class="empty-state">Loading…</div></div>
       </div>
+    </div>
+
+    <!-- My Pipeline -->
+    <div class="section-hd mb-8">
+      <div><div class="section-title">My Pipeline</div><div class="section-sub">Your partnerships by stage — click a row to expand</div></div>
+    </div>
+    <div class="card mb-16" style="padding:16px 20px" id="ws-pipeline">
+      <div class="empty-state">Loading…</div>
     </div>
   </div>
 
@@ -1578,9 +1578,10 @@ function renderStats() {
   const plEvts  = D.events.filter(isPLEvent);
   // PL participants — events with a PL Type set
   const plParts = D.events.filter(e=>gf(e,FE.plType)).reduce((s,e)=>s+(+gf(e,FE.parts)||0),0);
-  // NPS from Partner Survey — "NPS Score (Calculated) (from NPS by Administration Year)"
-  const npsYrVals = D.surveys.flatMap(s=>ga(s,FS.npsScore).map(v=>+v).filter(v=>!isNaN(v)));
-  const npsScore = npsYrVals.length ? Math.round(npsYrVals.reduce((a,b)=>a+b,0)/npsYrVals.length) : null;
+  // NPS — most recent year from NPS by Administration Year table
+  const npsYrForStat = [...D.npsYears].filter(r=>gf(r,FNPS.score)!=null&&gf(r,FNPS.name))
+    .sort((a,b)=>(gf(a,FNPS.name)||'').localeCompare(gf(b,FNPS.name)||''));
+  const npsScore = npsYrForStat.length ? Math.round(+gf(npsYrForStat[npsYrForStat.length-1],FNPS.score)) : null;
   // Avg Sat from event feedback (1-5 scale)
   const satArr  = Object.values(EVT_SCORES).map(s=>s.sat).filter(v=>v!=null);
   const avgSat  = satArr.length ? satArr.reduce((a,b)=>a+b)/satArr.length : null;
@@ -1590,7 +1591,7 @@ function renderStats() {
   document.getElementById('s-fees').textContent     = f$(awarded);
   document.getElementById('s-events').textContent   = plEvts.length;
   document.getElementById('s-parts').textContent    = plParts.toLocaleString();
-  document.getElementById('s-nps').textContent      = npsScore!=null ? npsScore+'%' : '—';
+  document.getElementById('s-nps').textContent      = npsScore!=null ? npsScore : '—';
   document.getElementById('s-sat').textContent      = avgSat!=null ? avgSat.toFixed(1) : '—';
 }
 
