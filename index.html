@@ -301,7 +301,8 @@ button{cursor:pointer;font-family:inherit;}
 .stat-item:hover{background:var(--surface2);}
 .stat-item::after{content:'↗';position:absolute;top:5px;right:8px;font-size:10px;color:var(--teal);opacity:0;transition:opacity .15s;}
 .stat-item:hover::after{opacity:1;}
-.okr-tile{cursor:pointer;transition:box-shadow .15s;}
+.okr-tile{cursor:pointer;transition:box-shadow .15s;display:flex;flex-direction:column;}
+.okr-tile>.okr-bar-bg{margin-top:auto;}
 .okr-tile:hover{box-shadow:0 0 0 2px var(--teal);}
 .okr-tile::after{content:'View records →';display:block;font-size:10px;color:var(--teal);opacity:0;transition:opacity .2s;margin-top:6px;}
 .okr-tile:hover::after{opacity:1;}
@@ -1686,12 +1687,28 @@ function renderOverview() {
   const propChip=document.getElementById('fy26-proposed-chip');
   if(propChip) propChip.textContent='Proposed: '+f$(propTotal);
 
-  // States
-  const bySt = {};
-  D.partners.forEach(p=>{ ga(p,FP.state).map(v=>typeof v==='object'?v.name:v).forEach(s=>{ if(s) bySt[s]=(bySt[s]||0)+1; }); });
-  const stSorted = Object.entries(bySt).sort((a,b)=>b[1]-a[1]).slice(0,12);
-  mkChart('ch-states','bar',stSorted.map(x=>x[0]),stSorted.map(x=>x[1]),stSorted.map(()=>cssVar('--teal')),'Partners',
-    i=>{ const st=stSorted[i][0]; const rows=D.partners.filter(p=>ga(p,FP.state).map(v=>typeof v==='object'?v.name:v).includes(st)); showDrill('Partners in '+st,rows.length+' partners',rows,COL_PRTS); });
+  // States — stacked by pipeline status
+  const stStateMap = {};
+  D.partners.forEach(p=>{
+    const states=ga(p,FP.state).map(v=>typeof v==='object'?v.name:v).filter(Boolean);
+    const stage=gf(p,FP.pipeline)||'Unknown';
+    states.forEach(st=>{ if(!stStateMap[st]) stStateMap[st]={}; stStateMap[st][stage]=(stStateMap[st][stage]||0)+1; });
+  });
+  const stSorted=Object.entries(stStateMap).map(([st,sg])=>[st,Object.values(sg).reduce((a,b)=>a+b,0)]).sort((a,b)=>b[1]-a[1]).slice(0,12).map(x=>x[0]);
+  const stStages=new Set(); stSorted.forEach(st=>Object.keys(stStateMap[st]).forEach(s=>stStages.add(s)));
+  const stDatasets=STAGE_ORDER.filter(s=>stStages.has(s)).map(stage=>({label:stage,data:stSorted.map(st=>stStateMap[st][stage]||0),backgroundColor:STAGE_COLORS[stage]||'#aaa'}));
+  stStages.has('Unknown')&&stDatasets.push({label:'Unknown',data:stSorted.map(st=>stStateMap[st]['Unknown']||0),backgroundColor:'#aaa'});
+  if(CHARTS['ch-states']){CHARTS['ch-states'].destroy();delete CHARTS['ch-states'];}
+  const stEl=document.getElementById('ch-states');
+  if(stEl){ const ink3=cssVar('--ink3'),bdr=cssVar('--border');
+    CHARTS['ch-states']=new Chart(stEl,{type:'bar',data:{labels:stSorted,datasets:stDatasets},options:{responsive:true,maintainAspectRatio:true,
+      plugins:{legend:{display:true,position:'bottom',labels:{color:ink3,font:{size:11},boxWidth:10}},
+        tooltip:{callbacks:{label:ctx=>` ${ctx.dataset.label}: ${ctx.raw}`}}},
+      scales:{x:{stacked:true,ticks:{color:ink3,font:{size:11}},grid:{display:false}},y:{stacked:true,ticks:{color:ink3,font:{size:11}},grid:{color:bdr},beginAtZero:true}},
+      onClick:(_e,els)=>{ if(els.length){const st=stSorted[els[0].index];const rows=D.partners.filter(p=>ga(p,FP.state).map(v=>typeof v==='object'?v.name:v).includes(st));showDrill('Partners in '+st,rows.length+' partners',rows,COL_PRTS);} },
+      onHover:(evt,els)=>{evt.native.target.style.cursor=els.length?'pointer':'default';}
+    }});
+  }
 
   // Events by month
   const byMo = {};
