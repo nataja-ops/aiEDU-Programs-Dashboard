@@ -325,7 +325,7 @@ button{cursor:pointer;font-family:inherit;}
   <div class="topbar-actions">
     <button class="icon-btn" id="refresh-btn" title="Refresh">↻</button>
     <button class="icon-btn" id="theme-btn" title="Toggle theme">◑</button>
-    <button class="lead-btn" id="lead-btn"><span>👤</span><span id="lead-lbl">Sr. Lead View</span></button>
+    <button class="lead-btn" id="lead-btn"><span>👤</span><span id="lead-lbl">My Workspace</span></button>
   </div>
 </header>
 
@@ -344,50 +344,57 @@ button{cursor:pointer;font-family:inherit;}
   <!-- OVERVIEW -->
   <div class="tab-panel active" id="tab-overview">
     <div id="lead-panel" style="display:none">
-      <div class="flex items-center justify-between mb-16">
+      <div class="flex items-center justify-between mb-12">
         <div>
           <div class="section-title">My Workspace — <span id="lead-name-disp"></span></div>
-          <div class="section-sub">Your partnerships &amp; sessions</div>
+          <div class="section-sub">Your personalized view of partnerships, fees, and sessions</div>
         </div>
         <button class="btn-sm" id="lead-logout">Sign out</button>
       </div>
 
-      <!-- Personal KPIs -->
-      <div class="my-stat-row">
-        <div class="card kpi-tile"><div class="kpi-val" id="my-prt-count">—</div><div class="kpi-lbl">My Partnerships</div></div>
-        <div class="card kpi-tile"><div class="kpi-val" id="my-fees-val">—</div><div class="kpi-lbl">FY26 Awarded</div></div>
-        <div class="card kpi-tile"><div class="kpi-val" id="my-evt-count">—</div><div class="kpi-lbl">My Events</div></div>
-        <div class="card kpi-tile"><div class="kpi-val" id="my-sat-val">—</div><div class="kpi-lbl">Avg Satisfaction</div></div>
+      <!-- Sub-tab nav -->
+      <div class="toggle-group mb-16" id="ws-tabs">
+        <button class="toggle-btn active" data-wstab="overview">Overview</button>
+        <button class="toggle-btn" data-wstab="partnerships">Partnerships</button>
+        <button class="toggle-btn" data-wstab="events">Events</button>
       </div>
 
-      <!-- My Charts -->
-      <div class="grid-2 mb-16">
-        <div class="card chart-card">
-          <div class="section-hd">
-            <div class="section-title">My Pipeline</div>
-            <div class="section-sub">Partnerships by stage</div>
-          </div>
-          <div><canvas id="ch-my-pipeline"></canvas></div>
+      <!-- Sub-panel: Overview -->
+      <div id="ws-overview">
+        <div class="my-stat-row">
+          <div class="card kpi-tile"><div class="kpi-val" id="my-prt-count">—</div><div class="kpi-lbl">My Partnerships</div></div>
+          <div class="card kpi-tile"><div class="kpi-val" id="my-fees-val">—</div><div class="kpi-lbl">FY26 Awarded</div></div>
+          <div class="card kpi-tile"><div class="kpi-val" id="my-evt-count">—</div><div class="kpi-lbl">My Events</div></div>
+          <div class="card kpi-tile"><div class="kpi-val" id="my-sat-val">—</div><div class="kpi-lbl">Avg Satisfaction</div></div>
         </div>
-        <div class="card chart-card">
-          <div class="section-hd">
-            <div><div class="section-title">My Fees</div><div class="section-sub">FY26 fee pipeline</div></div>
-            <div class="toggle-group">
-              <button class="toggle-btn active" id="tbtn-awarded" onclick="setMyFeesMode('awarded')">Awarded</button>
-              <button class="toggle-btn" id="tbtn-proposed" onclick="setMyFeesMode('proposed')">Proposed</button>
+        <div class="grid-2 mb-16">
+          <div class="card chart-card">
+            <div class="section-hd">
+              <div class="section-title">My Pipeline</div>
+              <div class="section-sub">Partnerships by stage</div>
             </div>
+            <div><canvas id="ch-my-pipeline"></canvas></div>
           </div>
-          <div><canvas id="ch-my-fees"></canvas></div>
+          <div class="card chart-card">
+            <div class="section-hd">
+              <div><div class="section-title">My Fees</div><div class="section-sub">FY26 fee pipeline</div></div>
+              <div class="toggle-group">
+                <button class="toggle-btn active" id="tbtn-awarded" onclick="setMyFeesMode('awarded')">Awarded</button>
+                <button class="toggle-btn" id="tbtn-proposed" onclick="setMyFeesMode('proposed')">Proposed</button>
+              </div>
+            </div>
+            <div><canvas id="ch-my-fees"></canvas></div>
+          </div>
         </div>
       </div>
 
-      <!-- My Partnerships -->
-      <div class="section-title mb-12">My Partnerships</div>
-      <div class="portfolio-cards" id="portfolio-cards"><div class="empty-state" style="min-width:200px">Loading…</div></div>
+      <!-- Sub-panel: Partnerships -->
+      <div id="ws-partnerships" style="display:none">
+        <div class="portfolio-cards" id="portfolio-cards"><div class="empty-state" style="min-width:200px">Loading…</div></div>
+      </div>
 
-      <!-- My Events -->
-      <div class="mt-16">
-        <div class="section-title mb-12">My Events</div>
+      <!-- Sub-panel: Events -->
+      <div id="ws-events" style="display:none">
         <div class="table-wrap">
           <table class="data-table" id="my-evt-tbl">
             <thead><tr><th>Event</th><th>Date</th><th>Partner</th><th>Participants</th><th>Sat</th><th>NPS</th></tr></thead>
@@ -530,8 +537,16 @@ button{cursor:pointer;font-family:inherit;}
     </div>
     <div class="grid-2 mb-16">
       <div class="card chart-card">
-        <div class="section-title mb-4">FY26 Fee Pipeline</div>
-        <div class="section-sub mb-12">Contracted fee value by pipeline stage — click a bar to see fee records</div>
+        <div class="section-hd mb-8">
+          <div>
+            <div class="section-title"><span id="fees-pipe-fy-lbl">FY26</span> Fee Pipeline</div>
+            <div class="section-sub">Contracted fee value by pipeline stage — click a bar to see fee records</div>
+          </div>
+          <div class="toggle-group">
+            <button class="toggle-btn" data-feesfy="FY25" id="fpy-fy25">FY25</button>
+            <button class="toggle-btn active" data-feesfy="FY26" id="fpy-fy26">FY26</button>
+          </div>
+        </div>
         <div><canvas id="ch-fees-pipe"></canvas></div>
       </div>
       <div class="card" style="padding:16px">
@@ -732,7 +747,7 @@ button{cursor:pointer;font-family:inherit;}
 <!-- Login modal -->
 <div id="login-ov">
   <div id="login-modal">
-    <div class="modal-title">Sr. Lead Sign In</div>
+    <div class="modal-title">Sign In to My Workspace</div>
     <div class="modal-sub">Select your name to view your personalized portfolio and sessions.</div>
     <div class="form-group">
       <label class="form-label">Your Name</label>
@@ -1333,7 +1348,7 @@ function buildEventScores() {
 // ── Load ──────────────────────────────────────────────────────────────────────
 const FY26_START = '2025-12-31';
 const FY26_END   = '2027-01-01';
-const CACHE_KEY  = 'aiedu_dash_v20';
+const CACHE_KEY  = 'aiedu_dash_v21';
 const CACHE_TTL  = 3 * 60 * 1000; // 3 minutes
 
 function loadProgress(pct) {
@@ -1907,9 +1922,12 @@ function renderContracts(f={}) {
 
   // Fee pipeline chart
   const fByStage = {};
-  D.fees.filter(f=>gf(f,FF.fy)==='FY26').forEach(f=>{ const s=gf(f,FF.pipeline)||'Other'; fByStage[s]=(fByStage[s]||0)+(+gf(f,FF.amount)||0); });
+  const feesFY = (document.querySelector('#fpy-fy25.active') ? 'FY25' : 'FY26');
+  document.getElementById('fees-pipe-fy-lbl').textContent = feesFY;
+  D.fees.filter(f=>gf(f,FF.fy)===feesFY).forEach(f=>{ const s=gf(f,FF.pipeline)||'Other'; fByStage[s]=(fByStage[s]||0)+(+gf(f,FF.amount)||0); });
   const fsL = STAGE_ORDER.filter(s=>fByStage[s]);
-  mkChart('ch-fees-pipe','bar',fsL,fsL.map(s=>fByStage[s]),fsL.map(s=>STAGE_COLORS[s]||'#999'),'FY26 Fees ($)');
+  mkChart('ch-fees-pipe','bar',fsL,fsL.map(s=>fByStage[s]),fsL.map(s=>STAGE_COLORS[s]||'#999'),feesFY+' Fees ($)',
+    i=>{ const stage=fsL[i]; const rows=D.fees.filter(f=>gf(f,FF.fy)===feesFY&&(gf(f,FF.pipeline)||'Other')===stage).sort((a,b)=>(+gf(b,FF.amount)||0)-(+gf(a,FF.amount)||0)); showDrill(feesFY+' Fees — '+stage,rows.length+' records',rows,COL_FEES); });
 
   // Table
   let rows = D.mous.filter(m=>pname(m)!=='—');
@@ -2347,13 +2365,23 @@ document.getElementById('lead-logout').addEventListener('click',()=>{
   LEAD=null;
   document.getElementById('lead-panel').style.display='none';
   document.getElementById('lead-btn').classList.remove('active');
-  document.getElementById('lead-lbl').textContent='Sr. Lead View';
+  document.getElementById('lead-lbl').textContent='My Workspace';
   toast('Signed out','info');
 });
 
 document.getElementById('lead-btn').addEventListener('click',()=>{
   if(LEAD){ document.getElementById('lead-logout').click(); }
   else { showLogin(); }
+});
+
+// ── My Workspace sub-tabs ─────────────────────────────────────────────────────
+const WS_PANELS = {overview:'ws-overview', partnerships:'ws-partnerships', events:'ws-events'};
+document.querySelectorAll('#ws-tabs [data-wstab]').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    const tab=btn.dataset.wstab;
+    document.querySelectorAll('#ws-tabs [data-wstab]').forEach(b=>b.classList.toggle('active',b===btn));
+    Object.entries(WS_PANELS).forEach(([k,id])=>{ document.getElementById(id).style.display=k===tab?'':'none'; });
+  });
 });
 
 // ── Tab nav ───────────────────────────────────────────────────────────────────
@@ -2394,6 +2422,12 @@ wire(['f-mou-stage','f-mou-search'],renderContracts,()=>({
   stage:document.getElementById('f-mou-stage').value,
   search:document.getElementById('f-mou-search').value,
 }));
+document.querySelectorAll('[data-feesfy]').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('[data-feesfy]').forEach(b=>b.classList.toggle('active',b===btn));
+    renderContracts({ stage:document.getElementById('f-mou-stage').value, search:document.getElementById('f-mou-search').value });
+  });
+});
 let evtDateFilter = '';
 wire(['f-evt-type','f-evt-search'],renderEvents,()=>({
   type:document.getElementById('f-evt-type').value,
