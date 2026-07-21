@@ -328,6 +328,7 @@ button{cursor:pointer;font-family:inherit;}
     <button class="nav-tab" data-tab="contracts">Contracts</button>
     <button class="nav-tab" data-tab="events">Events</button>
     <button class="nav-tab" data-tab="feedback">Partner Feedback</button>
+    <button class="nav-tab" data-tab="workspace" id="ws-nav-tab" style="display:none">👤 My Workspace</button>
   </nav>
   <div class="topbar-actions">
     <button class="icon-btn" id="refresh-btn" title="Refresh">↻</button>
@@ -348,68 +349,25 @@ button{cursor:pointer;font-family:inherit;}
 
 <main id="content">
 
-  <!-- OVERVIEW -->
-  <div class="tab-panel active" id="tab-overview">
-    <div id="lead-panel" style="display:none">
-      <div class="flex items-center justify-between mb-12">
-        <div>
-          <div class="section-title">My Workspace — <span id="lead-name-disp"></span></div>
-          <div class="section-sub">Your personalized view of partnerships, fees, and sessions</div>
-        </div>
+  <!-- MY WORKSPACE -->
+  <div class="tab-panel" id="tab-workspace">
+    <div class="flex items-center justify-between mb-16">
+      <div>
+        <div class="section-title">My Workspace — <span id="lead-name-disp"></span></div>
+        <div class="section-sub">Your partnerships at each pipeline stage</div>
+      </div>
+      <div class="flex gap-8">
+        <button class="btn-sm" onclick="switchTab('overview')">← Back to Dashboard</button>
         <button class="btn-sm" id="lead-logout">Sign out</button>
       </div>
-
-      <!-- Sub-tab nav -->
-      <div class="toggle-group mb-16" id="ws-tabs">
-        <button class="toggle-btn active" data-wstab="overview">Overview</button>
-        <button class="toggle-btn" data-wstab="partnerships">Partnerships</button>
-        <button class="toggle-btn" data-wstab="events">Events</button>
-      </div>
-
-      <!-- Sub-panel: Overview -->
-      <div id="ws-overview">
-        <div class="my-stat-row">
-          <div class="card kpi-tile"><div class="kpi-val" id="my-prt-count">—</div><div class="kpi-lbl">My Partnerships</div></div>
-          <div class="card kpi-tile"><div class="kpi-val" id="my-fees-val">—</div><div class="kpi-lbl">FY26 Awarded</div></div>
-          <div class="card kpi-tile"><div class="kpi-val" id="my-evt-count">—</div><div class="kpi-lbl">My Events</div></div>
-          <div class="card kpi-tile"><div class="kpi-val" id="my-sat-val">—</div><div class="kpi-lbl">Avg Satisfaction</div></div>
-        </div>
-        <div class="grid-2 mb-16">
-          <div class="card chart-card">
-            <div class="section-hd">
-              <div class="section-title">My Pipeline</div>
-              <div class="section-sub">Partnerships by stage</div>
-            </div>
-            <div><canvas id="ch-my-pipeline"></canvas></div>
-          </div>
-          <div class="card chart-card">
-            <div class="section-hd">
-              <div><div class="section-title">My Fees</div><div class="section-sub">FY26 fee pipeline</div></div>
-              <div class="toggle-group">
-                <button class="toggle-btn active" id="tbtn-awarded" onclick="setMyFeesMode('awarded')">Awarded</button>
-                <button class="toggle-btn" id="tbtn-proposed" onclick="setMyFeesMode('proposed')">Proposed</button>
-              </div>
-            </div>
-            <div><canvas id="ch-my-fees"></canvas></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Sub-panel: Partnerships -->
-      <div id="ws-partnerships" style="display:none">
-        <div class="portfolio-cards" id="portfolio-cards"><div class="empty-state" style="min-width:200px">Loading…</div></div>
-      </div>
-
-      <!-- Sub-panel: Events -->
-      <div id="ws-events" style="display:none">
-        <div class="table-wrap">
-          <table class="data-table" id="my-evt-tbl">
-            <thead><tr><th>Event</th><th>Date</th><th>Partner</th><th>Participants</th><th>Sat</th><th>NPS</th></tr></thead>
-            <tbody><tr><td colspan="6" class="empty-state">Loading…</td></tr></tbody>
-          </table>
-        </div>
-      </div>
     </div>
+    <div class="card" style="padding:16px 20px" id="ws-pipeline">
+      <div class="empty-state">Loading…</div>
+    </div>
+  </div>
+
+  <!-- OVERVIEW -->
+  <div class="tab-panel active" id="tab-overview">
 
     <!-- FY26 Goals section -->
     <div class="overview-goals-section mb-16">
@@ -469,22 +427,26 @@ button{cursor:pointer;font-family:inherit;}
       </div>
     </div>
 
-    <!-- Charts row 1: Pipeline by Stage + Fees for Service side by side -->
+    <!-- Charts row 1: Pipeline by Stage + Events by Month -->
     <div class="grid-2 mb-16">
       <div class="card chart-card">
         <div class="section-hd"><div class="section-title">Pipeline by Stage</div><div class="section-sub">Number of partnerships at each pipeline stage — click a bar to see the partner list</div></div>
         <div><canvas id="ch-pipeline"></canvas></div>
       </div>
       <div class="card chart-card">
+        <div class="section-hd"><div class="section-title">Events by Month</div><div class="section-sub">Professional learning sessions delivered over the past 12 months — click a month to see its events</div></div>
+        <div><canvas id="ch-evt-month"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Charts row 2: Fees for Service + FY26 Fees by Stage side by side -->
+    <div class="grid-2 mb-16">
+      <div class="card chart-card">
         <div class="section-hd">
           <div><div class="section-title">Fees for Service</div><div class="section-sub">Projected fees (in-progress partnerships) vs. actual awarded revenue by fiscal year — click a bar to drill into fee records</div></div>
         </div>
         <canvas id="ch-fees-fy" style="max-height:300px"></canvas>
       </div>
-    </div>
-
-    <!-- Charts row 2: FY26 Fees by Stage + Partners by State -->
-    <div class="grid-2 mb-16">
       <div class="card chart-card">
         <div class="section-hd">
           <div><div class="section-title">FY26 Fees by Stage</div><div class="section-sub">Total fee value per pipeline stage for FY26 — click a bar to view individual fee records</div></div>
@@ -492,17 +454,13 @@ button{cursor:pointer;font-family:inherit;}
         </div>
         <div><canvas id="ch-fees-stage"></canvas></div>
       </div>
+    </div>
+
+    <!-- Charts row 3: Partners by State -->
+    <div class="grid-2">
       <div class="card chart-card">
         <div class="section-hd"><div class="section-title">Partners by State</div><div class="section-sub">Geographic reach of partnerships — click a state to see its partner list</div></div>
         <div><canvas id="ch-states"></canvas></div>
-      </div>
-    </div>
-
-    <!-- Charts row 3: Events by Month -->
-    <div class="grid-2">
-      <div class="card chart-card">
-        <div class="section-hd"><div class="section-title">Events by Month</div><div class="section-sub">Professional learning sessions delivered over the past 12 months — click a month to see its events</div></div>
-        <div><canvas id="ch-evt-month"></canvas></div>
       </div>
     </div>
   </div>
@@ -1360,7 +1318,7 @@ function buildEventScores() {
 // ── Load ──────────────────────────────────────────────────────────────────────
 const FY26_START = '2025-12-31';
 const FY26_END   = '2027-01-01';
-const CACHE_KEY  = 'aiedu_dash_v24';
+const CACHE_KEY  = 'aiedu_dash_v25';
 const CACHE_TTL  = 3 * 60 * 1000; // 3 minutes
 
 function loadProgress(pct) {
@@ -1451,7 +1409,7 @@ function renderAll() {
   renderEvents();
   renderFeedback();
   renderSurveys();
-  if(LEAD) renderLeadPanel();
+  if(LEAD) renderWorkspacePipeline();
   addExpandButtons();
 }
 
@@ -2184,113 +2142,54 @@ function renderSurveys(f={}) {
   ).join('');
 }
 
-// ── Sr. Lead Panel ────────────────────────────────────────────────────────────
-let MY_FEES_MODE = 'awarded';
-
-function setMyFeesMode(mode) {
-  MY_FEES_MODE = mode;
-  document.getElementById('tbtn-awarded').classList.toggle('active', mode==='awarded');
-  document.getElementById('tbtn-proposed').classList.toggle('active', mode==='proposed');
-  renderLeadPanel();
-}
-
-function renderLeadPanel() {
+// ── My Workspace Pipeline ─────────────────────────────────────────────────────
+function renderWorkspacePipeline() {
   if(!LEAD) return;
-  document.getElementById('lead-panel').style.display='';
-  document.getElementById('lead-name-disp').textContent = LEAD.name;
-  document.getElementById('lead-lbl').textContent       = LEAD.name + "'s Workspace";
-
+  const el = document.getElementById('ws-pipeline'); if(!el) return;
   const teamNames = p => ga(p,FP.team).map(v=>typeof v==='object'?v.name:v);
-  const mine = D.partners.filter(p=>
-    teamNames(p).some(x=>x.trim().toLowerCase()===LEAD.name.trim().toLowerCase())
-  );
+  const mine = D.partners.filter(p=>teamNames(p).some(x=>x.trim().toLowerCase()===LEAD.name.trim().toLowerCase()));
 
-  // ── Personal KPIs ────────────────────────────────────────────────────────
-  const myFees = mine.reduce((s,p)=>s+(+gf(p,FP.fy26)||0),0);
-  const myEvts = D.events.filter(e=>
-    ga(e,FE.fac).some(x=>x===LEAD.id) || ga(e,FE.facDisp).some(x=>x===LEAD.name)
-  );
-  const mySats = myEvts.map(e=>(EVT_SCORES[e.id]||{}).sat).filter(v=>v!=null);
-  const avgSat = mySats.length ? mySats.reduce((a,b)=>a+b)/mySats.length : null;
+  const cats = [
+    { label:'Cultivation',       sub:'Relationship Building · Initial Contact · Early Exploration', stages:['Relationship Building','Initial Contact','Early Exploration'], color:'#3a6baf' },
+    { label:'Proposals',         sub:'Proposal/SOW Writing · SOW Sent',   stages:['Proposal/SOW Writing','SOW sent'], color:'#9b5ca5' },
+    { label:'Verbal Agreements', sub:'Verbal Agreement stage',             stages:['Verbal Agreement'],   color:'#e07c2a' },
+    { label:'Collaborations',    sub:'Active collaboration in progress',   stages:['Collaboration'],      color:'#22a878' },
+    { label:'MOUs Signed',       sub:'MOU Signed stage',                   stages:['MOU Signed'],         color:'#0d7a6b' },
+    { label:'MOUs Complete',     sub:'MOU Complete stage',                 stages:['MOU Complete'],       color:'#065040' },
+    { label:'Other / On Ice',    sub:'On Ice · Rejected',                  stages:['On Ice','Rejected'],  color:'#7da09a' },
+  ];
+  const total = mine.length || 1;
 
-  document.getElementById('my-prt-count').textContent = mine.length;
-  document.getElementById('my-fees-val').textContent  = f$(myFees);
-  document.getElementById('my-evt-count').textContent = myEvts.length;
-  document.getElementById('my-sat-val').textContent   = avgSat ? avgSat.toFixed(1) : '—';
-
-  // Store for KPI drill clicks
-  MY_DATA.mine = mine; MY_DATA.evts = myEvts;
-  const kpiWire = (id, fn) => { const el=document.getElementById(id)?.closest('.card'); if(el){el.style.cursor='pointer';el.onclick=fn;} };
-  kpiWire('my-prt-count', ()=>showDrill('My Partnerships', MY_DATA.mine.length+' total', MY_DATA.mine, COL_PRTS));
-  kpiWire('my-fees-val',  ()=>{ const r=MY_DATA.mine.filter(p=>(+gf(p,FP.fy26)||0)>0).sort((a,b)=>(+gf(b,FP.fy26)||0)-(+gf(a,FP.fy26)||0)); showDrill('My FY26 Awarded Fees', f$(r.reduce((s,p)=>s+(+gf(p,FP.fy26)||0),0)), r, COL_PRTS); });
-  kpiWire('my-evt-count', ()=>showDrill('My Events', MY_DATA.evts.length+' events', [...MY_DATA.evts].sort((a,b)=>(gf(b,FE.date)||'').localeCompare(gf(a,FE.date)||'')), COL_EVTS));
-  kpiWire('my-sat-val',   ()=>showDrill('My Satisfaction Scores', 'Events with scores', MY_DATA.evts.filter(e=>EVT_SCORES[e.id]?.sat!=null).sort((a,b)=>((EVT_SCORES[b.id]||{}).sat||0)-((EVT_SCORES[a.id]||{}).sat||0)), COL_EVTS));
-
-  // ── My Pipeline chart ────────────────────────────────────────────────────
-  const byStage = {};
-  mine.forEach(p=>{ const s=gf(p,FP.pipeline)||'Unknown'; byStage[s]=(byStage[s]||0)+1; });
-  const sLabels = STAGE_ORDER.filter(s=>byStage[s]);
-  mkChart('ch-my-pipeline','bar',sLabels,sLabels.map(s=>byStage[s]),
-    sLabels.map(s=>STAGE_COLORS[s]||'#999'),'Partnerships',
-    i=>drillTrackerStages([sLabels[i]],'My Pipeline: '+sLabels[i]));
-
-  // ── My Fees chart (Awarded / Proposed toggle) ────────────────────────────
-  const feeField = MY_FEES_MODE==='awarded' ? FP.fy26 : FP.proposed;
-  const feesByStage = {};
-  mine.forEach(p=>{ const s=gf(p,FP.pipeline)||'Unknown'; feesByStage[s]=(feesByStage[s]||0)+(+gf(p,feeField)||0); });
-  const fsL = STAGE_ORDER.filter(s=>feesByStage[s]);
-  const feeLabel = MY_FEES_MODE==='awarded' ? 'FY26 Awarded ($)' : 'FY26 Proposed ($)';
-  mkChart('ch-my-fees','bar',fsL,fsL.map(s=>feesByStage[s]),
-    fsL.map(s=>STAGE_COLORS[s]||'#999'), feeLabel,
-    i=>{ const stage=fsL[i]; const r=mine.filter(p=>(gf(p,FP.pipeline)||'Unknown')===stage&&(+gf(p,feeField)||0)>0); showDrill('My Fees — '+stage, feeLabel, r, COL_PRTS); });
-
-  const cardEl = document.getElementById('portfolio-cards');
-  cardEl.innerHTML = mine.length===0
-    ? '<div class="empty-state" style="min-width:200px">No partnerships assigned to you yet</div>'
-    : mine.map(p=>{
-        const stage = gf(p,FP.pipeline)||'Unknown';
-        const fy26  = +gf(p,FP.fy26)||0;
-        const sd=gf(p,FP.start), ed=gf(p,FP.end), days=daysTo(ed);
-        let pct=0;
-        if(sd&&ed){ pct=clamp((Date.now()-new Date(sd+' '))/(new Date(ed+' ')-new Date(sd+' '))*100,0,100); }
-        const stMap={Active:'pill-teal',Renewal:'pill-good',Proposal:'pill-warn',Negotiation:'pill-crit'};
-        return `<div class="portfolio-card" style="cursor:pointer" onclick="openPartnerProfile('${p.id}')">
-          <div class="pc-name">${gf(p,FP.name)||'—'}</div>
-          <div class="pc-row">
-            <span class="pill ${stMap[stage]||'pill-gray'}">${stage}</span>
-            <span style="font-weight:600">${f$(fy26)}</span>
-          </div>
-          <div class="pc-row">
-            <span style="font-size:11px;color:var(--ink3)">Ends ${fdt(ed)}</span>
-            ${daysChip(days)}
-          </div>
-          <div class="prog-wrap"><div class="prog-fill" style="width:${pct.toFixed(0)}%"></div></div>
-          <div class="next-action">→ ${nextAction(p)}</div>
-          <div class="pc-actions">
-            <button class="btn-sm primary" onclick="event.stopPropagation();openPrtDrawer('${p.id}')">Edit</button>
-            <button class="btn-sm" onclick="event.stopPropagation();showStageMenu(event,'${p.id}')">Stage ▾</button>
-          </div>
-        </div>`;
-      }).join('');
-
-  // My events (sorted by date desc)
-  const myEvtsSorted = [...myEvts].sort((a,b)=>(gf(b,FE.date)||'').localeCompare(gf(a,FE.date)||''));
-
-  const tbody = document.querySelector('#my-evt-tbl tbody');
-  tbody.innerHTML = myEvtsSorted.length===0 ? '<tr><td colspan="6" class="empty-state">No events found for you</td></tr>' :
-    myEvtsSorted.slice(0,20).map(r=>{
-      const name=gf(r,FE.nameT)||gf(r,FE.name)||'—';
-      const pids=ga(r,FE.partner);
-      const pn=pids.map(id=>(D.partners.find(p=>p.id===id)||{}).fields?.[FP.name]).filter(Boolean).join(', ')||'—';
-      return `<tr onclick="openEventModal('${r.id}')">
-        <td><span class="drill-link">${name}</span></td>
-        <td>${fdt(gf(r,FE.date))}</td>
-        <td style="font-size:12px;color:var(--ink2)">${pn}</td>
-        <td style="font-variant-numeric:tabular-nums">${gf(r,FE.parts)||'—'}</td>
-        <td>${scoreRing((EVT_SCORES[r.id]||{}).sat)}</td>
-        <td>${scoreRing((EVT_SCORES[r.id]||{}).nps!=null?(EVT_SCORES[r.id].nps+1):null,2)}</td>
-      </tr>`;
-    }).join('');
+  el.innerHTML = cats.map((c,i)=>{
+    const grpPrts = mine.filter(p=>c.stages.includes(gf(p,FP.pipeline)));
+    const n = grpPrts.length;
+    const pct = Math.min(100,Math.round(n/total*100));
+    const cardsHtml = n===0
+      ? '<div class="empty-state" style="padding:12px">No partnerships at this stage</div>'
+      : grpPrts.map(p=>{
+          const stage=gf(p,FP.pipeline)||'Unknown';
+          const fy26=+gf(p,FP.fy26)||0;
+          const sd=gf(p,FP.start), ed=gf(p,FP.end), days=daysTo(ed);
+          let pct2=0; if(sd&&ed){pct2=Math.min(100,Math.max(0,(Date.now()-new Date(sd+' '))/(new Date(ed+' ')-new Date(sd+' '))*100));}
+          const stMap={'MOU Signed':'pill-teal','MOU Complete':'pill-good','Verbal Agreement':'pill-warn'};
+          return `<div class="portfolio-card" style="cursor:pointer" onclick="openPartnerProfile('${p.id}')">
+            <div class="pc-name">${gf(p,FP.name)||'—'}</div>
+            <div class="pc-row"><span class="pill ${stMap[stage]||'pill-gray'}">${stage}</span><span style="font-weight:600">${f$(fy26)}</span></div>
+            <div class="pc-row"><span style="font-size:11px;color:var(--ink3)">Ends ${fdt(ed)}</span>${days!=null?daysChip(days):''}</div>
+            <div class="prog-wrap"><div class="prog-fill" style="width:${pct2.toFixed(0)}%"></div></div>
+            <div class="next-action">→ ${nextAction(p)}</div>
+          </div>`;
+        }).join('');
+    return `<div class="tracker-group" id="wstrk-${i}">
+      <div class="tracker-row" onclick="document.getElementById('wstrk-${i}').classList.toggle('open')">
+        <span class="tracker-toggle">▶</span>
+        <div class="tracker-label"><div class="tracker-lbl-main">${c.label}</div><div class="tracker-lbl-sub">${c.sub}</div></div>
+        <div class="tracker-bar-wrap"><div class="tracker-bar-fill" style="width:${pct}%;background:${c.color}"></div></div>
+        <div class="tracker-val">${n}</div>
+      </div>
+      <div class="tracker-expand"><div class="portfolio-cards" style="padding:12px 0 16px">${cardsHtml}</div></div>
+    </div>`;
+  }).join('');
 }
 
 // ── Drawers ───────────────────────────────────────────────────────────────────
@@ -2397,34 +2296,27 @@ document.getElementById('login-ok').addEventListener('click',()=>{
   document.getElementById('login-ov').classList.remove('open');
   document.getElementById('lead-btn').classList.add('active');
   document.getElementById('lead-lbl').textContent = LEAD.name + "'s Workspace";
-  renderLeadPanel();
+  document.getElementById('ws-nav-tab').style.display='';
+  document.getElementById('lead-name-disp').textContent = LEAD.name;
+  renderWorkspacePipeline();
   toast('Welcome, '+LEAD.name+'!','success');
-  switchTab('overview');
+  switchTab('workspace');
 });
 
 document.getElementById('login-cancel').addEventListener('click',()=>document.getElementById('login-ov').classList.remove('open'));
 
 document.getElementById('lead-logout').addEventListener('click',()=>{
   LEAD=null;
-  document.getElementById('lead-panel').style.display='none';
   document.getElementById('lead-btn').classList.remove('active');
   document.getElementById('lead-lbl').textContent='My Workspace';
+  document.getElementById('ws-nav-tab').style.display='none';
+  switchTab('overview');
   toast('Signed out','info');
 });
 
 document.getElementById('lead-btn').addEventListener('click',()=>{
-  if(LEAD){ document.getElementById('lead-logout').click(); }
+  if(LEAD){ switchTab('workspace'); }
   else { showLogin(); }
-});
-
-// ── My Workspace sub-tabs ─────────────────────────────────────────────────────
-const WS_PANELS = {overview:'ws-overview', partnerships:'ws-partnerships', events:'ws-events'};
-document.querySelectorAll('#ws-tabs [data-wstab]').forEach(btn=>{
-  btn.addEventListener('click',()=>{
-    const tab=btn.dataset.wstab;
-    document.querySelectorAll('#ws-tabs [data-wstab]').forEach(b=>b.classList.toggle('active',b===btn));
-    Object.entries(WS_PANELS).forEach(([k,id])=>{ document.getElementById(id).style.display=k===tab?'':'none'; });
-  });
 });
 
 // ── Tab nav ───────────────────────────────────────────────────────────────────
