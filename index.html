@@ -252,6 +252,18 @@ button{cursor:pointer;font-family:inherit;}
 .tracker-bar-wrap{flex:1;height:7px;background:var(--border);border-radius:4px;overflow:hidden;}
 .tracker-bar-fill{height:100%;border-radius:4px;transition:width .5s ease;}
 .tracker-val{width:80px;text-align:right;font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink);}
+/* Drill-down panel */
+#drill-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:350;justify-content:center;align-items:flex-start;padding:40px 16px 16px;}
+#drill-overlay.open{display:flex;}
+#drill-panel{background:var(--surface);border-radius:12px;width:100%;max-width:960px;max-height:calc(100vh - 56px);display:flex;flex-direction:column;box-shadow:0 24px 48px rgba(0,0,0,.25);}
+.drill-hd{display:flex;align-items:center;justify-content:space-between;padding:18px 24px;border-bottom:1px solid var(--border);flex-shrink:0;}
+.drill-body{overflow-y:auto;flex:1;}
+.stat-item{cursor:pointer;transition:background .12s;}
+.stat-item:hover{background:var(--surface2);}
+.okr-tile{cursor:pointer;transition:box-shadow .15s;}
+.okr-tile:hover{box-shadow:0 0 0 2px var(--teal);}
+.tracker-row{cursor:pointer;}
+.tracker-row:hover .tracker-bar-fill{filter:brightness(1.1);}
 /* Account profile modal */
 #acc-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:300;justify-content:center;align-items:flex-start;padding-top:60px;}
 #acc-overlay.open{display:flex;}
@@ -570,6 +582,27 @@ button{cursor:pointer;font-family:inherit;}
   </div>
 
 </main>
+
+<!-- Drill-down panel -->
+<div id="drill-overlay" onclick="if(event.target===this)closeDrill()">
+  <div id="drill-panel">
+    <div class="drill-hd">
+      <div>
+        <div class="section-title" id="drill-title">Detail</div>
+        <div class="section-sub" id="drill-sub"></div>
+      </div>
+      <button class="icon-btn" onclick="closeDrill()">✕</button>
+    </div>
+    <div class="drill-body">
+      <div class="table-wrap">
+        <table class="data-table" id="drill-tbl">
+          <thead id="drill-thead"></thead>
+          <tbody id="drill-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- Account profile modal -->
 <div id="acc-overlay">
@@ -899,6 +932,140 @@ function mkChartMulti(id, type, labels, datasets) {
   });
 }
 
+// ── Drill-down panel ─────────────────────────────────────────────────────────
+const COL_PRTS = [
+  {label:'Partner',   fn:r=>`<strong>${gf(r,FP.name)||'—'}</strong>`},
+  {label:'Stage',     fn:r=>stagePill(gf(r,FP.pipeline))},
+  {label:'State',     fn:r=>ga(r,FP.state).map(v=>typeof v==='object'?v.name:v).join(', ')||'—'},
+  {label:'FY26 Fees', fn:r=>`<span style="font-variant-numeric:tabular-nums">${f$(gf(r,FP.fy26))}</span>`},
+  {label:'Ends',      fn:r=>{const d=daysTo(gf(r,FP.end));return `${fdt(gf(r,FP.end))}${d!=null?' '+daysChip(d):''}`;} },
+  {label:'Team',      fn:r=>ga(r,FP.team).map(v=>typeof v==='object'?v.name:v).join(', ')||'—'},
+];
+const COL_EVTS = [
+  {label:'Event',        fn:r=>`<strong>${gf(r,FE.nameT)||gf(r,FE.name)||'—'}</strong>`},
+  {label:'Date',         fn:r=>fdt(gf(r,FE.date))},
+  {label:'Participants', fn:r=>gf(r,FE.parts)||'—'},
+  {label:'Sat',          fn:r=>scoreRing((EVT_SCORES[r.id]||{}).sat)},
+  {label:'NPS',          fn:r=>{const s=EVT_SCORES[r.id];return scoreRing(s?.nps!=null?s.nps+1:null,2);}},
+  {label:'Facilitator',  fn:r=>ga(r,FE.facDisp).join(', ')||'—'},
+];
+const COL_FEES = [
+  {label:'Partnership',  fn:r=>ga(r,FF.name).map(v=>typeof v==='object'?v.name:v).join(', ')||'—'},
+  {label:'FY',           fn:r=>gf(r,FF.fy)||'—'},
+  {label:'Amount',       fn:r=>`<span style="font-variant-numeric:tabular-nums">${f$(gf(r,FF.amount))}</span>`},
+  {label:'Stage',        fn:r=>{const s=ga(r,FF.pipeline).map(v=>typeof v==='object'?v.name:v).join('');return stagePill(s||null);}},
+  {label:'Team',         fn:r=>ga(r,FF.team).map(v=>typeof v==='object'?v.name:v).join(', ')||'—'},
+];
+
+function showDrill(title, sub, rows, cols) {
+  document.getElementById('drill-title').textContent = title;
+  document.getElementById('drill-sub').textContent   = sub||'';
+  document.getElementById('drill-thead').innerHTML   =
+    '<tr>'+cols.map(c=>`<th>${c.label}</th>`).join('')+'</tr>';
+  document.getElementById('drill-tbody').innerHTML   = rows.length===0
+    ? `<tr><td colspan="${cols.length}" class="empty-state">No records found</td></tr>`
+    : rows.map(r=>'<tr>'+cols.map(c=>`<td>${c.fn(r)}</td>`).join('')+'</tr>').join('');
+  document.getElementById('drill-overlay').classList.add('open');
+}
+function closeDrill(){ document.getElementById('drill-overlay').classList.remove('open'); }
+
+// Stat bar drill functions
+function drillAllPartners(){
+  showDrill('All Partners', D.partners.length+' total',
+    [...D.partners].sort((a,b)=>(gf(a,FP.name)||'').localeCompare(gf(b,FP.name)||'')), COL_PRTS);
+}
+function drillActive(){
+  const r=D.partners.filter(p=>gf(p,FP.pipeline)==='Active'||gf(p,FP.pipeline)==='Collaboration');
+  showDrill('Active Partnerships', r.length+' active', r, COL_PRTS);
+}
+function drillFY26Fees(){
+  const r=D.fees.filter(f=>gf(f,FF.fy)==='FY26').sort((a,b)=>(+gf(b,FF.amount)||0)-(+gf(a,FF.amount)||0));
+  showDrill('FY26 Fees for Service', f$(r.reduce((s,f)=>s+(+gf(f,FF.amount)||0),0))+' total', r, COL_FEES);
+}
+function drillAllEvents(){
+  showDrill('Events (FY26)', D.events.length+' events',
+    [...D.events].sort((a,b)=>(gf(b,FE.date)||'').localeCompare(gf(a,FE.date)||'')), COL_EVTS);
+}
+function drillParticipants(){
+  showDrill('Events by Participants', 'Sorted by attendance',
+    D.events.filter(e=>gf(e,FE.parts)).sort((a,b)=>(+gf(b,FE.parts)||0)-(+gf(a,FE.parts)||0)), COL_EVTS);
+}
+function drillNPS(){
+  showDrill('NPS by Event', 'Sorted highest to lowest',
+    D.events.filter(e=>EVT_SCORES[e.id]?.nps!=null)
+      .sort((a,b)=>((EVT_SCORES[b.id]||{}).nps||0)-((EVT_SCORES[a.id]||{}).nps||0)), COL_EVTS);
+}
+function drillSat(){
+  showDrill('Satisfaction by Event', 'Sorted highest to lowest',
+    D.events.filter(e=>EVT_SCORES[e.id]?.sat!=null)
+      .sort((a,b)=>((EVT_SCORES[b.id]||{}).sat||0)-((EVT_SCORES[a.id]||{}).sat||0)), COL_EVTS);
+}
+
+// OKR drill functions
+function drillComp(){
+  const fbBoth=D.feedback.filter(f=>gf(f,FFB.before)!=null&&gf(f,FFB.after)!=null);
+  const improved=fbBoth.filter(f=>(+gf(f,FFB.after)||0)>(+gf(f,FFB.before)||0)).length;
+  const cols=[
+    {label:'Session',    fn:r=>{const id=ga(r,FFB.event)[0];const ev=D.events.find(e=>e.id===id);return ev?`<strong>${gf(ev,FE.nameT)||gf(ev,FE.name)||id}</strong>`:'—';}},
+    {label:'Before',     fn:r=>fsc(gf(r,FFB.before))},
+    {label:'After',      fn:r=>fsc(gf(r,FFB.after))},
+    {label:'↑ Improved', fn:r=>{const b=+gf(r,FFB.before),a=+gf(r,FFB.after);return a>b?'<span style="color:var(--good)">✓ Yes</span>':'<span style="color:var(--ink3)">—</span>';}},
+    {label:'Sat',        fn:r=>fsc(gf(r,FFB.sat))},
+  ];
+  showDrill('Competency Improvement',`${improved} of ${fbBoth.length} respondents improved`,fbBoth,cols);
+}
+function drillMous(){
+  const r=D.partners.filter(p=>['MOU Signed','MOU Complete'].includes(gf(p,FP.pipeline)));
+  showDrill('Service MOUs',r.length+' of 15 — Signed or Complete',r,COL_PRTS);
+}
+function drillEdu(){
+  showDrill('Educators Trained — FY26','PL session participants',
+    [...D.events].sort((a,b)=>(gf(b,FE.date)||'').localeCompare(gf(a,FE.date)||'')),COL_EVTS);
+}
+function drillPeer(){
+  const mouStages=new Set(['MOU Signed','MOU Complete']);
+  const r=D.partners.filter(p=>{
+    const type=ga(p,FP.partType).map(v=>typeof v==='object'?v.name:v).join(',').toLowerCase();
+    return mouStages.has(gf(p,FP.pipeline))&&(type.includes('peer')||type.includes('org'));
+  });
+  showDrill('Peer Org Partnership MOUs',r.length+' of 5 target',r,COL_PRTS);
+}
+function drillCat(){
+  const r=(D.catalyst||[]).filter(r=>gf(r,FCAT.grant)!=null&&gf(r,FCAT.grant)!=='');
+  const cols=[
+    {label:'Org / Pathway',  fn:r=>gf(r,FCAT.pathway)||gf(r,FCAT.orgType)||'—'},
+    {label:'Grant Amount',   fn:r=>`<span style="font-variant-numeric:tabular-nums">${f$(gf(r,FCAT.grant))}</span>`},
+    {label:'Students',       fn:r=>gf(r,FCAT.students)||'—'},
+    {label:'Educators',      fn:r=>gf(r,FCAT.educators)||'—'},
+    {label:'State',          fn:r=>ga(r,FCAT.state).map(v=>typeof v==='object'?v.name:v).join(', ')||'—'},
+  ];
+  showDrill('Catalyst Awards',r.length+' of 10 awarded',r,cols);
+}
+function drillRev(){
+  const r=D.partners.filter(p=>(+gf(p,FP.fy26)||0)>0).sort((a,b)=>(+gf(b,FP.fy26)||0)-(+gf(a,FP.fy26)||0));
+  showDrill('Earned Revenue — FY26',f$(r.reduce((s,p)=>s+(+gf(p,FP.fy26)||0),0))+' total awarded',r,COL_PRTS);
+}
+function drillTrackerStages(stages,title){
+  const r=D.partners.filter(p=>stages.includes(gf(p,FP.pipeline)));
+  showDrill(title,r.length+' partnership'+(r.length!==1?'s':''),r,COL_PRTS);
+}
+
+// Wire stat bar + OKR tile clicks (called at boot, elements are static)
+function wireClickTargets(){
+  [['s-partners',drillAllPartners],['s-active',drillActive],['s-fees',drillFY26Fees],
+   ['s-events',drillAllEvents],['s-parts',drillParticipants],['s-nps',drillNPS],['s-sat',drillSat]]
+  .forEach(([id,fn])=>{
+    const el=document.getElementById(id)?.closest('.stat-item');
+    if(el) el.addEventListener('click',fn);
+  });
+  [['okr-comp-val',drillComp],['okr-mou-val',drillMous],['okr-edu-val',drillEdu],
+   ['okr-peer-val',drillPeer],['okr-cat-val',drillCat],['okr-rev-val',drillRev]]
+  .forEach(([id,fn])=>{
+    const el=document.getElementById(id)?.closest('.okr-tile');
+    if(el) el.addEventListener('click',fn);
+  });
+}
+
 // ── Build per-event score aggregates from feedback records ────────────────────
 function buildEventScores() {
   const map = {};
@@ -1138,32 +1305,35 @@ function renderSuccessTracker() {
 
   const cats = [
     { label:'Cultivation', sub:'Relationship Building · Initial Contact · Early Exploration',
-      n:count('Relationship Building','Initial Contact','Early Exploration'), color:'#3a6baf' },
+      stages:['Relationship Building','Initial Contact','Early Exploration'], color:'#3a6baf' },
     { label:'Proposals', sub:'Proposal/SOW Writing · SOW Sent',
-      n:count('Proposal/SOW Writing','SOW sent'), color:'#9b5ca5' },
+      stages:['Proposal/SOW Writing','SOW sent'], color:'#9b5ca5' },
     { label:'Verbal Agreements', sub:'Verbal Agreement stage',
-      n:count('Verbal Agreement'), color:'#e07c2a' },
+      stages:['Verbal Agreement'], color:'#e07c2a' },
     { label:'Collaborations', sub:'Active collaboration in progress',
-      n:count('Collaboration'), color:'#22a878' },
+      stages:['Collaboration'], color:'#22a878' },
     { label:'MOUs (Signed / Complete)', sub:'MOU Sent · MOU Signed · MOU Complete',
-      n:count('MOU Sent','MOU Signed','MOU Complete'), color:'#0d7a6b' },
+      stages:['MOU Sent','MOU Signed','MOU Complete'], color:'#0d7a6b' },
     { label:'Fees for Service (FY26)', sub:'Awarded revenue this fiscal year',
-      n:null, val:feeSum('MOU Sent','MOU Signed','MOU Complete','Verbal Agreement','Collaboration'),
-      target:900000, color:'#1a7a4a', isFee:true },
+      stages:['MOU Sent','MOU Signed','MOU Complete','Verbal Agreement','Collaboration'],
+      isFee:true, target:900000, color:'#1a7a4a' },
     { label:'Other / On Ice', sub:'On Ice · Rejected',
-      n:count('On Ice','Rejected'), color:'#7da09a' },
+      stages:['On Ice','Rejected'], color:'#7da09a' },
   ];
 
-  el.innerHTML = cats.map(c=>{
+  el.innerHTML = cats.map((c,i)=>{
+    const n = count(...c.stages);
     let pct, display;
     if(c.isFee){
-      pct = Math.min(100, Math.round(c.val/c.target*100));
-      display = f$(c.val);
+      const val = feeSum(...c.stages);
+      pct = Math.min(100, Math.round(val/c.target*100));
+      display = f$(val);
     } else {
-      pct = Math.min(100, Math.round(c.n/total*100));
-      display = c.n.toLocaleString();
+      pct = Math.min(100, Math.round(n/total*100));
+      display = n.toLocaleString();
     }
-    return `<div class="tracker-row">
+    const drillFn = c.isFee ? `drillRev()` : `drillTrackerStages(${JSON.stringify(c.stages)},${JSON.stringify(c.label)})`;
+    return `<div class="tracker-row" onclick="${drillFn}">
       <div class="tracker-label">
         <div class="tracker-lbl-main">${c.label}</div>
         <div class="tracker-lbl-sub">${c.sub}</div>
@@ -1836,6 +2006,7 @@ document.querySelectorAll('[data-fbtab]').forEach(btn=>{
 });
 
 // ── Boot ──────────────────────────────────────────────────────────────────────
+wireClickTargets();
 loadAll();
 </script>
 </body>
