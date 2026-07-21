@@ -338,6 +338,7 @@ button{cursor:pointer;font-family:inherit;}
     <button class="nav-tab" data-tab="contracts">Contracts</button>
     <button class="nav-tab" data-tab="events">Events</button>
     <button class="nav-tab" data-tab="feedback">Partner Feedback</button>
+    <button class="nav-tab" data-tab="content">Content</button>
     <button class="nav-tab" data-tab="workspace" id="ws-nav-tab">👤 My Workspace</button>
   </nav>
   <div class="topbar-actions">
@@ -664,6 +665,45 @@ button{cursor:pointer;font-family:inherit;}
     </div>
   </div>
 
+  <!-- CONTENT -->
+  <div class="tab-panel" id="tab-content">
+    <div class="mb-12">
+      <div class="section-title">Content</div>
+      <div class="section-sub">PL products (learning sequences) and individual sessions — your professional learning catalog</div>
+    </div>
+    <div class="flex gap-8 mb-16" id="content-subtabs">
+      <button class="btn-sm primary" data-ctab="products">PL Products</button>
+      <button class="btn-sm" data-ctab="sessions">PL Sessions</button>
+    </div>
+
+    <!-- PL Products view -->
+    <div id="ct-products-view">
+      <div class="section-hd mb-12">
+        <div></div>
+        <input class="form-input" id="f-plp-search" placeholder="Search products…" style="width:200px">
+      </div>
+      <div id="plp-list"><div class="empty-state">Loading…</div></div>
+    </div>
+
+    <!-- PL Sessions view -->
+    <div id="ct-sessions-view" style="display:none">
+      <div class="section-hd mb-12">
+        <div class="flex gap-8 items-center flex-wrap">
+          <select class="form-select" id="f-pls-status" style="width:auto"><option value="">All Statuses</option></select>
+          <select class="form-select" id="f-pls-format" style="width:auto"><option value="">All Formats</option></select>
+          <select class="form-select" id="f-pls-domain" style="width:auto"><option value="">All Domains</option></select>
+          <input class="form-input" id="f-pls-search" placeholder="Search sessions…" style="width:160px">
+        </div>
+      </div>
+      <div class="card table-wrap">
+        <table class="data-table" id="pls-tbl">
+          <thead><tr><th>#</th><th>Session Name</th><th>Product(s)</th><th>Format</th><th>Domain</th><th>Duration</th><th>Status</th></tr></thead>
+          <tbody><tr><td colspan="7" class="empty-state">Loading…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
 </main>
 
 <!-- Chart lightbox -->
@@ -797,7 +837,8 @@ const T = {
   acc:'tbliOUsLsV3k6hy8g', prt:'tbl9CLNpNz0oOfAzV', log:'tblA1wXyoO3pjeto5',
   fee:'tblgRodZdvORj3P9q', mou:'tbl0r7iGdBFEsqoJd', evt:'tblgLGSJhm0nB9Lhf',
   fb:'tblWTdC7kk80jfMOO',  srv:'tblmccdSXvckLRT5O', stf:'tblTngHWDZOIeIR0p',
-  cat:'tblk39heoW6mkzLYI', npsYr:'tblOo6xPKh95d9xpr'
+  cat:'tblk39heoW6mkzLYI', npsYr:'tblOo6xPKh95d9xpr',
+  plSess:'tblBLCqGBDdz6DiNV', plProd:'tbl4sM0EQWBNQNd51',
 };
 // NPS by Administration Year fields
 const FNPS = {
@@ -876,6 +917,36 @@ const FST = {
   name:'fldpmvWNm6cmygmVS', role:'fldtPyBVQFJyK0Pja',
   status:'fldqKfGLiTPAJp27T', type:'fldpOPwPNOf1gY3op'
 };
+// PL Sessions fields
+const FPLS = {
+  name:    'fld8hvIDF3bZ80VNk',  // Session Name
+  indiv:   'fldJrVCcWdmpmRriM',  // Individual PL Session (formula)
+  products:'fldPwShc7eRi0BHBy',  // Part of these PD Products (text)
+  pdType:  'fldDBqOqk2kWu8LXq',  // PD Type (from products) multipleSelects
+  desc:    'fldN8v9805EESrTWw',  // Description
+  link:    'fld6LMzhSfnTlox4w',  // Recording Link
+  num:     'fld9mLRWoD8FhwWcd',  // Session Number
+  dur:     'fldKbLJL2V4IARa6A',  // Duration (stored as seconds by Airtable)
+  status:  'fldFB0cXomGcwH7Gi',  // Dev Status
+  format:  'fldAkbz4nhoJxbVqz',  // Format
+  domain:  'fldM8v33SISrihSTv',  // Priority Domain
+  subDom:  'fldkhLJf10Ygmbf6Y',  // Sub-Domain Alignment
+  plProds: 'fldS4KBZtLK2thFkC',  // PL Products (record links)
+};
+// PL Products fields
+const FPLP = {
+  name:    'fldFXUGDtD4gEeKys',  // PL Product Name
+  nameSL:  'fld8m03jRVWYNSwuk',  // Name (singleLineText)
+  pdType:  'fldgYis0eePwYSFEq',  // PD Type (singleSelect)
+  roadmap: 'fldjA3koC6XCgkbMo',  // Roadmap Status
+  devStatus:'fldIXvgGNIFVGSoka', // Product Dev Status
+  audience:'fld18HSAiwB64Dwko',  // Audience
+  level:   'fld8pvAvRJOvteY3s',  // Level
+  sequence:'fldSJ3hUYFSYxzwBI',  // Sequence
+  cohorts: 'fld1Bge2HPAuvYOMm',  // Count (Cohorts)
+  durRoll: 'fldcXxA1xG99lALKD',  // Duration rollup (seconds)
+  sessions:'fldWerp5d6pFXq9Xh',  // PL Sessions (record links)
+};
 const FA = {
   name:  'fldJBHv9ShfZXRuWx',
   status:'fldvXTJgsMWfEAgPh',
@@ -906,7 +977,7 @@ const STAGE_ORDER = [
 ];
 
 // ── State ────────────────────────────────────────────────────────────────────
-let D = { partners:[], fees:[], mous:[], events:[], feedback:[], surveys:[], staff:[], catalyst:[], accounts:[], npsYears:[] };
+let D = { partners:[], fees:[], mous:[], events:[], feedback:[], surveys:[], staff:[], catalyst:[], accounts:[], npsYears:[], plSessions:[], plProducts:[] };
 let EVT_SCORES = {}; // eventId → { sat, facEff, objMet, before, after, nps }
 let LEAD = null;
 let CHARTS = {};
@@ -1378,7 +1449,7 @@ function buildEventScores() {
 // ── Load ──────────────────────────────────────────────────────────────────────
 const FY26_START = '2025-12-31';
 const FY26_END   = '2027-01-01';
-const CACHE_KEY  = 'aiedu_dash_v27';
+const CACHE_KEY  = 'aiedu_dash_v28';
 const CACHE_TTL  = 3 * 60 * 1000; // 3 minutes
 
 function loadProgress(pct) {
@@ -1408,7 +1479,10 @@ async function fetchFresh() {
   const fAcc = Object.values(FA);
   const fCat = Object.values(FCAT);
 
-  const [partners, fees, mous, staff, surveys, events, feedback, catalyst, accounts, npsYears] = await Promise.all([
+  const fPLS = Object.values(FPLS);
+  const fPLP = Object.values(FPLP);
+
+  const [partners, fees, mous, staff, surveys, events, feedback, catalyst, accounts, npsYears, plSessions, plProducts] = await Promise.all([
     atFetch(BASE, T.prt, fPrt),
     atFetch(BASE, T.fee, fFee, feeFilter),
     atFetch(BASE, T.mou, fMou),
@@ -1419,8 +1493,10 @@ async function fetchFresh() {
     atFetch(BASE, T.cat, fCat),
     atFetch(BASE, T.acc, fAcc),
     atFetch(BASE, T.npsYr, Object.values(FNPS)),
+    atFetch(BASE, T.plSess, fPLS),
+    atFetch(BASE, T.plProd, fPLP),
   ]);
-  return { partners, fees, mous, events, feedback, surveys, staff, catalyst, accounts, npsYears };
+  return { partners, fees, mous, events, feedback, surveys, staff, catalyst, accounts, npsYears, plSessions, plProducts };
 }
 
 async function loadAll() {
@@ -1469,6 +1545,7 @@ function renderAll() {
   renderEvents();
   renderFeedback();
   renderSurveys();
+  renderContent();
   if(LEAD){ renderWorkspacePipeline(); renderWorkspaceOps(); }
   addExpandButtons();
 }
@@ -2202,6 +2279,154 @@ function renderSurveys(f={}) {
   ).join('');
 }
 
+// ── Content Tab ───────────────────────────────────────────────────────────────
+function fmin(secs) {
+  if(secs==null||isNaN(+secs)||+secs<=0) return '—';
+  const m = Math.round(+secs/60);
+  if(m<60) return m+'min';
+  const h=Math.floor(m/60), r=m%60;
+  return h+'h'+(r?' '+r+'min':'');
+}
+
+function devStatusPill(s) {
+  if(!s) return '<span class="pill pill-gray">—</span>';
+  const sl = s.toLowerCase();
+  const cls = sl.includes('complet')||sl.includes('live')||sl.includes('done') ? 'pill-good'
+            : sl.includes('progress')||sl.includes('development') ? 'pill-warn'
+            : sl.includes('hold')||sl.includes('pause') ? 'pill-crit'
+            : 'pill-gray';
+  return `<span class="pill ${cls}">${s}</span>`;
+}
+
+function renderContent() {
+  renderPlProducts(document.getElementById('f-plp-search')?.value||'');
+  renderPlSessions();
+}
+
+function renderPlProducts(q='') {
+  const el=document.getElementById('plp-list'); if(!el) return;
+  const lc=q.toLowerCase();
+  let prods=D.plProducts.filter(p=>{
+    const n=gf(p,FPLP.name)||gf(p,FPLP.nameSL)||'';
+    return !lc||n.toLowerCase().includes(lc);
+  });
+  if(!prods.length){ el.innerHTML='<div class="empty-state">No PL products found</div>'; return; }
+
+  // Group by PD Type
+  const grouped={};
+  prods.forEach(p=>{ const t=gf(p,FPLP.pdType)||'Other'; (grouped[t]=grouped[t]||[]).push(p); });
+
+  el.innerHTML=Object.entries(grouped).map(([type,items])=>`
+    <div style="margin-bottom:20px">
+      <div class="ops-section-lbl" style="margin-bottom:8px">${type}</div>
+      ${items.map(p=>{
+        const name=gf(p,FPLP.name)||gf(p,FPLP.nameSL)||'—';
+        const status=gf(p,FPLP.devStatus)||gf(p,FPLP.roadmap)||'';
+        const level=gf(p,FPLP.level)||'';
+        const aud=ga(p,FPLP.audience).map(v=>typeof v==='object'?v.name:v).join(', ')||'';
+        const dur=gf(p,FPLP.durRoll);
+        const cohorts=+gf(p,FPLP.cohorts)||0;
+        const seq=gf(p,FPLP.sequence)||'';
+        const sessIds=ga(p,FPLP.sessions);
+        const sessCount=sessIds.length;
+        const linked=D.plSessions.filter(s=>sessIds.includes(s.id));
+        return `<div class="opp-account" id="plp-${p.id}">
+          <div class="opp-account-hd" onclick="togglePlp('${p.id}')">
+            <span class="opp-toggle">▶</span>
+            <span class="opp-name">${name}</span>
+            <div class="opp-acc-meta">
+              ${status?devStatusPill(status):''}
+              ${level?`<span class="pill pill-gray">${level}</span>`:''}
+              ${aud?`<span style="font-size:11px;color:var(--ink3)">${aud}</span>`:''}
+              ${dur?`<span style="font-size:11px;color:var(--ink3)">${fmin(dur)}</span>`:''}
+              <span style="font-size:11px;color:var(--ink3)">${sessCount} session${sessCount!==1?'s':''}</span>
+              ${cohorts?`<span style="font-size:11px;color:var(--ink3)">${cohorts} cohort${cohorts!==1?'s':''}</span>`:''}
+              ${seq?`<span class="pill pill-teal">${seq}</span>`:''}
+            </div>
+          </div>
+          <div class="opp-prt-list" style="padding:0 16px">
+            ${linked.length===0
+              ? '<div style="font-size:12px;color:var(--ink3);padding:12px 0">No linked sessions found</div>'
+              : linked.sort((a,b)=>(+gf(a,FPLS.num)||999)-(+gf(b,FPLS.num)||999)).map(s=>{
+                  const sName=gf(s,FPLS.name)||gf(s,FPLS.indiv)||'—';
+                  const sDur=gf(s,FPLS.dur);
+                  const sStat=gf(s,FPLS.status)||'';
+                  const sDom=gf(s,FPLS.domain)||'';
+                  const sLink=gf(s,FPLS.link);
+                  const sNum=gf(s,FPLS.num);
+                  return `<div style="display:flex;align-items:flex-start;gap:12px;padding:9px 0;border-bottom:1px solid var(--border);font-size:13px">
+                    <span style="color:var(--ink3);font-size:11px;min-width:22px;text-align:right;flex-shrink:0;margin-top:2px">${sNum!=null?sNum:'—'}</span>
+                    <div style="flex:1;min-width:0">
+                      <div style="font-weight:500;color:var(--ink)">${sName}</div>
+                      <div style="font-size:11px;color:var(--ink3);margin-top:2px;display:flex;gap:10px;flex-wrap:wrap">
+                        ${sDom?`<span>${sDom}</span>`:''}
+                        ${sDur?`<span>${fmin(sDur)}</span>`:''}
+                        ${sLink?`<a href="${sLink}" target="_blank" style="color:var(--teal)">Recording ↗</a>`:''}
+                      </div>
+                    </div>
+                    ${devStatusPill(sStat)}
+                  </div>`;
+                }).join('')
+            }
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+  `).join('');
+}
+
+function togglePlp(id){ document.getElementById('plp-'+id)?.classList.toggle('open'); }
+
+function renderPlSessions(f={}) {
+  const tbody=document.querySelector('#pls-tbl tbody'); if(!tbody) return;
+  const statusEl=document.getElementById('f-pls-status');
+  const formatEl=document.getElementById('f-pls-format');
+  const domainEl=document.getElementById('f-pls-domain');
+  if(statusEl){
+    const opts=[...new Set(D.plSessions.map(s=>gf(s,FPLS.status)).filter(Boolean))].sort();
+    const cur=f.status||statusEl.value;
+    statusEl.innerHTML='<option value="">All Statuses</option>'+opts.map(s=>`<option${s===cur?' selected':''}>${s}</option>`).join('');
+  }
+  if(formatEl){
+    const opts=[...new Set(D.plSessions.map(s=>gf(s,FPLS.format)).filter(Boolean))].sort();
+    const cur=f.format||formatEl.value;
+    formatEl.innerHTML='<option value="">All Formats</option>'+opts.map(s=>`<option${s===cur?' selected':''}>${s}</option>`).join('');
+  }
+  if(domainEl){
+    const opts=[...new Set(D.plSessions.map(s=>gf(s,FPLS.domain)).filter(Boolean))].sort();
+    const cur=f.domain||domainEl.value;
+    domainEl.innerHTML='<option value="">All Domains</option>'+opts.map(s=>`<option${s===cur?' selected':''}>${s}</option>`).join('');
+  }
+  let rows=D.plSessions.filter(s=>gf(s,FPLS.name)||gf(s,FPLS.indiv));
+  if(f.status) rows=rows.filter(r=>gf(r,FPLS.status)===f.status);
+  if(f.format) rows=rows.filter(r=>gf(r,FPLS.format)===f.format);
+  if(f.domain) rows=rows.filter(r=>gf(r,FPLS.domain)===f.domain);
+  if(f.search){ const q=f.search.toLowerCase(); rows=rows.filter(r=>(gf(r,FPLS.name)||gf(r,FPLS.indiv)||'').toLowerCase().includes(q)); }
+  rows.sort((a,b)=>{
+    const na=+gf(a,FPLS.num)||Infinity, nb=+gf(b,FPLS.num)||Infinity;
+    return na!==nb ? na-nb : (gf(a,FPLS.name)||'').localeCompare(gf(b,FPLS.name)||'');
+  });
+  tbody.innerHTML=rows.length===0?'<tr><td colspan="7" class="empty-state">No sessions found</td></tr>':
+    rows.map(r=>{
+      const name=gf(r,FPLS.name)||gf(r,FPLS.indiv)||'—';
+      const prods=gf(r,FPLS.products)||'—';
+      const link=gf(r,FPLS.link);
+      const num=gf(r,FPLS.num);
+      const subDoms=ga(r,FPLS.subDom).map(v=>typeof v==='object'?v.name:v);
+      return `<tr>
+        <td style="color:var(--ink3);font-size:11px;font-variant-numeric:tabular-nums">${num!=null?num:'—'}</td>
+        <td><strong>${name}</strong>${link?` <a href="${link}" target="_blank" style="font-size:11px;color:var(--teal);margin-left:6px">Recording ↗</a>`:''}
+          ${subDoms.length?`<div style="font-size:10px;color:var(--ink3);margin-top:2px">${subDoms.join(' · ')}</div>`:''}
+        </td>
+        <td style="font-size:12px;color:var(--ink2);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${prods}">${prods}</td>
+        <td>${gf(r,FPLS.format)||'—'}</td>
+        <td>${gf(r,FPLS.domain)||'—'}</td>
+        <td style="font-size:12px;font-variant-numeric:tabular-nums">${fmin(gf(r,FPLS.dur))}</td>
+        <td>${devStatusPill(gf(r,FPLS.status))}</td>
+      </tr>`;
+    }).join('');
+}
+
 // ── My Workspace Pipeline ─────────────────────────────────────────────────────
 function renderWorkspacePipeline() {
   if(!LEAD) return;
@@ -2530,7 +2755,7 @@ document.getElementById('theme-btn').addEventListener('click',()=>{
 
 // ── Refresh ───────────────────────────────────────────────────────────────────
 document.getElementById('refresh-btn').addEventListener('click',()=>{
-  D={partners:[],fees:[],mous:[],events:[],feedback:[],surveys:[],staff:[]};
+  D={partners:[],fees:[],mous:[],events:[],feedback:[],surveys:[],staff:[],plSessions:[],plProducts:[]};
   EVT_SCORES={};
   try { localStorage.removeItem(CACHE_KEY); } catch(e) {}
   loadAll().then(()=>toast('Refreshed','info'));
@@ -2583,8 +2808,35 @@ document.querySelectorAll('#evt-date-filter [data-evtdate]').forEach(btn=>{
   });
 });
 wire(['f-season'],f=>renderSurveys(f),()=>({season:document.getElementById('f-season').value}));
+wire(['f-pls-status','f-pls-format','f-pls-domain','f-pls-search'],renderPlSessions,()=>({
+  status:document.getElementById('f-pls-status').value,
+  format:document.getElementById('f-pls-format').value,
+  domain:document.getElementById('f-pls-domain').value,
+  search:document.getElementById('f-pls-search').value,
+}));
+const plpSearch=document.getElementById('f-plp-search');
+if(plpSearch){ plpSearch.addEventListener('input',()=>renderPlProducts(plpSearch.value)); }
 const oppSearch=document.getElementById('opp-search');
 if(oppSearch){ oppSearch.addEventListener('input',()=>renderOpportunities(oppSearch.value, false, 'opp-list')); }
+
+// ── Content subtabs ───────────────────────────────────────────────────────────
+document.querySelectorAll('[data-ctab]').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    const tab=btn.dataset.ctab;
+    document.getElementById('ct-products-view').style.display = tab==='products'?'':'none';
+    document.getElementById('ct-sessions-view').style.display = tab==='sessions'?'':'none';
+    document.querySelectorAll('[data-ctab]').forEach(b=>{
+      b.classList.toggle('primary', b.dataset.ctab===tab);
+    });
+    if(tab==='sessions') renderPlSessions({
+      status:document.getElementById('f-pls-status').value,
+      format:document.getElementById('f-pls-format').value,
+      domain:document.getElementById('f-pls-domain').value,
+      search:document.getElementById('f-pls-search').value,
+    });
+    if(tab==='products') renderPlProducts(document.getElementById('f-plp-search').value||'');
+  });
+});
 
 // ── Feedback subtabs ──────────────────────────────────────────────────────────
 document.querySelectorAll('[data-fbtab]').forEach(btn=>{
