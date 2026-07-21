@@ -373,11 +373,19 @@ button{cursor:pointer;font-family:inherit;}
       </div>
     </div>
 
+    <!-- My Pipeline -->
+    <div class="section-hd mb-8">
+      <div><div class="section-title">My Pipeline</div><div class="section-sub">Your partnerships by stage — click a row to expand</div></div>
+    </div>
+    <div class="card mb-16" style="padding:16px 20px" id="ws-pipeline">
+      <div class="empty-state">Loading…</div>
+    </div>
+
     <!-- Weekly Ops Panel -->
     <div class="grid-2 mb-16" id="ws-ops">
       <div class="card" style="padding:16px 20px">
         <div class="section-title mb-4">This Week</div>
-        <div class="section-sub mb-12">Upcoming renewals and events requiring your attention</div>
+        <div class="section-sub mb-12">Upcoming renewals, events, and missing flags requiring your attention</div>
         <div id="ws-reminders"><div class="empty-state">Loading…</div></div>
       </div>
       <div class="card" style="padding:16px 20px">
@@ -385,14 +393,6 @@ button{cursor:pointer;font-family:inherit;}
         <div class="section-sub mb-12">Missing fields on your partnerships — click any item to open and update</div>
         <div id="ws-missing"><div class="empty-state">Loading…</div></div>
       </div>
-    </div>
-
-    <!-- My Pipeline -->
-    <div class="section-hd mb-8">
-      <div><div class="section-title">My Pipeline</div><div class="section-sub">Your partnerships by stage — click a row to expand</div></div>
-    </div>
-    <div class="card" style="padding:16px 20px" id="ws-pipeline">
-      <div class="empty-state">Loading…</div>
     </div>
   </div>
 
@@ -2531,6 +2531,31 @@ function renderWorkspaceOps() {
       <span class="ops-item-action">Open →</span>
     </div>`).join('');
   }
+  // Missing flags checklist
+  const flagItems = [];
+  mine.forEach(p=>{
+    const name=gf(p,FP.name)||'Unnamed';
+    if(!gf(p,FP.end))        flagItems.push({name, reason:'Missing end date',   id:p.id, done:false});
+    if(!(+gf(p,FP.fy26)||0)) flagItems.push({name, reason:'Missing FY26 fees', id:p.id, done:false});
+  });
+  D.mous.filter(m=>ga(m,FM.partner).some(n=>mine.some(p=>gf(p,FP.name)===n))).forEach(m=>{
+    if(gf(m,FM.signed)&&!gf(m,FM.dateSigned)){
+      const n=ga(m,FM.partner).join(', ')||'MOU';
+      flagItems.push({name:n, reason:'MOU signed — no date recorded', id:null, done:false});
+    }
+  });
+  if(flagItems.length){
+    remHtml += `<div class="ops-section-lbl" style="margin-top:14px">Missing Flags</div>`;
+    remHtml += flagItems.map(f=>`<div class="ops-item" onclick="${f.id?`openPartnerProfile('${f.id}')`:''}" style="${!f.id?'cursor:default':''}">
+      <div style="width:14px;height:14px;border:2px solid var(--warn);border-radius:3px;flex-shrink:0;margin-top:2px"></div>
+      <div class="ops-item-body">
+        <div class="ops-item-name">${f.name}</div>
+        <div class="ops-item-meta">${f.reason}</div>
+      </div>
+      ${f.id?'<span class="ops-item-action">Fix →</span>':''}
+    </div>`).join('');
+  }
+
   remEl.innerHTML = remHtml || '<div class="empty-state">Nothing due this week</div>';
 
   // ── Data quality ──────────────────────────────────────────────────────
