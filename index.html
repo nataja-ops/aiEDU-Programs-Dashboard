@@ -1113,7 +1113,7 @@ function drillMous(){
     const ds=gf(m,FM.dateSigned); if(!ds) return false;
     return new Date(ds.slice(0,10)+'T00:00:00').getFullYear()===2026 && ga(m,FM.partner).length>0;
   };
-  const r=D.mous.filter(isFy26Mou);
+  const r=D.mous.filter(isFy26Mou).sort((a,b)=>(gf(b,FM.dateSigned)||'').localeCompare(gf(a,FM.dateSigned)||''));
   showDrill('Service MOUs — FY26',r.length+' of 15 signed in 2026',r,COL_MOU);
 }
 function drillEdu(){
