@@ -229,6 +229,40 @@ button{cursor:pointer;font-family:inherit;}
 .skel{background:linear-gradient(90deg,var(--surface2) 25%,var(--surface3) 50%,var(--surface2) 75%);background-size:200% 100%;animation:sk 1.5s infinite;border-radius:4px;}
 @keyframes sk{0%{background-position:200% 0}100%{background-position:-200% 0}}
 @media(max-width:700px){#nav{justify-content:flex-start;}.logo span{display:none;}}
+/* Opportunities view */
+.opp-account{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:8px;overflow:hidden;}
+.opp-account-hd{display:flex;align-items:center;gap:10px;padding:12px 16px;cursor:pointer;user-select:none;transition:background .15s;}
+.opp-account-hd:hover{background:var(--surface2);}
+.opp-toggle{font-size:10px;color:var(--ink3);width:14px;flex-shrink:0;transition:transform .2s;}
+.opp-account.open .opp-toggle{transform:rotate(90deg);}
+.opp-name{font-weight:600;font-size:14px;flex:1;color:var(--ink);}
+.opp-acc-meta{display:flex;align-items:center;gap:12px;font-size:12px;color:var(--ink3);flex-wrap:wrap;}
+.opp-prt-list{display:none;border-top:1px solid var(--border);background:var(--surface2);}
+.opp-account.open .opp-prt-list{display:block;}
+.opp-prt-row{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr;align-items:center;gap:8px;padding:9px 16px 9px 42px;border-bottom:1px solid var(--border);font-size:12px;}
+.opp-prt-row:last-child{border-bottom:none;}
+.opp-prt-row:hover{background:var(--surface3);}
+.opp-prt-hd{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--ink3);padding:6px 16px 6px 42px;display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr;gap:8px;border-bottom:1px solid var(--border);}
+/* Success tracker */
+.tracker-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);}
+.tracker-row:last-child{border-bottom:none;}
+.tracker-label{width:220px;flex-shrink:0;}
+.tracker-lbl-main{font-size:13px;color:var(--ink);font-weight:500;}
+.tracker-lbl-sub{font-size:11px;color:var(--ink3);}
+.tracker-bar-wrap{flex:1;height:7px;background:var(--border);border-radius:4px;overflow:hidden;}
+.tracker-bar-fill{height:100%;border-radius:4px;transition:width .5s ease;}
+.tracker-val{width:80px;text-align:right;font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink);}
+/* Account profile modal */
+#acc-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:300;justify-content:center;align-items:flex-start;padding-top:60px;}
+#acc-overlay.open{display:flex;}
+#acc-modal{background:var(--surface);border-radius:12px;padding:28px;width:560px;max-width:calc(100vw - 32px);max-height:80vh;overflow-y:auto;box-shadow:0 24px 48px rgba(0,0,0,.25);}
+.acc-field-row{display:flex;justify-content:space-between;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--border);font-size:13px;}
+.acc-field-row:last-child{border-bottom:none;}
+.acc-field-key{color:var(--ink3);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;width:160px;flex-shrink:0;}
+.acc-field-val{color:var(--ink);flex:1;text-align:right;}
+.acc-prt-sub{margin-top:16px;}
+.acc-prt-item{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;}
+.acc-prt-item:last-child{border-bottom:none;}
 </style>
 </head>
 <body>
@@ -388,6 +422,35 @@ button{cursor:pointer;font-family:inherit;}
         <div><canvas id="ch-evt-month"></canvas></div>
       </div>
     </div>
+
+    <!-- Success Tracker -->
+    <div class="mt-20">
+      <div class="section-hd">
+        <div><div class="section-title">Success Tracker</div><div class="section-sub">Program progress by pipeline category</div></div>
+      </div>
+      <div class="card" style="padding:16px 20px" id="success-tracker">
+        <div class="empty-state">Loading…</div>
+      </div>
+    </div>
+
+    <!-- Fees for Service Chart -->
+    <div class="mt-20">
+      <div class="section-hd">
+        <div><div class="section-title">Fees for Service</div><div class="section-sub">Projected vs. Actual by fiscal year</div></div>
+      </div>
+      <div class="card chart-card">
+        <canvas id="ch-fees-fy" style="max-height:300px"></canvas>
+      </div>
+    </div>
+
+    <!-- Opportunities View -->
+    <div class="mt-20">
+      <div class="section-hd">
+        <div><div class="section-title">Opportunities</div><div class="section-sub">All accounts and their partnerships</div></div>
+        <input class="form-input" id="opp-search" placeholder="Search accounts…" style="width:200px">
+      </div>
+      <div id="opp-list"><div class="empty-state">Loading…</div></div>
+    </div>
   </div>
 
   <!-- PARTNERSHIPS -->
@@ -508,6 +571,17 @@ button{cursor:pointer;font-family:inherit;}
 
 </main>
 
+<!-- Account profile modal -->
+<div id="acc-overlay">
+  <div id="acc-modal">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+      <div class="section-title" id="acc-modal-title">Account</div>
+      <button class="icon-btn" onclick="closeAccModal()">✕</button>
+    </div>
+    <div id="acc-modal-body"></div>
+  </div>
+</div>
+
 <!-- Drawer -->
 <div id="drawer-overlay"></div>
 <aside id="drawer">
@@ -581,7 +655,8 @@ const FP = {
   end:'fldmO78r4NxmHW8wn', missing:'fldNc1hZCyd0GiKwF', team:'fldl6l6te8tgmiENL',
   services:'fldqOMuPRf0UojJEZ', totalFees:'fldQU0pTL7oL8SarE', fy26:'fld6oXfY8rqrcqtJM',
   state:'fldYAFg4ulmMnfsqh', cultStart:'fldqhva6jf1Lm6dSx', notes:'fldokpiDBitEeKtgb',
-  partType:'fld9PMifRyYVooTob', proposed:'fld1X2wDQlOPKjBmB'
+  partType:'fld9PMifRyYVooTob', proposed:'fld1X2wDQlOPKjBmB',
+  account:'fldgZ6JHVCrnl99ng'
 };
 const FF = {
   name:'fldm0J2jZ5FNoeij4', amount:'fld74B4jxPOYfABSr', fy:'fldueOo2EOiAGsWev',
@@ -628,6 +703,14 @@ const FST = {
   name:'fldpmvWNm6cmygmVS', role:'fldtPyBVQFJyK0Pja',
   status:'fldqKfGLiTPAJp27T', type:'fldpOPwPNOf1gY3op'
 };
+const FA = {
+  name:  'fldJBHv9ShfZXRuWx',
+  status:'fldvXTJgsMWfEAgPh',
+  type:  'fldp4GYNPYU9ia8l3',
+  state: 'fldW3lf1RMIJ7LcBF',
+  links: 'fldAdL4BgAkiIxril',
+  team:  'fldkC5IHslxPiVlWa',
+};
 // Real pipeline stages from Airtable singleSelect schema
 const STAGE_COLORS = {
   'Relationship Building':'#7da09a',
@@ -650,7 +733,7 @@ const STAGE_ORDER = [
 ];
 
 // ── State ────────────────────────────────────────────────────────────────────
-let D = { partners:[], fees:[], mous:[], events:[], feedback:[], surveys:[], staff:[] };
+let D = { partners:[], fees:[], mous:[], events:[], feedback:[], surveys:[], staff:[], catalyst:[], accounts:[] };
 let EVT_SCORES = {}; // eventId → { sat, facEff, objMet, before, after, nps }
 let LEAD = null;
 let CHARTS = {};
@@ -789,6 +872,33 @@ function refreshChartColors() {
   });
 }
 
+function mkChartMulti(id, type, labels, datasets) {
+  if(CHARTS[id]){CHARTS[id].destroy();delete CHARTS[id];}
+  const el=document.getElementById(id); if(!el) return;
+  const ink3=cssVar('--ink3'), border=cssVar('--border');
+  CHARTS[id]=new Chart(el,{
+    type,
+    data:{labels,datasets:datasets.map(d=>({
+      label:d.label, data:d.data,
+      backgroundColor:d.color,
+      borderColor:type==='line'?d.color:'transparent',
+      borderWidth:type==='line'?2:0,
+      borderRadius:4,
+    }))},
+    options:{
+      responsive:true, maintainAspectRatio:true,
+      plugins:{
+        legend:{display:true,position:'bottom',labels:{color:ink3,font:{size:11},boxWidth:10}},
+        tooltip:{callbacks:{label:ctx=>' '+f$(ctx.raw)}}
+      },
+      scales:{
+        x:{ticks:{color:ink3,font:{size:11}},grid:{display:false}},
+        y:{ticks:{color:ink3,font:{size:11},callback:v=>f$(v)},grid:{color:border},beginAtZero:true}
+      }
+    }
+  });
+}
+
 // ── Build per-event score aggregates from feedback records ────────────────────
 function buildEventScores() {
   const map = {};
@@ -817,7 +927,7 @@ function buildEventScores() {
 // ── Load ──────────────────────────────────────────────────────────────────────
 const FY26_START = '2025-12-31';
 const FY26_END   = '2027-01-01';
-const CACHE_KEY  = 'aiedu_dash_v4';
+const CACHE_KEY  = 'aiedu_dash_v5';
 const CACHE_TTL  = 3 * 60 * 1000; // 3 minutes
 
 function loadProgress(pct) {
@@ -841,13 +951,13 @@ async function fetchFresh() {
   const fEvt = Object.values(FE);
   const fFb  = Object.values(FFB);
 
-  // Filter events and fees to FY26 at the API level — cuts record count dramatically
+  // Filter events to FY26; fees to FY25+FY26 for multi-year chart
   const evtFilter = { filterByFormula: `AND(IS_AFTER({${FE.date}},'${FY26_START}'),IS_BEFORE({${FE.date}},'${FY26_END}'))` };
-  const feeFilter = { filterByFormula: `{${FF.fy}}='FY26'` };
-
+  const feeFilter = { filterByFormula: `OR({${FF.fy}}='FY26',{${FF.fy}}='FY25')` };
+  const fAcc = Object.values(FA);
   const fCat = Object.values(FCAT);
 
-  const [partners, fees, mous, staff, surveys, events, feedback, catalyst] = await Promise.all([
+  const [partners, fees, mous, staff, surveys, events, feedback, catalyst, accounts] = await Promise.all([
     atFetch(BASE, T.prt, fPrt),
     atFetch(BASE, T.fee, fFee, feeFilter),
     atFetch(BASE, T.mou, fMou),
@@ -856,8 +966,9 @@ async function fetchFresh() {
     atFetch(BASE, T.evt, fEvt, evtFilter),
     atFetch(BASE, T.fb,  fFb),
     atFetch(BASE, T.cat, fCat),
+    atFetch(BASE, T.acc, fAcc),
   ]);
-  return { partners, fees, mous, events, feedback, surveys, staff, catalyst };
+  return { partners, fees, mous, events, feedback, surveys, staff, catalyst, accounts };
 }
 
 async function loadAll() {
@@ -897,6 +1008,9 @@ async function loadAll() {
 function renderAll() {
   renderStats();
   renderOverview();
+  renderSuccessTracker();
+  renderFeesChart();
+  renderOpportunities(document.getElementById('opp-search')?.value||'');
   renderPartnerships();
   renderContracts();
   renderEvents();
@@ -1013,6 +1127,191 @@ function renderOverview() {
     mos.map(m=>new Date(m+'-01').toLocaleDateString('en-US',{month:'short',year:'2-digit'})),
     mos.map(m=>byMo[m]),[cssVar('--teal')],'Events');
 }
+
+// ── Success Tracker ───────────────────────────────────────────────────────────
+function renderSuccessTracker() {
+  const el = document.getElementById('success-tracker'); if(!el) return;
+  const ps = D.partners;
+  const count = (...stages) => ps.filter(p=>stages.includes(gf(p,FP.pipeline))).length;
+  const feeSum = (...stages) => ps.filter(p=>stages.includes(gf(p,FP.pipeline))).reduce((s,p)=>s+(+gf(p,FP.fy26)||0),0);
+  const total = ps.length || 1;
+
+  const cats = [
+    { label:'Cultivation', sub:'Relationship Building · Initial Contact · Early Exploration',
+      n:count('Relationship Building','Initial Contact','Early Exploration'), color:'#3a6baf' },
+    { label:'Proposals', sub:'Proposal/SOW Writing · SOW Sent',
+      n:count('Proposal/SOW Writing','SOW sent'), color:'#9b5ca5' },
+    { label:'Verbal Agreements', sub:'Verbal Agreement stage',
+      n:count('Verbal Agreement'), color:'#e07c2a' },
+    { label:'Collaborations', sub:'Active collaboration in progress',
+      n:count('Collaboration'), color:'#22a878' },
+    { label:'MOUs (Signed / Complete)', sub:'MOU Sent · MOU Signed · MOU Complete',
+      n:count('MOU Sent','MOU Signed','MOU Complete'), color:'#0d7a6b' },
+    { label:'Fees for Service (FY26)', sub:'Awarded revenue this fiscal year',
+      n:null, val:feeSum('MOU Sent','MOU Signed','MOU Complete','Verbal Agreement','Collaboration'),
+      target:900000, color:'#1a7a4a', isFee:true },
+    { label:'Other / On Ice', sub:'On Ice · Rejected',
+      n:count('On Ice','Rejected'), color:'#7da09a' },
+  ];
+
+  el.innerHTML = cats.map(c=>{
+    let pct, display;
+    if(c.isFee){
+      pct = Math.min(100, Math.round(c.val/c.target*100));
+      display = f$(c.val);
+    } else {
+      pct = Math.min(100, Math.round(c.n/total*100));
+      display = c.n.toLocaleString();
+    }
+    return `<div class="tracker-row">
+      <div class="tracker-label">
+        <div class="tracker-lbl-main">${c.label}</div>
+        <div class="tracker-lbl-sub">${c.sub}</div>
+      </div>
+      <div class="tracker-bar-wrap">
+        <div class="tracker-bar-fill" style="width:${pct}%;background:${c.color}"></div>
+      </div>
+      <div class="tracker-val">${display}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── Fees for Service Chart ────────────────────────────────────────────────────
+function renderFeesChart() {
+  const ACTUAL_STAGES  = new Set(['MOU Signed','MOU Complete']);
+  const ACTIVE_STAGES  = new Set(['Verbal Agreement','Collaboration','MOU Sent']);
+  const years = ['FY25','FY26'];
+
+  const actual={}, projected={};
+  years.forEach(y=>{actual[y]=0;projected[y]=0;});
+
+  D.fees.forEach(f=>{
+    const fy = gf(f,FF.fy); if(!years.includes(fy)) return;
+    const amt = +gf(f,FF.amount)||0; if(!amt) return;
+    const pipe = ga(f,FF.pipeline).map(v=>typeof v==='object'?v.name:v).join('');
+    if(ACTUAL_STAGES.has(pipe)||ACTIVE_STAGES.has(pipe)) actual[fy]+=amt;
+    else projected[fy]+=amt;
+  });
+
+  mkChartMulti('ch-fees-fy','bar',years,[
+    {label:'Projected',  data:years.map(y=>projected[y]), color:'rgba(13,122,107,0.35)'},
+    {label:'Actual/Awarded', data:years.map(y=>actual[y]),    color:'rgba(13,122,107,0.9)'},
+  ]);
+}
+
+// ── Opportunities View ────────────────────────────────────────────────────────
+function renderOpportunities(q='') {
+  const el=document.getElementById('opp-list'); if(!el) return;
+  const lc=q.toLowerCase();
+  let accs = D.accounts.slice().sort((a,b)=>(gf(a,FA.name)||'').localeCompare(gf(b,FA.name)||''));
+  if(lc) accs=accs.filter(a=>(gf(a,FA.name)||'').toLowerCase().includes(lc));
+
+  if(!accs.length){el.innerHTML='<div class="empty-state">No accounts found</div>';return;}
+
+  // Build a map: accountId → [partner records]
+  const accPrts = {};
+  D.partners.forEach(p=>{
+    ga(p,FP.account).forEach(aId=>{
+      (accPrts[aId]=accPrts[aId]||[]).push(p);
+    });
+  });
+
+  el.innerHTML = accs.map((a,i)=>{
+    const id=a.id;
+    const name=gf(a,FA.name)||'Unknown Account';
+    const status=gf(a,FA.status)||'';
+    const types=ga(a,FA.type).map(v=>typeof v==='object'?v.name:v).join(', ')||'—';
+    const state=gf(a,FA.state)||'';
+    const prts=(accPrts[id]||[]);
+    const activeCount=prts.filter(p=>['MOU Signed','MOU Complete','Collaboration','Verbal Agreement'].includes(gf(p,FP.pipeline))).length;
+
+    const prtsHtml = prts.length===0
+      ? '<div style="padding:10px 16px 10px 42px;font-size:12px;color:var(--ink3)">No partnerships linked</div>'
+      : `<div class="opp-prt-hd"><span>Partnership</span><span>Stage</span><span>FY26 Fees</span><span>Ends</span><span>Team</span></div>`
+        + prts.map(p=>{
+            const team=ga(p,FP.team).map(v=>typeof v==='object'?v.name:v).join(', ')||'—';
+            const days=daysTo(gf(p,FP.end));
+            return `<div class="opp-prt-row">
+              <span style="font-weight:500;color:var(--ink)">${gf(p,FP.name)||'—'}</span>
+              <span>${stagePill(gf(p,FP.pipeline))}</span>
+              <span style="font-variant-numeric:tabular-nums">${f$(gf(p,FP.fy26))}</span>
+              <span>${fdt(gf(p,FP.end))} ${days!=null?daysChip(days):''}</span>
+              <span style="font-size:11px;color:var(--ink2)">${team}</span>
+            </div>`;
+          }).join('');
+
+    const statusCls = status.toLowerCase().includes('active')?'pill-good':status.toLowerCase().includes('prospect')?'pill-warn':'pill-gray';
+
+    return `<div class="opp-account" id="opp-${id}">
+      <div class="opp-account-hd" onclick="toggleOpp('${id}')">
+        <span class="opp-toggle">▶</span>
+        <span class="opp-name">${name}</span>
+        <div class="opp-acc-meta">
+          ${status?`<span class="pill ${statusCls}">${status}</span>`:''}
+          ${state?`<span>${state}</span>`:''}
+          <span>${prts.length} partnership${prts.length!==1?'s':''}</span>
+          ${activeCount?`<span style="color:var(--good)">${activeCount} active</span>`:''}
+          <span class="pill ${types==='—'?'pill-gray':'pill-teal'}">${types}</span>
+        </div>
+        <button class="btn-sm" onclick="event.stopPropagation();openAccProfile('${id}')" style="margin-left:8px;flex-shrink:0">Profile</button>
+      </div>
+      <div class="opp-prt-list">${prtsHtml}</div>
+    </div>`;
+  }).join('');
+}
+
+function toggleOpp(id) {
+  document.getElementById('opp-'+id)?.classList.toggle('open');
+}
+
+function openAccProfile(id) {
+  const a=D.accounts.find(r=>r.id===id); if(!a) return;
+  const name=gf(a,FA.name)||'Account';
+  const status=gf(a,FA.status)||'—';
+  const types=ga(a,FA.type).map(v=>typeof v==='object'?v.name:v).join(', ')||'—';
+  const state=gf(a,FA.state)||'—';
+  const team=ga(a,FA.team).map(v=>typeof v==='object'?v.name:v).join(', ')||'—';
+
+  // Get linked partnerships
+  const accPrts=D.partners.filter(p=>ga(p,FP.account).includes(id));
+
+  const fields=[
+    {k:'Account Status', v:status},
+    {k:'Partner Type',   v:types},
+    {k:'State',          v:state},
+    {k:'Team Member',    v:team},
+    {k:'Total Partnerships', v:accPrts.length.toString()},
+  ];
+
+  const prtsHtml = accPrts.length===0
+    ? '<div class="empty-state">No partnerships linked</div>'
+    : accPrts.map(p=>{
+        const sd=gf(p,FP.start), ed=gf(p,FP.end);
+        const duration = (sd||ed) ? `${sd?fdt(sd):'?'} – ${ed?fdt(ed):'?'}` : '—';
+        const team2=ga(p,FP.team).map(v=>typeof v==='object'?v.name:v).join(', ')||'—';
+        return `<div class="acc-prt-item">
+          <div>
+            <div style="font-weight:600">${gf(p,FP.name)||'—'}</div>
+            <div style="font-size:11px;color:var(--ink3);margin-top:2px">${duration} · ${team2}</div>
+          </div>
+          <div style="text-align:right">
+            ${stagePill(gf(p,FP.pipeline))}
+            <div style="font-size:11px;color:var(--ink3);margin-top:4px">${f$(gf(p,FP.fy26))}</div>
+          </div>
+        </div>`;
+      }).join('');
+
+  document.getElementById('acc-modal-title').textContent=name;
+  document.getElementById('acc-modal-body').innerHTML=
+    fields.map(f=>`<div class="acc-field-row"><span class="acc-field-key">${f.k}</span><span class="acc-field-val">${f.v}</span></div>`).join('')
+    +`<div class="acc-prt-sub"><div class="section-title mb-12" style="margin-top:16px">Partnerships</div>${prtsHtml}</div>`;
+  document.getElementById('acc-overlay').classList.add('open');
+}
+
+function closeAccModal(){document.getElementById('acc-overlay').classList.remove('open');}
+document.addEventListener('DOMContentLoaded',()=>{
+  document.getElementById('acc-overlay')?.addEventListener('click',e=>{if(e.target.id==='acc-overlay')closeAccModal();});
+});
 
 // ── Partnerships ──────────────────────────────────────────────────────────────
 function renderPartnerships(f={}) {
@@ -1517,6 +1816,8 @@ wire(['f-evt-type','f-evt-search'],renderEvents,()=>({
   search:document.getElementById('f-evt-search').value,
 }));
 wire(['f-season'],f=>renderSurveys(f),()=>({season:document.getElementById('f-season').value}));
+const oppSearch=document.getElementById('opp-search');
+if(oppSearch){ oppSearch.addEventListener('input',()=>renderOpportunities(oppSearch.value)); }
 
 // ── Feedback subtabs ──────────────────────────────────────────────────────────
 document.querySelectorAll('[data-fbtab]').forEach(btn=>{
