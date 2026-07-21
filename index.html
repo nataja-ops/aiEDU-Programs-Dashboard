@@ -1241,7 +1241,7 @@ function buildEventScores() {
 // ── Load ──────────────────────────────────────────────────────────────────────
 const FY26_START = '2025-12-31';
 const FY26_END   = '2027-01-01';
-const CACHE_KEY  = 'aiedu_dash_v13';
+const CACHE_KEY  = 'aiedu_dash_v14';
 const CACHE_TTL  = 3 * 60 * 1000; // 3 minutes
 
 function loadProgress(pct) {
@@ -1506,7 +1506,7 @@ function renderSuccessTracker() {
     const n = count(...c.stages);
     const pct = Math.min(100, Math.round(n/total*100));
     const display = n.toLocaleString();
-    const drillFn = `drillTrackerStages(${JSON.stringify(c.stages)},${JSON.stringify(c.label)})`;
+    const drillFn = `drillTrackerStages(${JSON.stringify(c.stages).replace(/"/g,'&quot;')},${JSON.stringify(c.label).replace(/"/g,'&quot;')})`;
     return `<div class="tracker-row" onclick="${drillFn}">
       <div class="tracker-label">
         <div class="tracker-lbl-main">${c.label}</div>
