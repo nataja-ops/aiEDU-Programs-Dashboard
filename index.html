@@ -611,7 +611,7 @@ button{cursor:pointer;font-family:inherit;}
 
     <!-- PL SESSION FEEDBACK -->
     <div id="fb-pl-view">
-      <div class="grid-3 mb-16">
+      <div class="grid-2 mb-16">
         <div class="card chart-card">
           <div class="section-title mb-4">Satisfaction Distribution</div>
           <div class="section-sub mb-12">Frequency of satisfaction ratings (1–5) across all PL session feedback responses</div>
@@ -622,6 +622,11 @@ button{cursor:pointer;font-family:inherit;}
           <div class="section-sub mb-12">Monthly average NPS score from PL session feedback — tracks promoter sentiment over time</div>
           <div><canvas id="ch-nps-trend"></canvas></div>
         </div>
+      </div>
+      <div class="card chart-card mb-16">
+        <div class="section-title mb-4">NPS Trend by Year</div>
+        <div class="section-sub mb-12">Net Promoter Score by administration year from partner surveys</div>
+        <div><canvas id="ch-nps-yr-pl"></canvas></div>
       </div>
       <div class="card table-wrap">
         <table class="data-table" id="fb-tbl">
@@ -2208,6 +2213,15 @@ function renderFeedback() {
         <td>${sc.objMet!=null?fpct(sc.objMet*20):'—'}</td>
       </tr>`;
     }).join('');
+
+  // NPS Trend by Year (same source as Partner Survey tab)
+  const fbNpsYrSorted = [...D.npsYears]
+    .filter(r=>gf(r,FNPS.score)!=null&&gf(r,FNPS.name))
+    .sort((a,b)=>(gf(a,FNPS.name)||'').localeCompare(gf(b,FNPS.name)||''));
+  mkChart('ch-nps-yr-pl','line',
+    fbNpsYrSorted.map(r=>gf(r,FNPS.name)||'—'),
+    fbNpsYrSorted.map(r=>+gf(r,FNPS.score)||0),
+    [cssVar('--teal')],'NPS Score');
 
   // Satisfaction distribution (from individual feedback records)
   const bkt = {'<3':0,'3–4':0,'4–5':0};
