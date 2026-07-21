@@ -85,10 +85,11 @@ button{cursor:pointer;font-family:inherit;}
 /* Stats bar */
 #statsbar{
   height:var(--statsbar-h);background:var(--navy-mid);border-bottom:1px solid rgba(255,255,255,.08);
-  display:flex;align-items:center;padding:0 20px;overflow-x:auto;gap:0;
+  display:flex;align-items:center;padding:0 20px;overflow-x:auto;gap:0;justify-content:space-between;
 }
-.stat-item{display:flex;align-items:baseline;gap:6px;padding:0 16px;border-right:1px solid rgba(255,255,255,.10);}
-.stat-item:first-child{padding-left:0;}
+.stat-item{display:flex;align-items:baseline;gap:6px;padding:0 12px;border-right:1px solid rgba(255,255,255,.10);flex:1;justify-content:center;}
+.stat-item:first-child{padding-left:0;justify-content:flex-start;}
+.stat-item:last-child{justify-content:flex-end;}
 .stat-item:last-child{border-right:none;}
 .stat-val{font-size:17px;font-weight:700;color:#fff;font-variant-numeric:tabular-nums;}
 .stat-lbl{font-size:11px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;}
@@ -1287,7 +1288,7 @@ function buildEventScores() {
 // ── Load ──────────────────────────────────────────────────────────────────────
 const FY26_START = '2025-12-31';
 const FY26_END   = '2027-01-01';
-const CACHE_KEY  = 'aiedu_dash_v16';
+const CACHE_KEY  = 'aiedu_dash_v17';
 const CACHE_TTL  = 3 * 60 * 1000; // 3 minutes
 
 function loadProgress(pct) {
