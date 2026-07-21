@@ -292,7 +292,7 @@ button{cursor:pointer;font-family:inherit;}
 .data-table tbody tr{cursor:pointer;}
 .data-table tbody tr:hover td{background:var(--surface2);}
 /* Account profile modal */
-#acc-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:300;justify-content:center;align-items:flex-start;padding-top:60px;}
+#acc-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:400;justify-content:center;align-items:flex-start;padding-top:60px;}
 #acc-overlay.open{display:flex;}
 #acc-modal{background:var(--surface);border-radius:12px;padding:28px;width:560px;max-width:calc(100vw - 32px);max-height:80vh;overflow-y:auto;box-shadow:0 24px 48px rgba(0,0,0,.25);}
 .acc-field-row{display:flex;justify-content:space-between;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--border);font-size:13px;}
@@ -743,8 +743,9 @@ const FF = {
 };
 const FM = {
   contract:'fldwdDFVJ51CcOqxv', begins:'fldxzUbvz1RYElzjG', ends:'fldEANQWfvf7PTYEV',
-  signed:'fldTQ1LXC9SiUaWms', partner:'fldONduCdYmYYJTAS', pipeline:'fldWzaeTDZccoICrN',
-  team:'fldg4K8tf6dWQR1d9', amount:'fld2IArT6QESgA5Va'
+  signed:'fldTQ1LXC9SiUaWms', dateSigned:'fldntqkEmLRxIAjzD',
+  partner:'fldONduCdYmYYJTAS', partnerships:'fldlrZf2X0GFyO03t',
+  pipeline:'fldWzaeTDZccoICrN', team:'fldg4K8tf6dWQR1d9', amount:'fld2IArT6QESgA5Va'
 };
 // Events table — fields confirmed against live schema
 const FE = {
@@ -962,7 +963,7 @@ function refreshChartColors() {
   });
 }
 
-function mkChartMulti(id, type, labels, datasets, clickFn=null) {
+function mkChartMulti(id, type, labels, datasets, clickFn=null, extraTooltip=null) {
   if(CHARTS[id]){CHARTS[id].destroy();delete CHARTS[id];}
   const el=document.getElementById(id); if(!el) return;
   const ink3=cssVar('--ink3'), border=cssVar('--border');
@@ -970,7 +971,7 @@ function mkChartMulti(id, type, labels, datasets, clickFn=null) {
     responsive:true, maintainAspectRatio:true,
     plugins:{
       legend:{display:true,position:'bottom',labels:{color:ink3,font:{size:11},boxWidth:10}},
-      tooltip:{callbacks:{label:ctx=>' '+f$(ctx.raw)}}
+      tooltip:{callbacks:{label:ctx=>' '+f$(ctx.raw), ...(extraTooltip||{})}}
     },
     scales:{
       x:{ticks:{color:ink3,font:{size:11}},grid:{display:false}},
@@ -1101,12 +1102,17 @@ function drillMous(){
   const COL_MOU=[
     {label:'Partner',   fn:m=>{const n=ga(m,FM.partner).join(', ')||'—'; const p=D.partners.find(x=>gf(x,FP.name)===n); return p?`<span class="drill-link" onclick="openPartnerProfile('${p.id}')">${n}</span>`:n;}},
     {label:'Stage',     fn:m=>stagePill(gf(m,FM.pipeline))},
-    {label:'Signed',    fn:m=>fdt(gf(m,FM.signed))},
+    {label:'Signed',    fn:m=>fdt(gf(m,FM.dateSigned))},
     {label:'Begins',    fn:m=>fdt(gf(m,FM.begins))},
     {label:'Ends',      fn:m=>{const d=daysTo(gf(m,FM.ends));return `${fdt(gf(m,FM.ends))}${d!=null?' '+daysChip(d):''}`;} },
     {label:'Amount',    fn:m=>`<span style="font-variant-numeric:tabular-nums">${f$(gf(m,FM.amount))}</span>`},
   ];
-  const r=D.mous.filter(m=>{const s=gf(m,FM.signed);return s&&new Date(s).getFullYear()===2026;});
+  const isFy26Mou=m=>{
+    if(!gf(m,FM.signed)) return false;
+    const ds=gf(m,FM.dateSigned); if(!ds) return false;
+    return new Date(ds.slice(0,10)+'T00:00:00').getFullYear()===2026 && ga(m,FM.partner).length>0;
+  };
+  const r=D.mous.filter(isFy26Mou);
   showDrill('Service MOUs — FY26',r.length+' of 15 signed in 2026',r,COL_MOU);
 }
 function drillEdu(){
@@ -1139,6 +1145,14 @@ function drillRev(){
 function drillTrackerStages(stages,title){
   const r=D.partners.filter(p=>stages.includes(gf(p,FP.pipeline)));
   showDrill(title,r.length+' partnership'+(r.length!==1?'s':''),r,COL_PRTS);
+}
+function drillProposedFees(){
+  const r=D.fees.filter(f=>{
+    if(gf(f,FF.fy)!=='FY26') return false;
+    const fs=ga(f,FF.funding).map(v=>(typeof v==='object'?v.name:v)+'').join(' ').toLowerCase();
+    return fs.includes('proposed');
+  }).sort((a,b)=>(+gf(b,FF.amount)||0)-(+gf(a,FF.amount)||0));
+  showDrill('Fees for Service — Proposed (FY26)',f$(r.reduce((s,f)=>s+(+gf(f,FF.amount)||0),0))+' total proposed',r,COL_FEES);
 }
 
 // Wire stat bar + OKR tile clicks (called at boot, elements are static)
@@ -1217,7 +1231,7 @@ function buildEventScores() {
 // ── Load ──────────────────────────────────────────────────────────────────────
 const FY26_START = '2025-12-31';
 const FY26_END   = '2027-01-01';
-const CACHE_KEY  = 'aiedu_dash_v8';
+const CACHE_KEY  = 'aiedu_dash_v9';
 const CACHE_TTL  = 3 * 60 * 1000; // 3 minutes
 
 function loadProgress(pct) {
@@ -1368,10 +1382,9 @@ function renderOverview() {
   const mouStages  = new Set(['MOU Signed','MOU Complete']);
   // Use MOU table: count records with signed date in 2026
   const mouCount = D.mous.filter(m=>{
-    const signed = gf(m,FM.signed);
-    if(!signed) return false;
-    const yr = new Date(signed).getFullYear();
-    return yr===2026;
+    if(!gf(m,FM.signed)) return false;
+    const ds=gf(m,FM.dateSigned); if(!ds) return false;
+    return new Date(ds.slice(0,10)+'T00:00:00').getFullYear()===2026 && ga(m,FM.partner).length>0;
   }).length;
   setOkr('mou', mouCount, 15);
   const mouPctEl = document.getElementById('okr-mou-pct');
@@ -1482,15 +1495,18 @@ function renderSuccessTracker() {
       pct = Math.min(100, Math.round(val/c.target*100));
       display = f$(val);
     } else if(c.isProposedFee){
-      const val = feeSum(...c.stages);
-      const propTotal = D.partners.reduce((s,p)=>s+(+gf(p,FP.proposed)||0),0)||1;
-      pct = Math.min(100, Math.round(val/propTotal*100));
+      const val = D.fees.filter(f=>{
+        if(gf(f,FF.fy)!=='FY26') return false;
+        const fs=ga(f,FF.funding).map(v=>(typeof v==='object'?v.name:v)+'').join(' ').toLowerCase();
+        return fs.includes('proposed');
+      }).reduce((s,f)=>s+(+gf(f,FF.amount)||0),0);
+      pct = Math.min(100, Math.round(val/900000*100));
       display = f$(val);
     } else {
       pct = Math.min(100, Math.round(n/total*100));
       display = n.toLocaleString();
     }
-    const drillFn = (c.isFee||c.isProposedFee) ? `drillTrackerStages(${JSON.stringify(c.stages)},${JSON.stringify(c.label)})` : `drillTrackerStages(${JSON.stringify(c.stages)},${JSON.stringify(c.label)})`;
+    const drillFn = c.isProposedFee ? 'drillProposedFees()' : `drillTrackerStages(${JSON.stringify(c.stages)},${JSON.stringify(c.label)})`;
     return `<div class="tracker-row" onclick="${drillFn}">
       <div class="tracker-label">
         <div class="tracker-lbl-main">${c.label}</div>
@@ -1529,11 +1545,12 @@ function renderFeesChart() {
       return isActual?(FEE_ACTUAL.has(pipe)||FEE_ACTIVE.has(pipe)):(!FEE_ACTUAL.has(pipe)&&!FEE_ACTIVE.has(pipe));
     }).sort((a,b)=>(+gf(b,FF.amount)||0)-(+gf(a,FF.amount)||0));
     showDrill(`${fy} — ${isActual?'Actual/Awarded':'Projected'}`,f$(rows.reduce((s,r)=>s+(+gf(r,FF.amount)||0),0))+' total',rows,COL_FEES);
-  });
+  }, {footer:items=>items[0]?.dataset?.label==='Projected'?['Fees in proposal, SOW sent,','or verbal agreement stages']:[]}
+  );
 }
 
 // ── Opportunities View ────────────────────────────────────────────────────────
-const ACTIVE_STAGES = new Set(['MOU Signed','MOU Complete','Collaboration','Verbal Agreement']);
+const ACTIVE_STAGES = new Set(['MOU Signed','MOU Complete']);
 const COMING_STAGES = new Set(['MOU Sent']);
 function renderOpportunities(q='', overviewMode=false, elId='opp-list') {
   const el=document.getElementById(elId); if(!el) return;
