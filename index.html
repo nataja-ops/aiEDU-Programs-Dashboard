@@ -393,6 +393,16 @@ button{cursor:pointer;font-family:inherit;}
       </div>
     </div>
 
+    <!-- Program Partnership Pipeline -->
+    <div class="mb-16">
+      <div class="section-hd">
+        <div><div class="section-title">Program Partnership Pipeline</div><div class="section-sub">Program progress by pipeline category</div></div>
+      </div>
+      <div class="card" style="padding:16px 20px" id="success-tracker">
+        <div class="empty-state">Loading…</div>
+      </div>
+    </div>
+
     <div class="okr-grid" id="okr-row">
       <div class="okr-tile">
         <div class="okr-eyebrow">FY26 Goal</div>
@@ -462,17 +472,6 @@ button{cursor:pointer;font-family:inherit;}
       <div class="card chart-card">
         <div class="section-hd"><div class="section-title">Events by Month</div><div class="section-sub">Sessions delivered</div></div>
         <div><canvas id="ch-evt-month"></canvas></div>
-      </div>
-    </div>
-
-
-    <!-- Success Tracker -->
-    <div class="mt-12">
-      <div class="section-hd">
-        <div><div class="section-title">Program Partnership Pipeline</div><div class="section-sub">Program progress by pipeline category</div></div>
-      </div>
-      <div class="card" style="padding:16px 20px" id="success-tracker">
-        <div class="empty-state">Loading…</div>
       </div>
     </div>
 
@@ -1288,7 +1287,7 @@ function buildEventScores() {
 // ── Load ──────────────────────────────────────────────────────────────────────
 const FY26_START = '2025-12-31';
 const FY26_END   = '2027-01-01';
-const CACHE_KEY  = 'aiedu_dash_v15';
+const CACHE_KEY  = 'aiedu_dash_v16';
 const CACHE_TTL  = 3 * 60 * 1000; // 3 minutes
 
 function loadProgress(pct) {
