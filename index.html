@@ -2332,6 +2332,16 @@ function renderContent() {
   renderPlSessions();
 }
 
+const PLP_PALETTE = ['#006464','#3a6baf','#9b5ca5','#e07c2a','#22a878','#c43535','#d4840a','#0d7a6b','#7da09a','#3d5a99'];
+const plpTypeColor = {};
+function getPlpColor(type) {
+  if(!plpTypeColor[type]){
+    const idx = Object.keys(plpTypeColor).length % PLP_PALETTE.length;
+    plpTypeColor[type] = PLP_PALETTE[idx];
+  }
+  return plpTypeColor[type];
+}
+
 function renderPlProducts(q='') {
   const el=document.getElementById('plp-list'); if(!el) return;
   const lc=q.toLowerCase();
@@ -2346,9 +2356,14 @@ function renderPlProducts(q='') {
   const grouped={};
   prods.forEach(p=>{ const t=gf(p,FPLP.pdType)||'Trailblazers'; (grouped[t]=grouped[t]||[]).push(p); });
 
-  el.innerHTML=Object.entries(grouped).sort(([a],[b])=>a.localeCompare(b)).map(([type,items])=>`
+  // Pre-assign colors in sorted order so they're stable
+  Object.keys(grouped).sort((a,b)=>a.localeCompare(b)).forEach(t=>getPlpColor(t));
+
+  el.innerHTML=Object.entries(grouped).sort(([a],[b])=>a.localeCompare(b)).map(([type,items])=>{
+    const color=getPlpColor(type);
+    return `
     <div style="margin-bottom:20px">
-      <div class="ops-section-lbl" style="margin-bottom:8px">${type}</div>
+      <div class="ops-section-lbl" style="margin-bottom:8px;color:${color}">${type}</div>
       ${items.map(p=>{
         const name=gf(p,FPLP.name)||gf(p,FPLP.nameSL)||'—';
         const status=gf(p,FPLP.devStatus)||gf(p,FPLP.roadmap)||'';
@@ -2360,7 +2375,7 @@ function renderPlProducts(q='') {
         const sessIds=ga(p,FPLP.sessions);
         const sessCount=sessIds.length;
         const linked=D.plSessions.filter(s=>sessIds.includes(s.id));
-        return `<div class="opp-account" id="plp-${p.id}">
+        return `<div class="opp-account" id="plp-${p.id}" style="border-left:3px solid ${color}">
           <div class="opp-account-hd" onclick="togglePlp('${p.id}')">
             <span class="opp-toggle">▶</span>
             <span class="opp-name">${name}</span>
@@ -2402,7 +2417,7 @@ function renderPlProducts(q='') {
         </div>`;
       }).join('')}
     </div>
-  `).join('');
+  `; }).join('');
 }
 
 function togglePlp(id){ document.getElementById('plp-'+id)?.classList.toggle('open'); }
