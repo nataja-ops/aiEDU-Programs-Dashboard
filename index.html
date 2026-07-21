@@ -2311,11 +2311,12 @@ function renderPlProducts(q='') {
   });
   if(!prods.length){ el.innerHTML='<div class="empty-state">No PL products found</div>'; return; }
 
-  // Group by PD Type
+  // Sort A-Z then group by PD Type
+  prods.sort((a,b)=>(gf(a,FPLP.name)||gf(a,FPLP.nameSL)||'').localeCompare(gf(b,FPLP.name)||gf(b,FPLP.nameSL)||''));
   const grouped={};
   prods.forEach(p=>{ const t=gf(p,FPLP.pdType)||'Other'; (grouped[t]=grouped[t]||[]).push(p); });
 
-  el.innerHTML=Object.entries(grouped).map(([type,items])=>`
+  el.innerHTML=Object.entries(grouped).sort(([a],[b])=>a.localeCompare(b)).map(([type,items])=>`
     <div style="margin-bottom:20px">
       <div class="ops-section-lbl" style="margin-bottom:8px">${type}</div>
       ${items.map(p=>{
