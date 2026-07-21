@@ -643,6 +643,13 @@ button{cursor:pointer;font-family:inherit;}
         <div class="card kpi-tile"><div class="kpi-val" id="sv-res">—</div><div class="kpi-lbl">Resources</div></div>
         <div class="card kpi-tile"><div class="kpi-val" id="sv-rec">—</div><div class="kpi-lbl">Recommend Rating</div></div>
       </div>
+      <!-- NPS Trend by Year — full width -->
+      <div class="card chart-card mb-16">
+        <div class="section-title mb-4">NPS Trend by Year</div>
+        <div class="section-sub mb-12">Net Promoter Score by administration year from partner surveys</div>
+        <div><canvas id="ch-nps-yr"></canvas></div>
+      </div>
+
       <div class="grid-2 mb-16">
         <div class="card chart-card">
           <div class="section-title mb-4">Scores by Dimension</div>
@@ -2237,6 +2244,15 @@ function renderSurveys(f={}) {
   document.getElementById('sv-comm').textContent = avg(FS.commPct)?fpct(avg(FS.commPct)):'—';
   document.getElementById('sv-res').textContent  = avg(FS.resPct)?fpct(avg(FS.resPct)):'—';
   document.getElementById('sv-rec').textContent  = avg(FS.recRating)?fsc(avg(FS.recRating)):'—';
+
+  // NPS Trend by Year
+  const npsYrSorted = [...D.npsYears]
+    .filter(r=>gf(r,FNPS.score)!=null&&gf(r,FNPS.name))
+    .sort((a,b)=>(gf(a,FNPS.name)||'').localeCompare(gf(b,FNPS.name)||''));
+  mkChart('ch-nps-yr','line',
+    npsYrSorted.map(r=>gf(r,FNPS.name)||'—'),
+    npsYrSorted.map(r=>+gf(r,FNPS.score)||0),
+    [cssVar('--teal')],'NPS Score');
 
   // Dimension bar
   const dims = [
