@@ -1,0 +1,515 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mari's Workspace</title>
+<style>
+:root{
+  --bg:#f4f6f9;--surface:#fff;--border:#e2e6ed;--text:#1a2332;--muted:#6b7a8d;
+  --teal:#006464;--teal-lt:#e6f2f2;--good:#22a878;--warn:#e07c2a;--crit:#c43535;--info:#3a6baf;
+  --pill-good-bg:#e6f7f0;--pill-good-txt:#1a7a54;
+  --pill-warn-bg:#fef3e8;--pill-warn-txt:#a85a00;
+  --pill-crit-bg:#fdeaea;--pill-crit-txt:#9b1c1c;
+  --pill-gray-bg:#f0f2f5;--pill-gray-txt:#5a6472;
+  --pill-blue-bg:#ebf1fb;--pill-blue-txt:#2a4a8a;
+  --r:8px;--sh:0 1px 3px rgba(0,0,0,.1);
+}
+@media(prefers-color-scheme:dark){
+  :root{
+    --bg:#111827;--surface:#1e2a3a;--border:#2d3d52;--text:#e8edf4;--muted:#8b96a8;
+    --teal:#00a0a0;--teal-lt:#0a2424;
+    --pill-good-bg:#0d2e20;--pill-good-txt:#4cd9a0;
+    --pill-warn-bg:#2e1e08;--pill-warn-txt:#ffa040;
+    --pill-crit-bg:#2e0d0d;--pill-crit-txt:#ff7070;
+    --pill-gray-bg:#1e2a3a;--pill-gray-txt:#8b96a8;
+    --pill-blue-bg:#1a2a42;--pill-blue-txt:#7aaae8;
+  }
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,-apple-system,sans-serif;font-size:14px;background:var(--bg);color:var(--text);line-height:1.5}
+a{color:var(--teal)}
+
+.hdr{background:var(--teal);color:#fff;padding:0 24px;height:56px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+.hdr-title{font-size:18px;font-weight:700;flex:1}
+.hdr-sub{font-size:12px;opacity:.75}
+
+.nav{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;display:flex;gap:0;position:sticky;top:56px;z-index:90}
+.nav-tab{padding:14px 20px;font-size:13px;font-weight:500;color:var(--muted);border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;transition:all .15s}
+.nav-tab:hover{color:var(--text)}
+.nav-tab.active{color:var(--teal);border-bottom-color:var(--teal)}
+
+.main{max-width:1200px;margin:0 auto;padding:24px}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--sh)}
+
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px 20px;text-align:center}
+.stat-v{font-size:28px;font-weight:700;color:var(--teal)}
+.stat-l{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-top:2px}
+.stat.warn .stat-v{color:var(--warn)}
+.stat.crit .stat-v{color:var(--crit)}
+
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:768px){.grid-2,.stats{grid-template-columns:1fr}}
+
+.tab-panel{display:none}.tab-panel.active{display:block}
+.sec-title{font-size:15px;font-weight:600}
+.sec-sub{font-size:12px;color:var(--muted)}
+.mb-4{margin-bottom:4px}.mb-8{margin-bottom:8px}.mb-12{margin-bottom:12px}.mb-16{margin-bottom:16px}.mb-24{margin-bottom:24px}
+
+/* Tasks */
+.task-item{padding:11px 16px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:10px;transition:background .1s}
+.task-item:last-child{border-bottom:none}
+.task-item:hover{background:var(--teal-lt)}
+.task-name{font-size:13px;font-weight:500;flex:1}
+.task-meta{font-size:11px;color:var(--muted);margin-top:2px}
+.task-wait{font-size:11px;color:var(--warn);margin-top:2px}
+
+/* Pills */
+.pill{display:inline-flex;align-items:center;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:500;white-space:nowrap}
+.pill-good{background:var(--pill-good-bg);color:var(--pill-good-txt)}
+.pill-warn{background:var(--pill-warn-bg);color:var(--pill-warn-txt)}
+.pill-crit{background:var(--pill-crit-bg);color:var(--pill-crit-txt)}
+.pill-gray{background:var(--pill-gray-bg);color:var(--pill-gray-txt)}
+.pill-blue{background:var(--pill-blue-bg);color:var(--pill-blue-txt)}
+
+.pdot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:5px}
+.p-high{background:var(--crit)}.p-med{background:var(--warn)}.p-low{background:var(--good)}.p-def{background:var(--muted)}
+
+/* Group header */
+.grp-hd{padding:8px 16px;background:var(--teal-lt);border-bottom:1px solid var(--border);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--teal)}
+
+/* Project cards */
+.proj-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:12px}
+.proj-hdr{padding:13px 16px;display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none}
+.proj-hdr:hover{background:var(--teal-lt)}
+.proj-name{font-size:14px;font-weight:600;flex:1}
+.proj-chev{color:var(--muted);transition:transform .2s;font-size:11px;flex-shrink:0}
+.proj-card.open .proj-chev{transform:rotate(90deg)}
+.proj-body{display:none;border-top:1px solid var(--border)}
+.proj-card.open .proj-body{display:block}
+.proj-detail{padding:10px 16px 12px;font-size:12px}
+.prog-wrap{height:5px;background:var(--border);border-radius:3px;margin:6px 0 8px}
+.prog-fill{height:5px;border-radius:3px;background:var(--teal);transition:width .3s}
+
+/* Filters */
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center}
+.form-sel,.form-inp{padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;background:var(--surface);color:var(--text);outline:none}
+.form-sel:focus,.form-inp:focus{border-color:var(--teal)}
+.form-inp{min-width:180px}
+
+/* Events */
+.evt-row{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px}
+.evt-row:last-child{border-bottom:none}
+.evt-dbox{min-width:44px;text-align:center;background:var(--teal-lt);border-radius:6px;padding:5px;flex-shrink:0}
+.evt-day{font-size:17px;font-weight:700;color:var(--teal);line-height:1}
+.evt-mon{font-size:10px;text-transform:uppercase;color:var(--teal);letter-spacing:.05em}
+.evt-name{font-size:13px;font-weight:500}
+.evt-meta{font-size:11px;color:var(--muted);margin-top:2px}
+
+.empty{text-align:center;padding:28px;color:var(--muted);font-size:13px}
+.empty-ok{color:var(--good)}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spin{width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--teal);border-radius:50%;animation:spin .8s linear infinite;margin:24px auto}
+
+#toast{position:fixed;bottom:24px;right:24px;padding:10px 18px;border-radius:8px;font-size:13px;font-weight:500;opacity:0;transform:translateY(8px);transition:all .25s;pointer-events:none;z-index:999}
+#toast.show{opacity:1;transform:translateY(0)}
+#toast.success{background:#22a878;color:#fff}
+#toast.error{background:#c43535;color:#fff}
+#toast.info{background:#3a6baf;color:#fff}
+.lbar{height:3px;background:var(--teal);position:fixed;top:0;left:0;z-index:200;transition:width .4s;width:0}
+</style>
+</head>
+<body>
+
+<div class="lbar" id="lbar"></div>
+
+<header class="hdr">
+  <div class="hdr-title">Mari's Workspace</div>
+  <div class="hdr-sub" id="last-upd"></div>
+</header>
+
+<nav class="nav">
+  <button class="nav-tab active" data-tab="home">Home</button>
+  <button class="nav-tab" data-tab="tasks">Tasks</button>
+  <button class="nav-tab" data-tab="projects">Projects</button>
+  <button class="nav-tab" data-tab="events">Events</button>
+</nav>
+
+<main class="main">
+
+  <!-- HOME -->
+  <div class="tab-panel active" id="tab-home">
+    <div class="stats mb-24">
+      <div class="stat"><div class="stat-v" id="st-total">—</div><div class="stat-l">Open Tasks</div></div>
+      <div class="stat"><div class="stat-v" id="st-week">—</div><div class="stat-l">Due This Week</div></div>
+      <div class="stat warn" id="st-ov-card"><div class="stat-v" id="st-overdue">—</div><div class="stat-l">Overdue</div></div>
+      <div class="stat"><div class="stat-v" id="st-projs">—</div><div class="stat-l">Active Projects</div></div>
+    </div>
+    <div class="grid-2 mb-24">
+      <div class="card">
+        <div class="grp-hd">Due This Week</div>
+        <div id="h-week"><div class="spin"></div></div>
+      </div>
+      <div class="card">
+        <div class="grp-hd">Blocked / Waiting</div>
+        <div id="h-blocked"><div class="spin"></div></div>
+      </div>
+    </div>
+    <div class="sec-title mb-8">Active Projects</div>
+    <div id="h-projs"><div class="spin"></div></div>
+  </div>
+
+  <!-- TASKS -->
+  <div class="tab-panel" id="tab-tasks">
+    <div class="filters">
+      <select class="form-sel" id="f-ts"><option value="">All Statuses</option></select>
+      <select class="form-sel" id="f-tp"><option value="">All Priorities</option></select>
+      <select class="form-sel" id="f-tpr"><option value="">All Projects</option></select>
+      <input class="form-inp" id="f-ts-q" placeholder="Search tasks…">
+    </div>
+    <div id="tasks-list"><div class="spin"></div></div>
+  </div>
+
+  <!-- PROJECTS -->
+  <div class="tab-panel" id="tab-projects">
+    <div class="filters">
+      <select class="form-sel" id="f-ps"><option value="">All Statuses</option></select>
+      <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer">
+        <input type="checkbox" id="f-pp"> Monthly Priority only
+      </label>
+      <input class="form-inp" id="f-ps-q" placeholder="Search projects…">
+    </div>
+    <div id="projs-list"><div class="spin"></div></div>
+  </div>
+
+  <!-- EVENTS -->
+  <div class="tab-panel" id="tab-events">
+    <div class="sec-title mb-4" id="evts-hd"></div>
+    <div class="sec-sub mb-16">Scheduled events this month</div>
+    <div class="card" id="evts-list"><div class="spin"></div></div>
+  </div>
+
+</main>
+
+<div id="toast"></div>
+
+<script>
+const BASE = 'appgdtYPttWwiBZzA';
+
+const FT = {
+  name:       'fldridBBnkTxGKibf',
+  projects:   'fldwFAMQzAvpHxMTd',
+  status:     'fldlRFquaoyLxUIER',
+  priority:   'fldQahtFooUIkiXPX',
+  dueDate:    'fldNwQOVGXGHCDM2Z',
+  desc:       'flddDf0T7YK7NBWCz',
+  assignedTo: 'fld8RAS2C78Q3kQEy',
+  waitingOn:  'fldrtYwkHG8znUTn6',
+};
+
+const FP = {
+  name:       'fldjEdanyJZ3Xfq7M',
+  status:     'fld3r3j7lqCTaiD2D',
+  priority:   'fldEqIOurYT3dOAl3',
+  startDate:  'fldJFza5FlqRVq5Z8',
+  endDate:    'fld2zR0l7kXDKH6PH',
+  deadline:   'fldhTE8IvEgmQjLrc',
+  completion: 'fldF4DFiVHwGt2ba9',
+  nextStep:   'flde5o9nCwMyl1Qps',
+  type:       'fldQZZfUnsnp199Yr',
+  tasks:      'fldbFS0A6cB4nmglR',
+};
+
+const FE = {
+  nameT:  'fld3QjwVpB51hC4yq',
+  date:   'fldW8DuSsdxVAf2RJ',
+  parts:  'fldLybnO5Vycut2ih',
+  format: 'fldlMSFVbJIaogWau',
+  plType: 'fld2n02ofIL7eFgBE',
+};
+
+let D = { tasks:[], projects:[], events:[] };
+
+// ── helpers ────────────────────────────────────────────────────────────────
+function gf(r,f){
+  const v=(r.fields||{})[f];
+  if(Array.isArray(v)) return v[0]??null;
+  return v??null;
+}
+function ga(r,f){
+  const v=(r.fields||{})[f];
+  return Array.isArray(v)?v:(v!=null?[v]:[]);
+}
+function lnkNames(r,f){ return ga(r,f).map(x=>typeof x==='object'?x.name:x).filter(Boolean); }
+function lnkIds(r,f){   return ga(r,f).map(x=>typeof x==='object'?x.id:x).filter(Boolean); }
+
+function todayStr(){ return new Date().toISOString().slice(0,10); }
+function weekEndStr(){
+  const d=new Date(); d.setDate(d.getDate()+(6-d.getDay())); return d.toISOString().slice(0,10);
+}
+
+function isDone(s){ if(!s) return false; const sl=s.toLowerCase(); return sl.includes('complet')||sl.includes('done')||sl==='closed'; }
+function isBlocked(t){
+  const s=(gf(t,FT.status)||'').toLowerCase();
+  return s.includes('block')||s.includes('wait')||s.includes('hold')||!!gf(t,FT.waitingOn);
+}
+
+function fmtDate(d){
+  if(!d) return '—';
+  const [y,m,day]=d.split('-').map(Number);
+  return new Date(y,m-1,day).toLocaleDateString('en-US',{month:'short',day:'numeric'});
+}
+
+function dueCls(d){
+  if(!d) return 'pill-gray';
+  const t=todayStr();
+  if(d<t) return 'pill-crit';
+  const we=weekEndStr();
+  return d<=we?'pill-warn':'pill-gray';
+}
+
+function sPill(s){
+  if(!s) return '<span class="pill pill-gray">—</span>';
+  const sl=s.toLowerCase();
+  const c=(sl.includes('complet')||sl.includes('done')) ? 'pill-good'
+          :(sl.includes('progress')||sl.includes('active')||sl.includes('started')) ? 'pill-blue'
+          :(sl.includes('block')||sl.includes('hold')) ? 'pill-crit'
+          :(sl.includes('wait')||sl.includes('review')||sl.includes('pending')) ? 'pill-warn'
+          :'pill-gray';
+  return `<span class="pill ${c}">${s}</span>`;
+}
+
+function pDot(p){
+  if(!p) return '<span class="pdot p-def"></span>';
+  const pl=p.toLowerCase();
+  const c=(pl.includes('high')||pl.includes('urgent')||pl.includes('crit')) ? 'p-high'
+          :pl.includes('med') ? 'p-med'
+          :pl.includes('low') ? 'p-low'
+          :'p-def';
+  return `<span class="pdot ${c}" title="${p}"></span>`;
+}
+
+function toast(msg,type='info'){
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.className='show '+type;
+  setTimeout(()=>el.className='',2500);
+}
+
+// ── fetch ──────────────────────────────────────────────────────────────────
+async function atFetch(tableId, fields){
+  let records=[],offset=null;
+  do {
+    const p=new URLSearchParams({path:`v0/${BASE}/${tableId}`,returnFieldsByFieldId:'true'});
+    fields.forEach(f=>p.append('fields[]',f));
+    if(offset) p.append('offset',offset);
+    const res=await fetch('/api/airtable?'+p);
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data=await res.json();
+    if(data.error) throw new Error(data.error.message||'Airtable error');
+    records.push(...(data.records||[]));
+    offset=data.offset||null;
+  } while(offset);
+  return records;
+}
+
+async function loadData(){
+  const bar=document.getElementById('lbar');
+  bar.style.width='30%';
+  try {
+    const [tasks,projects,events]=await Promise.all([
+      atFetch('tblAZe9Jl8vYTS3mV',Object.values(FT)),
+      atFetch('tblczqqMpkixoT9Pw',Object.values(FP)),
+      atFetch('tblgLGSJhm0nB9Lhf',Object.values(FE)),
+    ]);
+    D={tasks,projects,events};
+    bar.style.width='100%';
+    setTimeout(()=>bar.style.opacity='0',400);
+    document.getElementById('last-upd').textContent='Updated '+new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+    renderAll();
+  } catch(err){
+    bar.style.background='var(--crit)'; bar.style.width='100%';
+    toast('Failed to load: '+err.message,'error');
+  }
+}
+
+// ── render ─────────────────────────────────────────────────────────────────
+function renderAll(){ renderHome(); renderTasks(); renderProjects(); renderEvents(); buildFilters(); }
+
+function taskRow(t){
+  const name=gf(t,FT.name)||'Untitled';
+  const status=gf(t,FT.status);
+  const priority=gf(t,FT.priority);
+  const due=gf(t,FT.dueDate);
+  const waiting=gf(t,FT.waitingOn);
+  const projNames=lnkNames(t,FT.projects);
+  const assignees=lnkNames(t,FT.assignedTo);
+  return `<div class="task-item">
+    ${pDot(priority)}
+    <div style="flex:1;min-width:0">
+      <div class="task-name">${name}</div>
+      ${projNames.length?`<div class="task-meta">${projNames.join(', ')}</div>`:''}
+      ${assignees.length?`<div class="task-meta" style="color:var(--teal)">→ ${assignees.join(', ')}</div>`:''}
+      ${waiting?`<div class="task-wait">⏳ ${waiting}</div>`:''}
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0">
+      ${sPill(status)}
+      ${due?`<span class="pill ${dueCls(due)}" style="font-size:10px">${fmtDate(due)}</span>`:''}
+    </div>
+  </div>`;
+}
+
+function projCard(p,open=false){
+  const name=gf(p,FP.name)||'Untitled Project';
+  const status=gf(p,FP.status);
+  const pct=gf(p,FP.completion);
+  const deadline=gf(p,FP.deadline)||gf(p,FP.endDate);
+  const nextStep=gf(p,FP.nextStep);
+  const star=gf(p,FP.priority);
+  const pctVal=pct!=null?Math.round(pct*100):null;
+  const taskIds=lnkIds(p,FP.tasks);
+  const openTasks=D.tasks.filter(t=>taskIds.includes(t.id)&&!isDone(gf(t,FT.status)));
+  return `<div class="proj-card${open?' open':''}" onclick="this.classList.toggle('open')">
+    <div class="proj-hdr">
+      ${star?'<span style="color:var(--warn);font-size:13px">★</span>':''}
+      <div class="proj-name">${name}</div>
+      ${sPill(status)}
+      ${deadline?`<span class="pill pill-gray" style="font-size:10px">${fmtDate(deadline)}</span>`:''}
+      <span class="proj-chev">▶</span>
+    </div>
+    <div class="proj-body">
+      ${pctVal!=null?`<div class="proj-detail" style="padding-bottom:0">
+        <span style="font-size:11px;color:var(--muted)">Completion: ${pctVal}%</span>
+        <div class="prog-wrap"><div class="prog-fill" style="width:${pctVal}%"></div></div>
+      </div>`:''}
+      ${nextStep?`<div class="proj-detail" style="padding-bottom:0"><span style="color:var(--muted)">Next step:</span> ${nextStep}</div>`:''}
+      ${openTasks.length===0
+        ?'<div class="empty" style="padding:12px;font-size:12px">No open tasks</div>'
+        :openTasks.slice(0,6).map(t=>taskRow(t)).join('')}
+      ${openTasks.length>6?`<div style="padding:8px 16px;font-size:11px;color:var(--muted)">${openTasks.length-6} more tasks…</div>`:''}
+    </div>
+  </div>`;
+}
+
+function renderHome(){
+  const t=todayStr(), we=weekEndStr();
+  const ws=new Date(); ws.setDate(ws.getDate()-ws.getDay()); const wsStr=ws.toISOString().slice(0,10);
+  const open=D.tasks.filter(tk=>!isDone(gf(tk,FT.status)));
+  const dueWeek=open.filter(tk=>{const d=gf(tk,FT.dueDate);return d&&d>=wsStr&&d<=we;});
+  const overdue=open.filter(tk=>{const d=gf(tk,FT.dueDate);return d&&d<t;});
+  const blocked=open.filter(tk=>isBlocked(tk));
+  const activeP=D.projects.filter(p=>!isDone(gf(p,FP.status)));
+
+  document.getElementById('st-total').textContent=open.length;
+  document.getElementById('st-week').textContent=dueWeek.length;
+  document.getElementById('st-overdue').textContent=overdue.length;
+  document.getElementById('st-projs').textContent=activeP.length;
+  if(overdue.length>0) document.getElementById('st-ov-card').className='stat crit';
+
+  document.getElementById('h-week').innerHTML=dueWeek.length===0
+    ?'<div class="empty empty-ok">✓ Nothing due this week</div>'
+    :dueWeek.sort((a,b)=>(gf(a,FT.dueDate)||'').localeCompare(gf(b,FT.dueDate)||'')).map(taskRow).join('');
+
+  document.getElementById('h-blocked').innerHTML=blocked.length===0
+    ?'<div class="empty empty-ok">✓ No blocked tasks</div>'
+    :blocked.map(taskRow).join('');
+
+  document.getElementById('h-projs').innerHTML=activeP.length===0
+    ?'<div class="empty">No active projects</div>'
+    :activeP.sort((a,b)=>(gf(b,FP.priority)?1:0)-(gf(a,FP.priority)?1:0)||(gf(a,FP.name)||'').localeCompare(gf(b,FP.name)||'')).slice(0,6).map(p=>projCard(p,false)).join('');
+}
+
+function renderTasks(){
+  const sf=document.getElementById('f-ts')?.value||'';
+  const pf=document.getElementById('f-tp')?.value||'';
+  const prF=document.getElementById('f-tpr')?.value||'';
+  const q=(document.getElementById('f-ts-q')?.value||'').toLowerCase();
+  let tasks=D.tasks.filter(t=>{
+    if(sf&&gf(t,FT.status)!==sf) return false;
+    if(pf&&gf(t,FT.priority)!==pf) return false;
+    if(prF&&!lnkIds(t,FT.projects).includes(prF)) return false;
+    if(q&&!(gf(t,FT.name)||'').toLowerCase().includes(q)) return false;
+    return true;
+  });
+  if(!tasks.length){document.getElementById('tasks-list').innerHTML='<div class="empty">No tasks found</div>';return;}
+  const byProj={};
+  const none=[];
+  tasks.forEach(t=>{
+    const ids=lnkIds(t,FT.projects);
+    if(!ids.length){none.push(t);return;}
+    ids.forEach(id=>(byProj[id]=byProj[id]||[]).push(t));
+  });
+  let html='';
+  D.projects.slice().sort((a,b)=>(gf(a,FP.name)||'').localeCompare(gf(b,FP.name)||'')).forEach(p=>{
+    const pts=byProj[p.id]; if(!pts?.length) return;
+    html+=`<div class="card mb-12"><div class="grp-hd">${gf(p,FP.name)||'Unnamed'} <span style="opacity:.6">(${pts.length})</span></div>${pts.map(taskRow).join('')}</div>`;
+  });
+  if(none.length) html+=`<div class="card mb-12"><div class="grp-hd">No Project <span style="opacity:.6">(${none.length})</span></div>${none.map(taskRow).join('')}</div>`;
+  document.getElementById('tasks-list').innerHTML=html||'<div class="empty">No tasks found</div>';
+}
+
+function renderProjects(){
+  const sf=document.getElementById('f-ps')?.value||'';
+  const pOnly=document.getElementById('f-pp')?.checked||false;
+  const q=(document.getElementById('f-ps-q')?.value||'').toLowerCase();
+  let projs=D.projects.filter(p=>{
+    if(sf&&gf(p,FP.status)!==sf) return false;
+    if(pOnly&&!gf(p,FP.priority)) return false;
+    if(q&&!(gf(p,FP.name)||'').toLowerCase().includes(q)) return false;
+    return true;
+  });
+  projs.sort((a,b)=>(gf(b,FP.priority)?1:0)-(gf(a,FP.priority)?1:0)||(gf(a,FP.name)||'').localeCompare(gf(b,FP.name)||''));
+  document.getElementById('projs-list').innerHTML=projs.length?projs.map(p=>projCard(p)).join(''):'<div class="empty">No projects found</div>';
+}
+
+function renderEvents(){
+  const now=new Date();
+  document.getElementById('evts-hd').textContent=now.toLocaleDateString('en-US',{month:'long',year:'numeric'});
+  const y=now.getFullYear(), m=now.getMonth();
+  const ms=`${y}-${String(m+1).padStart(2,'0')}-01`;
+  const me=new Date(y,m+1,0).toISOString().slice(0,10);
+  const evts=D.events.filter(e=>{const d=gf(e,FE.date);return d&&d>=ms&&d<=me;})
+    .sort((a,b)=>(gf(a,FE.date)||'').localeCompare(gf(b,FE.date)||''));
+  if(!evts.length){document.getElementById('evts-list').innerHTML='<div class="empty">No events this month</div>';return;}
+  document.getElementById('evts-list').innerHTML=evts.map(e=>{
+    const d=gf(e,FE.date);
+    const name=gf(e,FE.nameT)||'Event';
+    const fmt=gf(e,FE.format), pl=gf(e,FE.plType), pts=gf(e,FE.parts);
+    let dayN='—', monS='';
+    if(d){const[dy,dm,dd]=d.split('-').map(Number);const dt=new Date(dy,dm-1,dd);dayN=dt.getDate();monS=dt.toLocaleDateString('en-US',{month:'short'});}
+    return `<div class="evt-row">
+      <div class="evt-dbox"><div class="evt-day">${dayN}</div><div class="evt-mon">${monS}</div></div>
+      <div style="flex:1;min-width:0">
+        <div class="evt-name">${name}</div>
+        <div class="evt-meta">${[fmt,pl,pts?pts+' participants':null].filter(Boolean).join(' · ')||'&nbsp;'}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function buildFilters(){
+  const uniq=(arr)=>[...new Set(arr.filter(Boolean))].sort();
+  const fill=(id,vals)=>{const s=document.getElementById(id);vals.forEach(v=>{const o=document.createElement('option');o.value=v;o.textContent=v;s.appendChild(o);});};
+  fill('f-ts',uniq(D.tasks.map(t=>gf(t,FT.status))));
+  fill('f-tp',uniq(D.tasks.map(t=>gf(t,FT.priority))));
+  D.projects.slice().sort((a,b)=>(gf(a,FP.name)||'').localeCompare(gf(b,FP.name)||'')).forEach(p=>{
+    const o=document.createElement('option');o.value=p.id;o.textContent=gf(p,FP.name)||'Unnamed';document.getElementById('f-tpr').appendChild(o);
+  });
+  fill('f-ps',uniq(D.projects.map(p=>gf(p,FP.status))));
+  ['f-ts','f-tp','f-tpr','f-ts-q'].forEach(id=>document.getElementById(id)?.addEventListener('input',renderTasks));
+  ['f-ps','f-pp','f-ps-q'].forEach(id=>document.getElementById(id)?.addEventListener('input',renderProjects));
+}
+
+// ── tabs ────────────────────────────────────────────────────────────────────
+document.querySelectorAll('.nav-tab').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.nav-tab').forEach(t=>t.classList.toggle('active',t===btn));
+    document.querySelectorAll('.tab-panel').forEach(p=>p.classList.toggle('active',p.id==='tab-'+btn.dataset.tab));
+  });
+});
+
+loadData();
+</script>
+</body>
+</html>
