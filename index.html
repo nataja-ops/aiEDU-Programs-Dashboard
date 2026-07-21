@@ -539,12 +539,14 @@ button{cursor:pointer;font-family:inherit;}
       <div class="card chart-card">
         <div class="section-hd mb-8">
           <div>
-            <div class="section-title"><span id="fees-pipe-fy-lbl">FY26</span> Fee Pipeline</div>
+            <div class="section-title">Fees for Service — <span id="fees-pipe-fy-lbl">FY26</span></div>
             <div class="section-sub">Contracted fee value by pipeline stage — click a bar to see fee records</div>
           </div>
           <div class="toggle-group">
             <button class="toggle-btn" data-feesfy="FY25" id="fpy-fy25">FY25</button>
             <button class="toggle-btn active" data-feesfy="FY26" id="fpy-fy26">FY26</button>
+            <button class="toggle-btn" data-feesfy="FY27" id="fpy-fy27">FY27</button>
+            <button class="toggle-btn" data-feesfy="FY28" id="fpy-fy28">FY28</button>
           </div>
         </div>
         <div><canvas id="ch-fees-pipe"></canvas></div>
@@ -1351,7 +1353,7 @@ function buildEventScores() {
 // ── Load ──────────────────────────────────────────────────────────────────────
 const FY26_START = '2025-12-31';
 const FY26_END   = '2027-01-01';
-const CACHE_KEY  = 'aiedu_dash_v21';
+const CACHE_KEY  = 'aiedu_dash_v22';
 const CACHE_TTL  = 3 * 60 * 1000; // 3 minutes
 
 function loadProgress(pct) {
@@ -1377,7 +1379,7 @@ async function fetchFresh() {
 
   // Filter events to FY26; fees to FY25+FY26 for multi-year chart
   const evtFilter = { filterByFormula: `AND(IS_AFTER({${FE.date}},'${FY26_START}'),IS_BEFORE({${FE.date}},'${FY26_END}'))` };
-  const feeFilter = { filterByFormula: `OR({${FF.fy}}='FY26',{${FF.fy}}='FY25')` };
+  const feeFilter = { filterByFormula: `OR({${FF.fy}}='FY25',{${FF.fy}}='FY26',{${FF.fy}}='FY27',{${FF.fy}}='FY28')` };
   const fAcc = Object.values(FA);
   const fCat = Object.values(FCAT);
 
@@ -1925,7 +1927,7 @@ function renderContracts(f={}) {
 
   // Fee pipeline chart
   const fByStage = {};
-  const feesFY = (document.querySelector('#fpy-fy25.active') ? 'FY25' : 'FY26');
+  const feesFY = (document.querySelector('[data-feesfy].active')||{}).dataset?.feesfy || 'FY26';
   document.getElementById('fees-pipe-fy-lbl').textContent = feesFY;
   D.fees.filter(f=>gf(f,FF.fy)===feesFY).forEach(f=>{ const s=gf(f,FF.pipeline)||'Other'; fByStage[s]=(fByStage[s]||0)+(+gf(f,FF.amount)||0); });
   const fsL = STAGE_ORDER.filter(s=>fByStage[s]);
