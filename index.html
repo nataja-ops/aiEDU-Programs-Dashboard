@@ -462,27 +462,11 @@ button{cursor:pointer;font-family:inherit;}
       </div>
     </div>
 
-    <!-- Pipeline number tiles -->
-    <div class="my-stat-row mt-20" id="pipeline-tiles" style="cursor:default">
-      <div class="card kpi-tile" style="cursor:pointer" onclick="drillTrackerStages(['MOU Signed','MOU Complete'],'Active Partnerships')">
+    <!-- Active Partnerships tile -->
+    <div class="mt-20">
+      <div class="card kpi-tile" style="cursor:pointer;max-width:200px" onclick="drillAllActivePartners()">
         <div class="kpi-val" id="pt-active-val">—</div>
-        <div class="kpi-lbl">Active MOUs</div>
-      </div>
-      <div class="card kpi-tile" style="cursor:pointer" onclick="drillTrackerStages(['MOU Sent'],'Coming Soon — MOU Sent')">
-        <div class="kpi-val" id="pt-soon-val">—</div>
-        <div class="kpi-lbl">MOU Sent</div>
-      </div>
-      <div class="card kpi-tile" style="cursor:pointer" onclick="drillTrackerStages(['Collaboration','Verbal Agreement'],'In Progress')">
-        <div class="kpi-val" id="pt-progress-val">—</div>
-        <div class="kpi-lbl">In Progress</div>
-      </div>
-      <div class="card kpi-tile" style="cursor:pointer" onclick="drillTrackerStages(['Proposal/SOW Writing','SOW sent'],'Proposals')">
-        <div class="kpi-val" id="pt-proposals-val">—</div>
-        <div class="kpi-lbl">Proposals</div>
-      </div>
-      <div class="card kpi-tile" style="cursor:pointer" onclick="drillTrackerStages(['On Ice','Rejected'],'On Ice &amp; Rejected')">
-        <div class="kpi-val" id="pt-onice-val">—</div>
-        <div class="kpi-lbl">On Ice / Rejected</div>
+        <div class="kpi-lbl">Active Partnerships</div>
       </div>
     </div>
 
@@ -795,6 +779,7 @@ const FS = {
   owner:'fldRFH3iuCClYHXNZ', satPct:'fldyAVBAIbl1aBGVO', commPct:'fldWgaNecjCNYwTqF',
   resPct:'fld8X2zvhDzgIx4KX', objPct:'fldWr9LoaT6FHJI54', aiPct:'fld45HKCatlvjCaKq',
   recRating:'fldR1T5JOetNKbsAC', npsPoints:'fldiskA4NFpwwaipQ', // "NPS Points (+1/0/-1)"
+  npsScore:'fldk16DQMcrqRARRH', // "NPS Score (Calculated) (from NPS by Administration Year)"
   sat:'fld0LRFQ5VR079Ewi',  // "How satisfied are you..." (singleSelect)
   accountName:'fldWgesiHgr3Wp4Sj', // "Name (from Accounts)" lookup
 };
@@ -1158,8 +1143,14 @@ function drillRev(){
   const r=D.partners.filter(p=>(+gf(p,FP.fy26)||0)>0).sort((a,b)=>(+gf(b,FP.fy26)||0)-(+gf(a,FP.fy26)||0));
   showDrill('Earned Revenue — FY26',f$(r.reduce((s,p)=>s+(+gf(p,FP.fy26)||0),0))+' total awarded',r,COL_PRTS);
 }
+function drillAllActivePartners(){
+  const activeAccIds=new Set(D.accounts.filter(a=>(gf(a,FA.status)||'').toLowerCase()==='active').map(a=>a.id));
+  const r=D.partners.filter(p=>ga(p,FP.account).some(id=>activeAccIds.has(id))).sort((a,b)=>(gf(a,FP.name)||'').localeCompare(gf(b,FP.name)||''));
+  showDrill('Active Partnerships',r.length+' partnerships with active accounts',r,COL_PRTS);
+}
 function drillTrackerStages(stages,title){
-  const r=D.partners.filter(p=>stages.includes(gf(p,FP.pipeline)));
+  const activeAccIds=new Set(D.accounts.filter(a=>(gf(a,FA.status)||'').toLowerCase()==='active').map(a=>a.id));
+  const r=D.partners.filter(p=>stages.includes(gf(p,FP.pipeline))&&ga(p,FP.account).some(id=>activeAccIds.has(id)));
   showDrill(title,r.length+' partnership'+(r.length!==1?'s':''),r,COL_PRTS);
 }
 function drillProposedFees(){
@@ -1247,7 +1238,7 @@ function buildEventScores() {
 // ── Load ──────────────────────────────────────────────────────────────────────
 const FY26_START = '2025-12-31';
 const FY26_END   = '2027-01-01';
-const CACHE_KEY  = 'aiedu_dash_v10';
+const CACHE_KEY  = 'aiedu_dash_v12';
 const CACHE_TTL  = 3 * 60 * 1000; // 3 minutes
 
 function loadProgress(pct) {
@@ -1357,9 +1348,10 @@ function renderStats() {
   const plEvts  = D.events.filter(isPLEvent);
   // PL participants — events with a PL Type set
   const plParts = D.events.filter(e=>gf(e,FE.plType)).reduce((s,e)=>s+(+gf(e,FE.parts)||0),0);
-  // NPS from partner survey npsPoints (-1/0/+1)
-  const npsVals = D.surveys.map(s=>{ const v=gf(s,FS.npsPoints); return v==null||v===''?null:+v; }).filter(v=>v!=null&&!isNaN(v));
-  const avgNps  = npsVals.length ? npsVals.reduce((a,b)=>a+b,0)/npsVals.length : null;
+  // NPS from pre-calculated "NPS Score (Calculated)" lookup field — average across unique year scores
+  const npsRaw = D.surveys.flatMap(s=>ga(s,FS.npsScore).map(v=>+(typeof v==='object'?v.name:v))).filter(v=>!isNaN(v));
+  const npsUniq = [...new Set(npsRaw)];
+  const npsScore = npsUniq.length ? Math.round(npsUniq.reduce((a,b)=>a+b,0)/npsUniq.length) : null;
   // Avg Sat from event feedback (1-5 scale)
   const satArr  = Object.values(EVT_SCORES).map(s=>s.sat).filter(v=>v!=null);
   const avgSat  = satArr.length ? satArr.reduce((a,b)=>a+b)/satArr.length : null;
@@ -1368,7 +1360,7 @@ function renderStats() {
   document.getElementById('s-fees').textContent     = f$(awarded);
   document.getElementById('s-events').textContent   = plEvts.length;
   document.getElementById('s-parts').textContent    = plParts.toLocaleString();
-  document.getElementById('s-nps').textContent      = avgNps!=null ? avgNps.toFixed(1) : '—';
+  document.getElementById('s-nps').textContent      = npsScore!=null ? npsScore+'%' : '—';
   document.getElementById('s-sat').textContent      = avgSat!=null ? avgSat.toFixed(1) : '—';
 }
 
@@ -1474,7 +1466,9 @@ function renderOverview() {
 // ── Success Tracker ───────────────────────────────────────────────────────────
 function renderSuccessTracker() {
   const el = document.getElementById('success-tracker'); if(!el) return;
-  const ps = D.partners;
+  const activeAccIds = new Set(D.accounts.filter(a=>(gf(a,FA.status)||'').toLowerCase()==='active').map(a=>a.id));
+  const hasActiveAcc = p => ga(p,FP.account).some(id=>activeAccIds.has(id));
+  const ps = D.partners.filter(hasActiveAcc);
   const count = (...stages) => ps.filter(p=>stages.includes(gf(p,FP.pipeline))).length;
   const feeSum = (...stages) => ps.filter(p=>stages.includes(gf(p,FP.pipeline))).reduce((s,p)=>s+(+gf(p,FP.fy26)||0),0);
   const total = ps.length || 1;
@@ -1534,18 +1528,9 @@ function renderSuccessTracker() {
     </div>`;
   }).join('');
 
-  // Populate pipeline number tiles
-  const tileMap = [
-    ['pt-active-val',   ['MOU Signed','MOU Complete']],
-    ['pt-soon-val',     ['MOU Sent']],
-    ['pt-progress-val', ['Collaboration','Verbal Agreement']],
-    ['pt-proposals-val',['Proposal/SOW Writing','SOW sent']],
-    ['pt-onice-val',    ['On Ice','Rejected']],
-  ];
-  tileMap.forEach(([id,stages])=>{
-    const el=document.getElementById(id);
-    if(el) el.textContent=count(...stages);
-  });
+  // Active Partnerships tile — total partnerships linked to active accounts
+  const ptEl = document.getElementById('pt-active-val');
+  if(ptEl) ptEl.textContent = ps.length;
 }
 
 // ── Fees for Service Chart ────────────────────────────────────────────────────
