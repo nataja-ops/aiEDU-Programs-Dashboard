@@ -338,11 +338,12 @@ button{cursor:pointer;font-family:inherit;}
     <button class="nav-tab" data-tab="contracts">Contracts</button>
     <button class="nav-tab" data-tab="events">Events</button>
     <button class="nav-tab" data-tab="feedback">Partner Feedback</button>
-    <button class="nav-tab" data-tab="workspace" id="ws-nav-tab" style="display:none">👤 My Workspace</button>
+    <button class="nav-tab" data-tab="workspace" id="ws-nav-tab">👤 My Workspace</button>
   </nav>
   <div class="topbar-actions">
     <button class="icon-btn" id="refresh-btn" title="Refresh">↻</button>
     <button class="icon-btn" id="theme-btn" title="Toggle theme">◑</button>
+    <button class="lead-btn" id="req-btn" onclick="openRequestModal()">✉ Submit Request</button>
     <button class="lead-btn" id="lead-btn"><span>👤</span><span id="lead-lbl">My Workspace</span></button>
   </div>
 </header>
@@ -744,6 +745,36 @@ button{cursor:pointer;font-family:inherit;}
 <div id="toast-wrap"></div>
 
 <!-- Login modal -->
+<!-- Request modal -->
+<div id="req-ov" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:500;justify-content:center;align-items:flex-start;padding-top:60px">
+  <div style="background:var(--surface);border-radius:12px;padding:28px;width:480px;max-width:calc(100vw - 32px);box-shadow:0 24px 48px rgba(0,0,0,.25)">
+    <div class="modal-title">Submit a Request</div>
+    <div class="modal-sub">Questions or support requests go directly to the Programs team.</div>
+    <div class="form-group mt-16">
+      <label class="form-label">Your Name</label>
+      <input class="form-input" id="req-name" placeholder="Your name">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Request Type</label>
+      <select class="form-select" id="req-type">
+        <option value="General Question">General Question</option>
+        <option value="Partnership Inquiry">Partnership Inquiry</option>
+        <option value="Data Update">Data Update</option>
+        <option value="Event Support">Event Support</option>
+        <option value="Other">Other</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Message</label>
+      <textarea class="form-input" id="req-msg" rows="4" placeholder="Describe your request…" style="resize:vertical"></textarea>
+    </div>
+    <div class="flex gap-8 mt-16">
+      <button class="btn-sm primary flex-1" id="req-ok">Send Request</button>
+      <button class="btn-sm" onclick="document.getElementById('req-ov').style.display='none'">Cancel</button>
+    </div>
+  </div>
+</div>
+
 <div id="login-ov">
   <div id="login-modal">
     <div class="modal-title">Sign In to My Workspace</div>
@@ -1347,7 +1378,7 @@ function buildEventScores() {
 // ── Load ──────────────────────────────────────────────────────────────────────
 const FY26_START = '2025-12-31';
 const FY26_END   = '2027-01-01';
-const CACHE_KEY  = 'aiedu_dash_v26';
+const CACHE_KEY  = 'aiedu_dash_v27';
 const CACHE_TTL  = 3 * 60 * 1000; // 3 minutes
 
 function loadProgress(pct) {
@@ -2296,9 +2327,9 @@ function renderWorkspaceOps() {
     }
   });
 
-  misEl.innerHTML = issues.length===0
+  let misHtml = issues.length===0
     ? '<div class="empty-state" style="color:var(--good)">✓ All data looks complete</div>'
-    : issues.map(i=>`<div class="ops-item" onclick="${i.type==='mou'?'':(`openPartnerProfile('${i.id}')`)}" style="${i.type==='mou'?'cursor:default':''}">
+    : issues.map(i=>`<div class="ops-item" onclick="${i.type==='partner'?`openPartnerProfile('${i.id}')`:''}" style="${i.type!=='partner'?'cursor:default':''}">
         <div class="ops-dot" style="background:${i.color}"></div>
         <div class="ops-item-body">
           <div class="ops-item-name">${i.name}</div>
@@ -2306,6 +2337,23 @@ function renderWorkspaceOps() {
         </div>
         ${i.type==='partner'?'<span class="ops-item-action">Fix →</span>':''}
       </div>`).join('');
+
+  // Recent submitted requests
+  try {
+    const reqs = JSON.parse(localStorage.getItem('aiedu_requests')||'[]');
+    if(reqs.length){
+      misHtml += `<div class="ops-section-lbl">Recent Requests</div>`;
+      misHtml += reqs.slice(0,5).map(r=>`<div class="ops-item" style="cursor:default">
+        <div class="ops-dot" style="background:var(--teal)"></div>
+        <div class="ops-item-body">
+          <div class="ops-item-name">${r.name} — ${r.type}</div>
+          <div class="ops-item-meta">${r.msg.slice(0,80)}${r.msg.length>80?'…':''} · ${new Date(r.ts).toLocaleDateString()}</div>
+        </div>
+      </div>`).join('');
+    }
+  } catch(e){}
+
+  misEl.innerHTML = misHtml;
 }
 
 // ── Drawers ───────────────────────────────────────────────────────────────────
@@ -2412,7 +2460,6 @@ document.getElementById('login-ok').addEventListener('click',()=>{
   document.getElementById('login-ov').classList.remove('open');
   document.getElementById('lead-btn').classList.add('active');
   document.getElementById('lead-lbl').textContent = LEAD.name + "'s Workspace";
-  document.getElementById('ws-nav-tab').style.display='';
   document.getElementById('lead-name-disp').textContent = LEAD.name;
   renderWorkspacePipeline();
   renderWorkspaceOps();
@@ -2426,7 +2473,6 @@ document.getElementById('lead-logout').addEventListener('click',()=>{
   LEAD=null;
   document.getElementById('lead-btn').classList.remove('active');
   document.getElementById('lead-lbl').textContent='My Workspace';
-  document.getElementById('ws-nav-tab').style.display='none';
   switchTab('overview');
   toast('Signed out','info');
 });
@@ -2441,7 +2487,38 @@ function switchTab(name) {
   document.querySelectorAll('.nav-tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===name));
   document.querySelectorAll('.tab-panel').forEach(p=>p.classList.toggle('active',p.id==='tab-'+name));
 }
-document.querySelectorAll('.nav-tab').forEach(b=>b.addEventListener('click',()=>switchTab(b.dataset.tab)));
+document.querySelectorAll('.nav-tab').forEach(b=>b.addEventListener('click',()=>{
+  if(b.dataset.tab==='workspace' && !LEAD){ showLogin(); return; }
+  switchTab(b.dataset.tab);
+}));
+
+// ── Request modal ─────────────────────────────────────────────────────────────
+const REQ_KEY = 'aiedu_requests';
+function openRequestModal(){ document.getElementById('req-ov').style.display='flex'; }
+
+document.getElementById('req-ok').addEventListener('click',()=>{
+  const name = document.getElementById('req-name').value.trim();
+  const type = document.getElementById('req-type').value;
+  const msg  = document.getElementById('req-msg').value.trim();
+  if(!name||!msg){ toast('Please fill in your name and message','info'); return; }
+  const req = { name, type, msg, ts: new Date().toISOString() };
+  // Store locally
+  try {
+    const existing = JSON.parse(localStorage.getItem(REQ_KEY)||'[]');
+    existing.unshift(req);
+    localStorage.setItem(REQ_KEY, JSON.stringify(existing.slice(0,50)));
+  } catch(e){}
+  // Open mailto
+  const subject = encodeURIComponent(`[Programs Dashboard] ${type} from ${name}`);
+  const body    = encodeURIComponent(`Name: ${name}\nType: ${type}\n\nMessage:\n${msg}`);
+  window.open(`mailto:nataja@aiedu.org?subject=${subject}&body=${body}`,'_blank');
+  document.getElementById('req-ov').style.display='none';
+  document.getElementById('req-name').value='';
+  document.getElementById('req-msg').value='';
+  toast('Request sent — your email client should open','success');
+  // Refresh ops panel if workspace is active
+  if(LEAD) renderWorkspaceOps();
+});
 
 // ── Theme toggle ──────────────────────────────────────────────────────────────
 document.getElementById('theme-btn').addEventListener('click',()=>{
