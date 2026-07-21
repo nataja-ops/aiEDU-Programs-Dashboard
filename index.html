@@ -978,6 +978,14 @@ const COL_FEES = [
   {label:'Stage',        fn:r=>{const s=ga(r,FF.pipeline).map(v=>typeof v==='object'?v.name:v).join('');return stagePill(s||null);}},
   {label:'Team',         fn:r=>ga(r,FF.team).map(v=>typeof v==='object'?v.name:v).join(', ')||'—'},
 ];
+const COL_ACCS = [
+  {label:'Account',      fn:r=>`<strong class="drill-link" onclick="openAccProfile('${r.id}')">${gf(r,FA.name)||'—'}</strong>`},
+  {label:'Status',       fn:r=>{const s=gf(r,FA.status)||'—';const cls=s==='Active'?'pill-good':s==='Prospect'?'pill-warn':'pill-gray';return `<span class="pill ${cls}">${s}</span>`;}},
+  {label:'Type',         fn:r=>ga(r,FA.type).map(v=>typeof v==='object'?v.name:v).join(', ')||'—'},
+  {label:'State',        fn:r=>gf(r,FA.state)||'—'},
+  {label:'Partnerships', fn:r=>{ const n=D.partners.filter(p=>ga(p,FP.account).includes(r.id)).length; return n||'0'; }},
+  {label:'Team',         fn:r=>ga(r,FA.team).map(v=>typeof v==='object'?v.name:v).join(', ')||'—'},
+];
 
 function showDrill(title, sub, rows, cols) {
   document.getElementById('drill-title').textContent = title;
@@ -997,8 +1005,9 @@ function drillAllPartners(){
     [...D.partners].sort((a,b)=>(gf(a,FP.name)||'').localeCompare(gf(b,FP.name)||'')), COL_PRTS);
 }
 function drillActive(){
-  const r=D.partners.filter(p=>gf(p,FP.pipeline)==='Active'||gf(p,FP.pipeline)==='Collaboration');
-  showDrill('Active Partnerships', r.length+' active', r, COL_PRTS);
+  const r=D.accounts.filter(a=>(gf(a,FA.status)||'').toLowerCase()==='active')
+    .sort((a,b)=>(gf(a,FA.name)||'').localeCompare(gf(b,FA.name)||''));
+  showDrill('Active Accounts', r.length+' accounts', r, COL_ACCS);
 }
 function drillFY26Fees(){
   const r=D.fees.filter(f=>gf(f,FF.fy)==='FY26').sort((a,b)=>(+gf(b,FF.amount)||0)-(+gf(a,FF.amount)||0));
@@ -1124,7 +1133,7 @@ function buildEventScores() {
 // ── Load ──────────────────────────────────────────────────────────────────────
 const FY26_START = '2025-12-31';
 const FY26_END   = '2027-01-01';
-const CACHE_KEY  = 'aiedu_dash_v5';
+const CACHE_KEY  = 'aiedu_dash_v6';
 const CACHE_TTL  = 3 * 60 * 1000; // 3 minutes
 
 function loadProgress(pct) {
@@ -1218,7 +1227,7 @@ function renderAll() {
 
 // ── Stats bar ─────────────────────────────────────────────────────────────────
 function renderStats() {
-  const active  = D.partners.filter(p=>gf(p,FP.pipeline)==='Active').length;
+  const active  = D.accounts.filter(a=>(gf(a,FA.status)||'').toLowerCase()==='active').length;
   const fy26    = D.fees.filter(f=>gf(f,FF.fy)==='FY26').reduce((s,f)=>s+(+gf(f,FF.amount)||0),0);
   const parts   = D.events.reduce((s,e)=>s+(+gf(e,FE.parts)||0),0);
   const allScores = Object.values(EVT_SCORES);
