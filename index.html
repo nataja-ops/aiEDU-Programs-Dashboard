@@ -482,19 +482,26 @@ button{cursor:pointer;font-family:inherit;}
       </div>
     </div>
 
-    <!-- Opportunities View -->
+    <!-- Opportunities — Active + Coming Soon only -->
     <div class="mt-20">
       <div class="section-hd">
-        <div><div class="section-title">Opportunities</div><div class="section-sub">All accounts and their partnerships</div></div>
-        <input class="form-input" id="opp-search" placeholder="Search accounts…" style="width:200px">
+        <div><div class="section-title">Active &amp; Coming Soon</div><div class="section-sub">Active partnerships and MOU Sent upcoming</div></div>
       </div>
-      <div id="opp-list"><div class="empty-state">Loading…</div></div>
+      <div id="opp-active-list"><div class="empty-state">Loading…</div></div>
     </div>
   </div>
 
   <!-- PARTNERSHIPS -->
   <div class="tab-panel" id="tab-partnerships">
+    <!-- Full Opportunities View -->
     <div class="section-hd mb-12">
+      <div><div class="section-title">Opportunities &amp; Accounts</div><div class="section-sub">All accounts with their partnerships</div></div>
+      <input class="form-input" id="opp-search" placeholder="Search accounts…" style="width:200px">
+    </div>
+    <div id="opp-list"><div class="empty-state">Loading…</div></div>
+
+    <!-- Partnerships Table -->
+    <div class="section-hd mt-24 mb-12">
       <div class="section-title">All Partnerships</div>
       <div class="flex gap-8 items-center" style="flex-wrap:wrap">
         <select class="form-select" id="f-stage" style="width:auto"><option value="">All Stages</option></select>
@@ -554,7 +561,7 @@ button{cursor:pointer;font-family:inherit;}
     </div>
     <div class="card table-wrap">
       <table class="data-table" id="evt-tbl">
-        <thead><tr><th>Event</th><th>Date</th><th>Facilitator</th><th>Format</th><th>Participants</th><th>Sat</th><th>NPS</th><th>Obj Met</th></tr></thead>
+        <thead><tr><th>Event</th><th style="min-width:130px">Date</th><th>Facilitator</th><th>Format</th><th>Participants</th><th>Sat</th><th>NPS</th><th>Obj Met</th></tr></thead>
         <tbody><tr><td colspan="8" class="empty-state">Loading…</td></tr></tbody>
       </table>
     </div>
@@ -724,7 +731,10 @@ const FP = {
   services:'fldqOMuPRf0UojJEZ', totalFees:'fldQU0pTL7oL8SarE', fy26:'fld6oXfY8rqrcqtJM',
   state:'fldYAFg4ulmMnfsqh', cultStart:'fldqhva6jf1Lm6dSx', notes:'fldokpiDBitEeKtgb',
   partType:'fld9PMifRyYVooTob', proposed:'fld1X2wDQlOPKjBmB',
-  account:'fldgZ6JHVCrnl99ng'
+  account:'fldgZ6JHVCrnl99ng',
+  fundingStage:'fldv1NHNgQmQMHiuk',  // "Funding Stage" singleSelect
+  mouSigned:'fldxOLvOZrBpAyhWS',     // "SIGNED (from Program MOU)" lookup
+  mouDate:'fld8yKp3q4fYCG07X',       // "Date Signed (from Program MOU)" lookup
 };
 const FF = {
   name:'fldm0J2jZ5FNoeij4', amount:'fld74B4jxPOYfABSr', fy:'fldueOo2EOiAGsWev',
@@ -769,6 +779,7 @@ const FS = {
   resPct:'fld8X2zvhDzgIx4KX', objPct:'fldWr9LoaT6FHJI54', aiPct:'fld45HKCatlvjCaKq',
   recRating:'fldR1T5JOetNKbsAC', npsPoints:'fldiskA4NFpwwaipQ', // "NPS Points (+1/0/-1)"
   sat:'fld0LRFQ5VR079Ewi',  // "How satisfied are you..." (singleSelect)
+  accountName:'fldWgesiHgr3Wp4Sj', // "Name (from Accounts)" lookup
 };
 const FST = {
   name:'fldpmvWNm6cmygmVS', role:'fldtPyBVQFJyK0Pja',
@@ -1031,7 +1042,12 @@ function showDrill(title, sub, rows, cols) {
     '<tr>'+cols.map(c=>`<th>${c.label}</th>`).join('')+'</tr>';
   document.getElementById('drill-tbody').innerHTML   = rows.length===0
     ? `<tr><td colspan="${cols.length}" class="empty-state">No records found</td></tr>`
-    : rows.map(r=>'<tr>'+cols.map(c=>`<td>${c.fn(r)}</td>`).join('')+'</tr>').join('');
+    : rows.map(r=>{
+        const first = cols[0].fn(r);
+        const m = first.match(/onclick="([^"]+)"/);
+        const rowClick = m ? ` style="cursor:pointer" onclick="${m[1]}"` : '';
+        return `<tr${rowClick}>${cols.map(c=>`<td>${c.fn(r)}</td>`).join('')}</tr>`;
+      }).join('');
   document.getElementById('drill-overlay').classList.add('open');
 }
 function closeDrill(){ document.getElementById('drill-overlay').classList.remove('open'); }
@@ -1201,7 +1217,7 @@ function buildEventScores() {
 // ── Load ──────────────────────────────────────────────────────────────────────
 const FY26_START = '2025-12-31';
 const FY26_END   = '2027-01-01';
-const CACHE_KEY  = 'aiedu_dash_v7';
+const CACHE_KEY  = 'aiedu_dash_v8';
 const CACHE_TTL  = 3 * 60 * 1000; // 3 minutes
 
 function loadProgress(pct) {
@@ -1284,7 +1300,8 @@ function renderAll() {
   renderOverview();
   renderSuccessTracker();
   renderFeesChart();
-  renderOpportunities(document.getElementById('opp-search')?.value||'');
+  renderOpportunities('', true, 'opp-active-list');
+  renderOpportunities(document.getElementById('opp-search')?.value||'', false, 'opp-list');
   renderPartnerships();
   renderContracts();
   renderEvents();
@@ -1516,8 +1533,10 @@ function renderFeesChart() {
 }
 
 // ── Opportunities View ────────────────────────────────────────────────────────
-function renderOpportunities(q='') {
-  const el=document.getElementById('opp-list'); if(!el) return;
+const ACTIVE_STAGES = new Set(['MOU Signed','MOU Complete','Collaboration','Verbal Agreement']);
+const COMING_STAGES = new Set(['MOU Sent']);
+function renderOpportunities(q='', overviewMode=false, elId='opp-list') {
+  const el=document.getElementById(elId); if(!el) return;
   const lc=q.toLowerCase();
   let accs = D.accounts.slice().sort((a,b)=>(gf(a,FA.name)||'').localeCompare(gf(b,FA.name)||''));
   if(lc) accs=accs.filter(a=>(gf(a,FA.name)||'').toLowerCase().includes(lc));
@@ -1530,8 +1549,16 @@ function renderOpportunities(q='') {
     });
   });
 
-  // Only show accounts that have at least one linked partnership
-  accs = accs.filter(a=>( accPrts[a.id]||[]).length>0);
+  // In overview mode: only show accounts with active or coming-soon partnerships
+  if(overviewMode){
+    accs = accs.filter(a=>(accPrts[a.id]||[]).some(p=>{
+      const s=gf(p,FP.pipeline)||'';
+      return ACTIVE_STAGES.has(s)||COMING_STAGES.has(s);
+    }));
+  } else {
+    // Only show accounts that have at least one linked partnership
+    accs = accs.filter(a=>(accPrts[a.id]||[]).length>0);
+  }
   if(!accs.length){el.innerHTML='<div class="empty-state">No accounts with partnerships found</div>';return;}
 
   el.innerHTML = accs.map((a,i)=>{
@@ -1540,17 +1567,20 @@ function renderOpportunities(q='') {
     const status=gf(a,FA.status)||'';
     const types=ga(a,FA.type).map(v=>typeof v==='object'?v.name:v).join(', ')||'—';
     const state=gf(a,FA.state)||'';
-    const prts=(accPrts[id]||[]);
-    const activeCount=prts.filter(p=>['MOU Signed','MOU Complete','Collaboration','Verbal Agreement'].includes(gf(p,FP.pipeline))).length;
+    let prts=(accPrts[id]||[]);
+    // In overview mode filter to active/coming stages only
+    if(overviewMode) prts=prts.filter(p=>{const s=gf(p,FP.pipeline)||'';return ACTIVE_STAGES.has(s)||COMING_STAGES.has(s);});
+    const activeCount=prts.filter(p=>ACTIVE_STAGES.has(gf(p,FP.pipeline)||'')).length;
 
     const prtsHtml = prts.length===0
-      ? '<div style="padding:10px 16px 10px 42px;font-size:12px;color:var(--ink3)">No partnerships linked</div>'
+      ? '<div style="padding:10px 16px 10px 42px;font-size:12px;color:var(--ink3)">No active partnerships</div>'
       : `<div class="opp-prt-hd"><span>Partnership</span><span>Stage</span><span>FY26 Fees</span><span>Ends</span><span>Team</span></div>`
         + prts.map(p=>{
             const team=ga(p,FP.team).map(v=>typeof v==='object'?v.name:v).join(', ')||'—';
             const days=daysTo(gf(p,FP.end));
+            const comingSoon=COMING_STAGES.has(gf(p,FP.pipeline)||'');
             return `<div class="opp-prt-row" onclick="openPartnerProfile('${p.id}')">
-              <span class="drill-link">${gf(p,FP.name)||'—'}</span>
+              <span class="drill-link">${gf(p,FP.name)||'—'}${comingSoon?' <span style="font-size:10px;color:var(--warn);font-weight:600">COMING SOON</span>':''}</span>
               <span>${stagePill(gf(p,FP.pipeline))}</span>
               <span style="font-variant-numeric:tabular-nums">${f$(gf(p,FP.fy26))}</span>
               <span>${fdt(gf(p,FP.end))} ${days!=null?daysChip(days):''}</span>
@@ -1640,8 +1670,18 @@ function openPartnerProfile(id){
   const services=ga(p,FP.services).map(v=>typeof v==='object'?v.name:v).join(', ')||'—';
   const acc=ga(p,FP.account)[0];
   const accName=acc?(D.accounts.find(a=>a.id===acc)||{}).fields?.[FA.name]||'—':'—';
+  const fundingStage = gf(p,FP.fundingStage)||'—';
+  const mouSignedVals = ga(p,FP.mouSigned).map(v=>typeof v==='object'?v.name:v).filter(Boolean);
+  const mouDateVals   = ga(p,FP.mouDate).map(v=>typeof v==='object'?v.name:v).filter(Boolean);
+  const mouSigned = mouSignedVals.some(v=>String(v).toLowerCase()==='true'||v===1||v==='1'||v==='yes');
+  const mouDateStr = mouDateVals.length ? fdt(mouDateVals[0]) : null;
+  const mouStatusHtml = mouSigned
+    ? `<span class="pill pill-good">✓ Signed${mouDateStr?' · '+mouDateStr:''}</span>`
+    : `<span class="pill pill-gray">Not Signed</span>`;
   const fields=[
     {k:'Pipeline Stage',        v:stagePill(gf(p,FP.pipeline))},
+    {k:'Funding Stage',         v:fundingStage!=='—'?`<span class="pill pill-teal">${fundingStage}</span>`:'—'},
+    {k:'MOU Status',            v:mouStatusHtml},
     {k:'Partner Type',          v:type},
     {k:'Account',               v:`<span class="drill-link" onclick="openAccProfile('${acc||''}');closeAccModal()">${accName}</span>`},
     {k:'State',                 v:state},
@@ -1902,9 +1942,17 @@ function renderSurveys(f={}) {
     dSorted.map(()=>cssVar('--teal')),'Avg Sat %');
 
   const tbody = document.querySelector('#sv-tbl tbody');
-  tbody.innerHTML = rows.length===0 ? '<tr><td colspan="8" class="empty-state">No survey data</td></tr>' :
-    rows.map(r=>`<tr>
-      <td><strong>${gf(r,FS.district)||'—'}</strong></td>
+  if(rows.length===0){ tbody.innerHTML='<tr><td colspan="8" class="empty-state">No survey data</td></tr>'; return; }
+  // Group by account/partnership name
+  const grouped = {};
+  rows.forEach(r=>{
+    const acc = ga(r,FS.accountName).map(v=>typeof v==='object'?v.name:v).join(', ')||gf(r,FS.district)||'Unknown';
+    (grouped[acc]=grouped[acc]||[]).push(r);
+  });
+  tbody.innerHTML = Object.entries(grouped).sort(([a],[b])=>a.localeCompare(b)).map(([grp,grpRows])=>
+    `<tr style="background:var(--surface2)"><td colspan="8" style="font-weight:700;font-size:12px;color:var(--ink);padding:8px 12px;letter-spacing:.02em">${grp}</td></tr>`
+    + grpRows.map(r=>`<tr>
+      <td style="padding-left:20px"><strong>${gf(r,FS.district)||'—'}</strong></td>
       <td>${gf(r,FS.season)||'—'}</td>
       <td>${fpct(gf(r,FS.satPct))}</td>
       <td>${fpct(gf(r,FS.commPct))}</td>
@@ -1912,7 +1960,8 @@ function renderSurveys(f={}) {
       <td>${fpct(gf(r,FS.objPct))}</td>
       <td>${fpct(gf(r,FS.aiPct))}</td>
       <td>${fsc(gf(r,FS.recRating))}</td>
-    </tr>`).join('');
+    </tr>`).join('')
+  ).join('');
 }
 
 // ── Sr. Lead Panel ────────────────────────────────────────────────────────────
@@ -2192,7 +2241,7 @@ wire(['f-evt-type','f-evt-search'],renderEvents,()=>({
 }));
 wire(['f-season'],f=>renderSurveys(f),()=>({season:document.getElementById('f-season').value}));
 const oppSearch=document.getElementById('opp-search');
-if(oppSearch){ oppSearch.addEventListener('input',()=>renderOpportunities(oppSearch.value)); }
+if(oppSearch){ oppSearch.addEventListener('input',()=>renderOpportunities(oppSearch.value, false, 'opp-list')); }
 
 // ── Feedback subtabs ──────────────────────────────────────────────────────────
 document.querySelectorAll('[data-fbtab]').forEach(btn=>{
