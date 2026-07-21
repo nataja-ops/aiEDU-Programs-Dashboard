@@ -465,13 +465,6 @@ button{cursor:pointer;font-family:inherit;}
       </div>
     </div>
 
-    <!-- Active Partnerships tile -->
-    <div class="mt-20">
-      <div class="card kpi-tile" style="cursor:pointer;max-width:200px" onclick="drillAllActivePartners()">
-        <div class="kpi-val" id="pt-active-val">—</div>
-        <div class="kpi-lbl">Active Partnerships</div>
-      </div>
-    </div>
 
     <!-- Success Tracker -->
     <div class="mt-12">
@@ -637,6 +630,9 @@ button{cursor:pointer;font-family:inherit;}
         <div class="section-sub" id="drill-sub"></div>
       </div>
       <button class="icon-btn" onclick="closeDrill()">✕</button>
+    </div>
+    <div id="drill-chart-section" style="display:none;padding:16px 24px 8px;border-bottom:1px solid var(--border);flex-shrink:0">
+      <canvas id="drill-chart-canvas" style="max-height:220px"></canvas>
     </div>
     <div class="drill-body">
       <div class="table-wrap">
@@ -1040,7 +1036,7 @@ const COL_SURVEYS = [
   {label:'Owner',    fn:r=>ga(r,FS.owner).map(v=>typeof v==='object'?v.name:v).join(', ')||'—'},
 ];
 
-function showDrill(title, sub, rows, cols) {
+function showDrill(title, sub, rows, cols, chartFn=null) {
   document.getElementById('drill-title').textContent = title;
   document.getElementById('drill-sub').textContent   = sub||'';
   document.getElementById('drill-thead').innerHTML   =
@@ -1053,9 +1049,21 @@ function showDrill(title, sub, rows, cols) {
         const rowClick = m ? ` style="cursor:pointer" onclick="${m[1]}"` : '';
         return `<tr${rowClick}>${cols.map(c=>`<td>${c.fn(r)}</td>`).join('')}</tr>`;
       }).join('');
+  const cs = document.getElementById('drill-chart-section');
+  if(chartFn) {
+    if(CHARTS['drill-chart-canvas']){CHARTS['drill-chart-canvas'].destroy();delete CHARTS['drill-chart-canvas'];}
+    cs.style.display='block';
+    chartFn('drill-chart-canvas');
+  } else {
+    cs.style.display='none';
+  }
   document.getElementById('drill-overlay').classList.add('open');
 }
-function closeDrill(){ document.getElementById('drill-overlay').classList.remove('open'); }
+function closeDrill(){
+  document.getElementById('drill-overlay').classList.remove('open');
+  document.getElementById('drill-chart-section').style.display='none';
+  if(CHARTS['drill-chart-canvas']){CHARTS['drill-chart-canvas'].destroy();delete CHARTS['drill-chart-canvas'];}
+}
 
 // Stat bar drill functions
 function drillAllPartners(){
@@ -1120,8 +1128,33 @@ function drillMous(){
   showDrill('Service MOUs — FY26',r.length+' of 15 signed in 2026',r,COL_MOU);
 }
 function drillEdu(){
-  showDrill('Educators Trained — FY26','PL session participants',
-    [...D.events].sort((a,b)=>(gf(b,FE.date)||'').localeCompare(gf(a,FE.date)||'')),COL_EVTS);
+  const evts=[...D.events].sort((a,b)=>(gf(b,FE.date)||'').localeCompare(gf(a,FE.date)||''));
+  // Group by partner account name
+  const grouped={};
+  evts.forEach(e=>{
+    const pName=ga(e,FE.partner).map(v=>typeof v==='object'?v.name:v).join(', ')||'No Partner';
+    (grouped[pName]=grouped[pName]||[]).push(e);
+  });
+  const cols=COL_EVTS;
+  const rows=[];
+  Object.entries(grouped).sort(([a],[b])=>a.localeCompare(b)).forEach(([grp,grpEvts])=>{
+    const total=grpEvts.reduce((s,e)=>s+(+gf(e,FE.parts)||0),0);
+    rows.push({_isGroup:true, _label:`${grp} — ${grpEvts.length} events · ${total.toLocaleString()} participants`});
+    grpEvts.forEach(e=>rows.push(e));
+  });
+  const totalParts=evts.reduce((s,e)=>s+(+gf(e,FE.parts)||0),0);
+  document.getElementById('drill-title').textContent='Educators Trained — FY26';
+  document.getElementById('drill-sub').textContent=totalParts.toLocaleString()+' total participants';
+  document.getElementById('drill-thead').innerHTML='<tr>'+cols.map(c=>`<th>${c.label}</th>`).join('')+'</tr>';
+  document.getElementById('drill-tbody').innerHTML=rows.map(r=>{
+    if(r._isGroup) return `<tr style="background:var(--surface2)"><td colspan="${cols.length}" style="font-weight:700;padding:8px 10px;font-size:12px;color:var(--ink2)">${r._label}</td></tr>`;
+    const first=cols[0].fn(r);
+    const m=first.match(/onclick="([^"]+)"/);
+    const rc=m?` style="cursor:pointer" onclick="${m[1]}"`:' ';
+    return `<tr${rc}>${cols.map(c=>`<td>${c.fn(r)}</td>`).join('')}</tr>`;
+  }).join('');
+  document.getElementById('drill-chart-section').style.display='none';
+  document.getElementById('drill-overlay').classList.add('open');
 }
 function drillPeer(){
   const mouStages=new Set(['MOU Signed','MOU Complete']);
@@ -1144,7 +1177,21 @@ function drillCat(){
 }
 function drillRev(){
   const r=D.partners.filter(p=>(+gf(p,FP.fy26)||0)>0).sort((a,b)=>(+gf(b,FP.fy26)||0)-(+gf(a,FP.fy26)||0));
-  showDrill('Earned Revenue — FY26',f$(r.reduce((s,p)=>s+(+gf(p,FP.fy26)||0),0))+' total awarded',r,COL_PRTS);
+  showDrill('Earned Revenue — FY26',f$(r.reduce((s,p)=>s+(+gf(p,FP.fy26)||0),0))+' total awarded',r,COL_PRTS, id=>{
+    const years=['FY25','FY26'];
+    const actual={},projected={};
+    years.forEach(y=>{actual[y]=0;projected[y]=0;});
+    D.fees.forEach(f=>{
+      const fy=gf(f,FF.fy); if(!years.includes(fy)) return;
+      const amt=+gf(f,FF.amount)||0; if(!amt) return;
+      const pipe=ga(f,FF.pipeline).map(v=>typeof v==='object'?v.name:v).join('');
+      if(FEE_ACTUAL.has(pipe)||FEE_ACTIVE.has(pipe)) actual[fy]+=amt; else projected[fy]+=amt;
+    });
+    mkChartMulti(id,'bar',years,[
+      {label:'Projected',      data:years.map(y=>projected[y]), color:'rgba(13,122,107,0.35)'},
+      {label:'Actual/Awarded', data:years.map(y=>actual[y]),    color:'rgba(13,122,107,0.9)'},
+    ], null, {footer:items=>items[0]?.dataset?.label==='Projected'?['Fees in proposal, SOW sent,','or verbal agreement stages']:[]});
+  });
 }
 function drillAllActivePartners(){
   const activeAccIds=new Set(D.accounts.filter(a=>(gf(a,FA.status)||'').toLowerCase()==='active').map(a=>a.id));
@@ -1241,7 +1288,7 @@ function buildEventScores() {
 // ── Load ──────────────────────────────────────────────────────────────────────
 const FY26_START = '2025-12-31';
 const FY26_END   = '2027-01-01';
-const CACHE_KEY  = 'aiedu_dash_v14';
+const CACHE_KEY  = 'aiedu_dash_v15';
 const CACHE_TTL  = 3 * 60 * 1000; // 3 minutes
 
 function loadProgress(pct) {
@@ -1519,9 +1566,6 @@ function renderSuccessTracker() {
     </div>`;
   }).join('');
 
-  // Active Partnerships tile — total partnerships linked to active accounts
-  const ptEl = document.getElementById('pt-active-val');
-  if(ptEl) ptEl.textContent = ps.length;
 }
 
 // ── Fees for Service Chart ────────────────────────────────────────────────────
