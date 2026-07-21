@@ -462,8 +462,32 @@ button{cursor:pointer;font-family:inherit;}
       </div>
     </div>
 
+    <!-- Pipeline number tiles -->
+    <div class="my-stat-row mt-20" id="pipeline-tiles" style="cursor:default">
+      <div class="card kpi-tile" style="cursor:pointer" onclick="drillTrackerStages(['MOU Signed','MOU Complete'],'Active Partnerships')">
+        <div class="kpi-val" id="pt-active-val">—</div>
+        <div class="kpi-lbl">Active MOUs</div>
+      </div>
+      <div class="card kpi-tile" style="cursor:pointer" onclick="drillTrackerStages(['MOU Sent'],'Coming Soon — MOU Sent')">
+        <div class="kpi-val" id="pt-soon-val">—</div>
+        <div class="kpi-lbl">MOU Sent</div>
+      </div>
+      <div class="card kpi-tile" style="cursor:pointer" onclick="drillTrackerStages(['Collaboration','Verbal Agreement'],'In Progress')">
+        <div class="kpi-val" id="pt-progress-val">—</div>
+        <div class="kpi-lbl">In Progress</div>
+      </div>
+      <div class="card kpi-tile" style="cursor:pointer" onclick="drillTrackerStages(['Proposal/SOW Writing','SOW sent'],'Proposals')">
+        <div class="kpi-val" id="pt-proposals-val">—</div>
+        <div class="kpi-lbl">Proposals</div>
+      </div>
+      <div class="card kpi-tile" style="cursor:pointer" onclick="drillTrackerStages(['On Ice','Rejected'],'On Ice &amp; Rejected')">
+        <div class="kpi-val" id="pt-onice-val">—</div>
+        <div class="kpi-lbl">On Ice / Rejected</div>
+      </div>
+    </div>
+
     <!-- Success Tracker -->
-    <div class="mt-20">
+    <div class="mt-12">
       <div class="section-hd">
         <div><div class="section-title">Success Tracker</div><div class="section-sub">Program progress by pipeline category</div></div>
       </div>
@@ -480,14 +504,6 @@ button{cursor:pointer;font-family:inherit;}
       <div class="card chart-card">
         <canvas id="ch-fees-fy" style="max-height:300px"></canvas>
       </div>
-    </div>
-
-    <!-- Opportunities — Active + Coming Soon only -->
-    <div class="mt-20">
-      <div class="section-hd">
-        <div><div class="section-title">Active &amp; Coming Soon</div><div class="section-sub">Active partnerships and MOU Sent upcoming</div></div>
-      </div>
-      <div id="opp-active-list"><div class="empty-state">Loading…</div></div>
     </div>
   </div>
 
@@ -1231,7 +1247,7 @@ function buildEventScores() {
 // ── Load ──────────────────────────────────────────────────────────────────────
 const FY26_START = '2025-12-31';
 const FY26_END   = '2027-01-01';
-const CACHE_KEY  = 'aiedu_dash_v9';
+const CACHE_KEY  = 'aiedu_dash_v10';
 const CACHE_TTL  = 3 * 60 * 1000; // 3 minutes
 
 function loadProgress(pct) {
@@ -1314,7 +1330,6 @@ function renderAll() {
   renderOverview();
   renderSuccessTracker();
   renderFeesChart();
-  renderOpportunities('', true, 'opp-active-list');
   renderOpportunities(document.getElementById('opp-search')?.value||'', false, 'opp-list');
   renderPartnerships();
   renderContracts();
@@ -1518,6 +1533,19 @@ function renderSuccessTracker() {
       <div class="tracker-val">${display}</div>
     </div>`;
   }).join('');
+
+  // Populate pipeline number tiles
+  const tileMap = [
+    ['pt-active-val',   ['MOU Signed','MOU Complete']],
+    ['pt-soon-val',     ['MOU Sent']],
+    ['pt-progress-val', ['Collaboration','Verbal Agreement']],
+    ['pt-proposals-val',['Proposal/SOW Writing','SOW sent']],
+    ['pt-onice-val',    ['On Ice','Rejected']],
+  ];
+  tileMap.forEach(([id,stages])=>{
+    const el=document.getElementById(id);
+    if(el) el.textContent=count(...stages);
+  });
 }
 
 // ── Fees for Service Chart ────────────────────────────────────────────────────
