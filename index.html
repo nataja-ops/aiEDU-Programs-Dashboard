@@ -339,13 +339,12 @@ button{cursor:pointer;font-family:inherit;}
     <button class="nav-tab" data-tab="events">Events</button>
     <button class="nav-tab" data-tab="feedback">Partner Feedback</button>
     <button class="nav-tab" data-tab="content">Content</button>
-    <button class="nav-tab" data-tab="workspace" id="ws-nav-tab">👤 My Workspace</button>
+    <button class="nav-tab" data-tab="workspace" id="ws-nav-tab">My Workspace</button>
   </nav>
   <div class="topbar-actions">
     <button class="icon-btn" id="refresh-btn" title="Refresh">↻</button>
     <button class="icon-btn" id="theme-btn" title="Toggle theme">◑</button>
     <button class="lead-btn" id="req-btn" onclick="openRequestModal()">✉ Submit Request</button>
-    <button class="lead-btn" id="lead-btn"><span>👤</span><span id="lead-lbl">My Workspace</span></button>
   </div>
 </header>
 
@@ -2683,8 +2682,6 @@ document.getElementById('login-ok').addEventListener('click',()=>{
   if(!rec) return;
   LEAD={id:sel.value, name:gf(rec,FST.name)};
   document.getElementById('login-ov').classList.remove('open');
-  document.getElementById('lead-btn').classList.add('active');
-  document.getElementById('lead-lbl').textContent = LEAD.name + "'s Workspace";
   document.getElementById('lead-name-disp').textContent = LEAD.name;
   renderWorkspacePipeline();
   renderWorkspaceOps();
@@ -2696,16 +2693,10 @@ document.getElementById('login-cancel').addEventListener('click',()=>document.ge
 
 document.getElementById('lead-logout').addEventListener('click',()=>{
   LEAD=null;
-  document.getElementById('lead-btn').classList.remove('active');
-  document.getElementById('lead-lbl').textContent='My Workspace';
   switchTab('overview');
   toast('Signed out','info');
 });
 
-document.getElementById('lead-btn').addEventListener('click',()=>{
-  if(LEAD){ switchTab('workspace'); }
-  else { showLogin(); }
-});
 
 // ── Tab nav ───────────────────────────────────────────────────────────────────
 function switchTab(name) {
