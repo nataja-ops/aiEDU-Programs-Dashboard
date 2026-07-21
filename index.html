@@ -2314,7 +2314,7 @@ function renderPlProducts(q='') {
   // Sort A-Z then group by PD Type
   prods.sort((a,b)=>(gf(a,FPLP.name)||gf(a,FPLP.nameSL)||'').localeCompare(gf(b,FPLP.name)||gf(b,FPLP.nameSL)||''));
   const grouped={};
-  prods.forEach(p=>{ const t=gf(p,FPLP.pdType)||'Other'; (grouped[t]=grouped[t]||[]).push(p); });
+  prods.forEach(p=>{ const t=gf(p,FPLP.pdType)||'Trailblazers'; (grouped[t]=grouped[t]||[]).push(p); });
 
   el.innerHTML=Object.entries(grouped).sort(([a],[b])=>a.localeCompare(b)).map(([type,items])=>`
     <div style="margin-bottom:20px">
