@@ -2717,8 +2717,12 @@ async function setStage(id,stage) {
 }
 
 // ── Sr. Lead login ────────────────────────────────────────────────────────────
+const WS_USERS = ['ashley renick','kristen','lenard','lindsay','nataja'];
 function showLogin() {
-  const stf = D.staff.filter(s=>gf(s,FST.name));
+  const stf = D.staff.filter(s=>{
+    const n=(gf(s,FST.name)||'').toLowerCase();
+    return WS_USERS.some(u=>n.includes(u));
+  });
   stf.sort((a,b)=>(gf(a,FST.name)||'').localeCompare(gf(b,FST.name)||''));
   const sel=document.getElementById('lead-select');
   sel.innerHTML='<option value="">— Choose —</option>'+stf.map(s=>`<option value="${s.id}">${gf(s,FST.name)}</option>`).join('');
