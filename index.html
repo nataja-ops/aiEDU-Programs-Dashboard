@@ -88,8 +88,8 @@ button{cursor:pointer;font-family:inherit;}
   display:flex;align-items:center;padding:0 20px;overflow-x:auto;gap:0;justify-content:space-between;
 }
 .stat-item{display:flex;align-items:baseline;gap:6px;padding:0 12px;border-right:1px solid rgba(255,255,255,.10);flex:1;justify-content:center;}
-.stat-item:first-child{padding-left:0;justify-content:flex-start;}
-.stat-item:last-child{justify-content:flex-end;}
+.stat-item:first-child{padding-left:12px;}
+.stat-item:last-child{justify-content:center;}
 .stat-item:last-child{border-right:none;}
 .stat-val{font-size:17px;font-weight:700;color:#fff;font-variant-numeric:tabular-nums;}
 .stat-lbl{font-size:11px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;}
@@ -453,7 +453,7 @@ button{cursor:pointer;font-family:inherit;}
     <!-- Program Partnership Pipeline -->
     <div class="mb-16">
       <div class="section-hd">
-        <div><div class="section-title">Program Partnership Pipeline</div><div class="section-sub">Program progress by pipeline category</div></div>
+        <div><div class="section-title">Program Partnership Pipeline</div><div class="section-sub">Count of active-account partnerships at each stage — click any row to view details</div></div>
       </div>
       <div class="card" style="padding:16px 20px" id="success-tracker">
         <div class="empty-state">Loading…</div>
@@ -463,12 +463,12 @@ button{cursor:pointer;font-family:inherit;}
     <!-- Charts row 1: Pipeline by Stage + Fees for Service side by side -->
     <div class="grid-2 mb-16">
       <div class="card chart-card">
-        <div class="section-hd"><div class="section-title">Pipeline by Stage</div><div class="section-sub">Partnerships per stage</div></div>
+        <div class="section-hd"><div class="section-title">Pipeline by Stage</div><div class="section-sub">Number of partnerships at each pipeline stage — click a bar to see the partner list</div></div>
         <div><canvas id="ch-pipeline"></canvas></div>
       </div>
       <div class="card chart-card">
         <div class="section-hd">
-          <div><div class="section-title">Fees for Service</div><div class="section-sub">Projected vs. Actual by fiscal year</div></div>
+          <div><div class="section-title">Fees for Service</div><div class="section-sub">Projected fees (in-progress partnerships) vs. actual awarded revenue by fiscal year — click a bar to drill into fee records</div></div>
         </div>
         <canvas id="ch-fees-fy" style="max-height:300px"></canvas>
       </div>
@@ -478,13 +478,13 @@ button{cursor:pointer;font-family:inherit;}
     <div class="grid-2 mb-16">
       <div class="card chart-card">
         <div class="section-hd">
-          <div><div class="section-title">FY26 Fees by Stage</div><div class="section-sub">Fee pipeline breakdown</div></div>
+          <div><div class="section-title">FY26 Fees by Stage</div><div class="section-sub">Total fee value per pipeline stage for FY26 — click a bar to view individual fee records</div></div>
           <span id="fy26-proposed-chip" class="pill pill-teal" style="cursor:pointer;font-size:11px" onclick="drillProposedFees()">Proposed: —</span>
         </div>
         <div><canvas id="ch-fees-stage"></canvas></div>
       </div>
       <div class="card chart-card">
-        <div class="section-hd"><div class="section-title">Partners by State</div><div class="section-sub">Geographic distribution</div></div>
+        <div class="section-hd"><div class="section-title">Partners by State</div><div class="section-sub">Geographic reach of partnerships — click a state to see its partner list</div></div>
         <div><canvas id="ch-states"></canvas></div>
       </div>
     </div>
@@ -492,7 +492,7 @@ button{cursor:pointer;font-family:inherit;}
     <!-- Charts row 3: Events by Month -->
     <div class="grid-2">
       <div class="card chart-card">
-        <div class="section-hd"><div class="section-title">Events by Month</div><div class="section-sub">Sessions delivered</div></div>
+        <div class="section-hd"><div class="section-title">Events by Month</div><div class="section-sub">Professional learning sessions delivered over the past 12 months — click a month to see its events</div></div>
         <div><canvas id="ch-evt-month"></canvas></div>
       </div>
     </div>
@@ -502,7 +502,7 @@ button{cursor:pointer;font-family:inherit;}
   <div class="tab-panel" id="tab-partnerships">
     <!-- Full Opportunities View -->
     <div class="section-hd mb-12">
-      <div><div class="section-title">Opportunities &amp; Accounts</div><div class="section-sub">All accounts with their partnerships</div></div>
+      <div><div class="section-title">Opportunities &amp; Accounts</div><div class="section-sub">All partner accounts and their associated partnerships — search by name and click any row to open the record</div></div>
       <input class="form-input" id="opp-search" placeholder="Search accounts…" style="width:200px">
     </div>
     <div id="opp-list"><div class="empty-state">Loading…</div></div>
@@ -527,7 +527,7 @@ button{cursor:pointer;font-family:inherit;}
   <!-- CONTRACTS -->
   <div class="tab-panel" id="tab-contracts">
     <div class="section-hd mb-12">
-      <div class="section-title">Contracts &amp; MOUs</div>
+      <div><div class="section-title">Contracts &amp; MOUs</div><div class="section-sub">Active and historical MOUs with partner organizations — filter by stage, search by partner name</div></div>
       <div class="flex gap-8 items-center">
         <select class="form-select" id="f-mou-stage" style="width:auto"><option value="">All Stages</option></select>
         <input class="form-input" id="f-mou-search" placeholder="Search…" style="width:160px">
@@ -535,11 +535,13 @@ button{cursor:pointer;font-family:inherit;}
     </div>
     <div class="grid-2 mb-16">
       <div class="card chart-card">
-        <div class="section-title mb-12">FY26 Fee Pipeline</div>
+        <div class="section-title mb-4">FY26 Fee Pipeline</div>
+        <div class="section-sub mb-12">Contracted fee value by pipeline stage — click a bar to see fee records</div>
         <div><canvas id="ch-fees-pipe"></canvas></div>
       </div>
       <div class="card" style="padding:16px">
-        <div class="section-title mb-12">Renewals — Next 90 Days</div>
+        <div class="section-title mb-4">Renewals — Next 90 Days</div>
+        <div class="section-sub mb-12">MOUs expiring within 90 days — prioritize outreach for timely renewal</div>
         <div id="renewals-list"><div class="empty-state">Loading…</div></div>
       </div>
     </div>
@@ -554,9 +556,18 @@ button{cursor:pointer;font-family:inherit;}
   <!-- EVENTS -->
   <div class="tab-panel" id="tab-events">
     <div class="section-hd mb-12">
-      <div class="section-title">Events</div>
+      <div><div class="section-title">Events</div><div class="section-sub">All professional learning and partner events — filter by type or search by name</div></div>
       <div class="flex gap-8 items-center">
+        <div class="toggle-group" id="evt-date-filter">
+          <button class="toggle-btn active" data-evtdate="">All</button>
+          <button class="toggle-btn" data-evtdate="past">Past</button>
+          <button class="toggle-btn" data-evtdate="today">Today</button>
+          <button class="toggle-btn" data-evtdate="week">This Week</button>
+          <button class="toggle-btn" data-evtdate="month">This Month</button>
+          <button class="toggle-btn" data-evtdate="future">Upcoming</button>
+        </div>
         <select class="form-select" id="f-evt-type" style="width:auto"><option value="">All Types</option></select>
+        <select class="form-select" id="f-evt-partner" style="width:auto"><option value="">All Partners</option></select>
         <input class="form-input" id="f-evt-search" placeholder="Search…" style="width:160px">
       </div>
     </div>
@@ -565,6 +576,12 @@ button{cursor:pointer;font-family:inherit;}
       <div class="card kpi-tile"><div class="kpi-val" id="ev-parts">—</div><div class="kpi-lbl">Participants</div></div>
       <div class="card kpi-tile"><div class="kpi-val" id="ev-sat">—</div><div class="kpi-lbl">Avg Satisfaction</div></div>
       <div class="card kpi-tile"><div class="kpi-val" id="ev-nps">—</div><div class="kpi-lbl">Avg NPS</div></div>
+    </div>
+    <!-- Events This Week -->
+    <div class="card mb-16" style="padding:16px 20px" id="evt-this-week-card">
+      <div class="section-title mb-4">Events This Week</div>
+      <div class="section-sub mb-12">Sessions scheduled for the current week (Mon–Sun)</div>
+      <div id="evt-this-week"><div class="empty-state">Loading…</div></div>
     </div>
     <div class="card table-wrap">
       <table class="data-table" id="evt-tbl">
@@ -585,8 +602,16 @@ button{cursor:pointer;font-family:inherit;}
     <!-- PL SESSION FEEDBACK -->
     <div id="fb-pl-view">
       <div class="grid-3 mb-16">
-        <div class="card chart-card"><div class="section-title mb-12">Satisfaction Distribution</div><div><canvas id="ch-sat-dist"></canvas></div></div>
-        <div class="card chart-card"><div class="section-title mb-12">NPS Trend by Month</div><div><canvas id="ch-nps-trend"></canvas></div></div>
+        <div class="card chart-card">
+          <div class="section-title mb-4">Satisfaction Distribution</div>
+          <div class="section-sub mb-12">Frequency of satisfaction ratings (1–5) across all PL session feedback responses</div>
+          <div><canvas id="ch-sat-dist"></canvas></div>
+        </div>
+        <div class="card chart-card">
+          <div class="section-title mb-4">NPS Trend by Month</div>
+          <div class="section-sub mb-12">Monthly average NPS score from PL session feedback — tracks promoter sentiment over time</div>
+          <div><canvas id="ch-nps-trend"></canvas></div>
+        </div>
       </div>
       <div class="card table-wrap">
         <table class="data-table" id="fb-tbl">
@@ -609,8 +634,16 @@ button{cursor:pointer;font-family:inherit;}
         <div class="card kpi-tile"><div class="kpi-val" id="sv-rec">—</div><div class="kpi-lbl">Recommend Rating</div></div>
       </div>
       <div class="grid-2 mb-16">
-        <div class="card chart-card"><div class="section-title mb-12">Scores by Dimension</div><div><canvas id="ch-sv-dims"></canvas></div></div>
-        <div class="card chart-card"><div class="section-title mb-12">Satisfaction by District</div><div><canvas id="ch-sv-dist"></canvas></div></div>
+        <div class="card chart-card">
+          <div class="section-title mb-4">Scores by Dimension</div>
+          <div class="section-sub mb-12">Average partner satisfaction across five survey dimensions: satisfaction, communication, resources, objectives met, and AI readiness capacity</div>
+          <div><canvas id="ch-sv-dims"></canvas></div>
+        </div>
+        <div class="card chart-card">
+          <div class="section-title mb-4">Satisfaction by District</div>
+          <div class="section-sub mb-12">Overall satisfaction scores by partner district — highlights which partnerships may need additional support</div>
+          <div><canvas id="ch-sv-dist"></canvas></div>
+        </div>
       </div>
       <div class="card table-wrap">
         <table class="data-table" id="sv-tbl">
@@ -1084,8 +1117,8 @@ function closeDrill(){
 
 // Stat bar drill functions
 function drillAllPartners(){
-  showDrill('All Partners', D.partners.length+' total',
-    [...D.partners].sort((a,b)=>(gf(a,FP.name)||'').localeCompare(gf(b,FP.name)||'')), COL_PRTS);
+  const r=[...D.partners].filter(p=>{ const s=gf(p,FP.start); return s && s >= '2023-01-01'; }).sort((a,b)=>(gf(a,FP.name)||'').localeCompare(gf(b,FP.name)||''));
+  showDrill('Partners Since 2023', r.length+' partners', r, COL_PRTS);
 }
 function drillActive(){
   const r=D.accounts.filter(a=>(gf(a,FA.status)||'').toLowerCase()==='active')
@@ -1305,7 +1338,7 @@ function buildEventScores() {
 // ── Load ──────────────────────────────────────────────────────────────────────
 const FY26_START = '2025-12-31';
 const FY26_END   = '2027-01-01';
-const CACHE_KEY  = 'aiedu_dash_v19';
+const CACHE_KEY  = 'aiedu_dash_v20';
 const CACHE_TTL  = 3 * 60 * 1000; // 3 minutes
 
 function loadProgress(pct) {
@@ -1392,6 +1425,7 @@ function renderAll() {
   renderOpportunities(document.getElementById('opp-search')?.value||'', false, 'opp-list');
   renderPartnerships();
   renderContracts();
+  renderEventsThisWeek();
   renderEvents();
   renderFeedback();
   renderSurveys();
@@ -1422,7 +1456,8 @@ function renderStats() {
   // Avg Sat from event feedback (1-5 scale)
   const satArr  = Object.values(EVT_SCORES).map(s=>s.sat).filter(v=>v!=null);
   const avgSat  = satArr.length ? satArr.reduce((a,b)=>a+b)/satArr.length : null;
-  document.getElementById('s-partners').textContent = D.partners.length;
+  const partnersSince2023 = D.partners.filter(p=>{ const s=gf(p,FP.start); return s && s >= '2023-01-01'; });
+  document.getElementById('s-partners').textContent = partnersSince2023.length;
   document.getElementById('s-active').textContent   = active;
   document.getElementById('s-fees').textContent     = f$(awarded);
   document.getElementById('s-events').textContent   = plEvts.length;
@@ -1904,14 +1939,61 @@ function renderContracts(f={}) {
 }
 
 // ── Events ────────────────────────────────────────────────────────────────────
+function renderEventsThisWeek() {
+  const el = document.getElementById('evt-this-week'); if(!el) return;
+  const now = new Date();
+  const dow = now.getDay(); // 0=Sun
+  const mon = new Date(now); mon.setDate(now.getDate() - ((dow+6)%7)); mon.setHours(0,0,0,0);
+  const sun = new Date(mon); sun.setDate(mon.getDate()+6); sun.setHours(23,59,59,999);
+  const monStr = mon.toISOString().slice(0,10);
+  const sunStr = sun.toISOString().slice(0,10);
+  const week = D.events.filter(e=>{
+    const d=gf(e,FE.date); if(!d) return false;
+    const ds=d.slice(0,10); return ds>=monStr&&ds<=sunStr;
+  }).sort((a,b)=>(gf(a,FE.date)||'').localeCompare(gf(b,FE.date)||''));
+  if(!week.length){
+    el.innerHTML='<div class="empty-state">No events scheduled this week</div>'; return;
+  }
+  el.innerHTML=`<table class="data-table"><thead><tr><th>Event</th><th>Date</th><th>Facilitator</th><th>Format</th><th>Participants</th></tr></thead><tbody>`+
+    week.map(e=>{
+      const name=gf(e,FE.nameT)||gf(e,FE.name)||'—';
+      const fac=ga(e,FE.facDisp).join(', ')||'—';
+      const fmt=gf(e,FE.format)||'—';
+      const parts=gf(e,FE.parts)||'—';
+      return `<tr style="cursor:pointer" onclick="openEventModal('${e.id}')"><td><strong class="drill-link">${name}</strong></td><td>${fdt(gf(e,FE.date))}</td><td>${fac}</td><td>${fmt}</td><td>${parts}</td></tr>`;
+    }).join('')+
+  '</tbody></table>';
+}
 function renderEvents(f={}) {
   const types = [...new Set(D.events.map(e=>gf(e,FE.plType)).filter(Boolean))].sort();
   const typeEl = document.getElementById('f-evt-type'), cur=typeEl.value;
   typeEl.innerHTML = '<option value="">All Types</option>'+types.map(t=>`<option${t===cur?' selected':''}>${t}</option>`).join('');
 
+  // Populate partner dropdown
+  const prtEl = document.getElementById('f-evt-partner');
+  const curPrt = f.partner||prtEl.value;
+  const evtPartners = [...new Set(D.events.flatMap(e=>ga(e,FE.partner).map(v=>typeof v==='object'?v.name:v)).filter(Boolean))].sort();
+  prtEl.innerHTML = '<option value="">All Partners</option>'+evtPartners.map(p=>`<option${p===curPrt?' selected':''}>${p}</option>`).join('');
+
+  // Date filter helpers
+  const todayStr = new Date().toISOString().slice(0,10);
+  const now = new Date(); now.setHours(0,0,0,0);
+  const dow = now.getDay();
+  const monDate = new Date(now); monDate.setDate(now.getDate() - ((dow+6)%7));
+  const sunDate = new Date(monDate); sunDate.setDate(monDate.getDate()+6);
+  const monStr = monDate.toISOString().slice(0,10);
+  const sunStr = sunDate.toISOString().slice(0,10);
+  const moStr = todayStr.slice(0,7);
+
   let rows = D.events.filter(e=>gf(e,FE.nameT)||gf(e,FE.name));
   if(f.type) rows=rows.filter(r=>gf(r,FE.plType)===f.type);
+  if(f.partner){ const pq=f.partner; rows=rows.filter(r=>ga(r,FE.partner).map(v=>typeof v==='object'?v.name:v).includes(pq)); }
   if(f.search){ const q=f.search.toLowerCase(); rows=rows.filter(r=>(gf(r,FE.nameT)||gf(r,FE.name)||'').toLowerCase().includes(q)); }
+  if(f.dateFilter==='past')  rows=rows.filter(r=>(gf(r,FE.date)||'').slice(0,10)<todayStr);
+  if(f.dateFilter==='today') rows=rows.filter(r=>(gf(r,FE.date)||'').slice(0,10)===todayStr);
+  if(f.dateFilter==='week')  rows=rows.filter(r=>{ const ds=(gf(r,FE.date)||'').slice(0,10); return ds>=monStr&&ds<=sunStr; });
+  if(f.dateFilter==='month') rows=rows.filter(r=>(gf(r,FE.date)||'').slice(0,7)===moStr);
+  if(f.dateFilter==='future')rows=rows.filter(r=>(gf(r,FE.date)||'').slice(0,10)>todayStr);
   rows.sort((a,b)=>(gf(b,FE.date)||'').localeCompare(gf(a,FE.date)||''));
 
   const parts = rows.reduce((s,e)=>s+(+gf(e,FE.parts)||0),0);
@@ -2317,10 +2399,31 @@ wire(['f-mou-stage','f-mou-search'],renderContracts,()=>({
   stage:document.getElementById('f-mou-stage').value,
   search:document.getElementById('f-mou-search').value,
 }));
+let evtDateFilter = '';
 wire(['f-evt-type','f-evt-search'],renderEvents,()=>({
   type:document.getElementById('f-evt-type').value,
   search:document.getElementById('f-evt-search').value,
+  partner:document.getElementById('f-evt-partner').value,
+  dateFilter:evtDateFilter,
 }));
+document.getElementById('f-evt-partner').addEventListener('change',()=>renderEvents({
+  type:document.getElementById('f-evt-type').value,
+  search:document.getElementById('f-evt-search').value,
+  partner:document.getElementById('f-evt-partner').value,
+  dateFilter:evtDateFilter,
+}));
+document.querySelectorAll('#evt-date-filter [data-evtdate]').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    evtDateFilter = btn.dataset.evtdate;
+    document.querySelectorAll('#evt-date-filter [data-evtdate]').forEach(b=>b.classList.toggle('active',b===btn));
+    renderEvents({
+      type:document.getElementById('f-evt-type').value,
+      search:document.getElementById('f-evt-search').value,
+      partner:document.getElementById('f-evt-partner').value,
+      dateFilter:evtDateFilter,
+    });
+  });
+});
 wire(['f-season'],f=>renderSurveys(f),()=>({season:document.getElementById('f-season').value}));
 const oppSearch=document.getElementById('opp-search');
 if(oppSearch){ oppSearch.addEventListener('input',()=>renderOpportunities(oppSearch.value, false, 'opp-list')); }
