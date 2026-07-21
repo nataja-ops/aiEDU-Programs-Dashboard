@@ -258,12 +258,21 @@ button{cursor:pointer;font-family:inherit;}
 #drill-panel{background:var(--surface);border-radius:12px;width:100%;max-width:960px;max-height:calc(100vh - 56px);display:flex;flex-direction:column;box-shadow:0 24px 48px rgba(0,0,0,.25);}
 .drill-hd{display:flex;align-items:center;justify-content:space-between;padding:18px 24px;border-bottom:1px solid var(--border);flex-shrink:0;}
 .drill-body{overflow-y:auto;flex:1;}
-.stat-item{cursor:pointer;transition:background .12s;}
+.stat-item{cursor:pointer;transition:background .12s;position:relative;}
 .stat-item:hover{background:var(--surface2);}
+.stat-item::after{content:'↗';position:absolute;top:5px;right:8px;font-size:10px;color:var(--teal);opacity:0;transition:opacity .15s;}
+.stat-item:hover::after{opacity:1;}
 .okr-tile{cursor:pointer;transition:box-shadow .15s;}
 .okr-tile:hover{box-shadow:0 0 0 2px var(--teal);}
+.okr-tile::after{content:'View records →';display:block;font-size:10px;color:var(--teal);opacity:0;transition:opacity .2s;margin-top:6px;}
+.okr-tile:hover::after{opacity:1;}
 .tracker-row{cursor:pointer;}
 .tracker-row:hover .tracker-bar-fill{filter:brightness(1.1);}
+.tracker-row:hover .tracker-lbl-main{color:var(--teal);}
+.drill-link{cursor:pointer;color:var(--teal);text-decoration:none;}
+.drill-link:hover{text-decoration:underline;}
+.data-table tbody tr{cursor:pointer;}
+.data-table tbody tr:hover td{background:var(--surface2);}
 /* Account profile modal */
 #acc-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:300;justify-content:center;align-items:flex-start;padding-top:60px;}
 #acc-overlay.open{display:flex;}
@@ -772,6 +781,9 @@ let LEAD = null;
 let CHARTS = {};
 let DRAWER = null;
 let POPOVER = null;
+let MY_DATA = { mine:[], evts:[] };
+const FEE_ACTUAL = new Set(['MOU Signed','MOU Complete']);
+const FEE_ACTIVE = new Set(['Verbal Agreement','Collaboration','MOU Sent']);
 
 // ── API ───────────────────────────────────────────────────────────────────────
 async function atFetch(baseId, tableId, fields=null, extra={}) {
@@ -864,15 +876,30 @@ function nextAction(p) {
 function cssVar(n) { return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
 
 // ── Chart helper ──────────────────────────────────────────────────────────────
-function mkChart(id, type, labels, data, colors, label) {
+function mkChart(id, type, labels, data, colors, label, clickFn=null) {
   if(CHARTS[id]){CHARTS[id].destroy();delete CHARTS[id];}
   const el = document.getElementById(id);
   if(!el) return;
   const ink3 = cssVar('--ink3'), border = cssVar('--border');
   const isLine = type==='line';
+  const opts = {
+    responsive:true, maintainAspectRatio:true,
+    plugins:{
+      legend:{display:false},
+      tooltip:{callbacks:{label:ctx=>{ const v=ctx.raw; return label.includes('$')?' '+f$(v):' '+v; }}}
+    },
+    scales:{
+      x:{ticks:{color:ink3,font:{size:11}},grid:{display:false}},
+      y:{ticks:{color:ink3,font:{size:11}},grid:{color:border},beginAtZero:true}
+    }
+  };
+  if(clickFn){
+    opts.onClick = (_e,els)=>{ if(els.length) clickFn(els[0].index); };
+    opts.onHover = (evt,els)=>{ evt.native.target.style.cursor=els.length?'pointer':'default'; };
+  }
   CHARTS[id] = new Chart(el, {
     type,
-    data: { labels, datasets:[{
+    data:{ labels, datasets:[{
       label, data,
       backgroundColor: isLine ? 'transparent' : colors,
       borderColor: isLine ? (colors[0]||cssVar('--teal')) : colors,
@@ -880,17 +907,7 @@ function mkChart(id, type, labels, data, colors, label) {
       pointRadius: isLine?4:0, pointHoverRadius: isLine?6:0,
       tension: isLine?.35:0,
     }]},
-    options: {
-      responsive:true, maintainAspectRatio:true,
-      plugins:{
-        legend:{display:false},
-        tooltip:{callbacks:{label:ctx=>{ const v=ctx.raw; return label.includes('$')?' '+f$(v):' '+v; }}}
-      },
-      scales:{
-        x:{ticks:{color:ink3,font:{size:11}},grid:{display:false}},
-        y:{ticks:{color:ink3,font:{size:11}},grid:{color:border},beginAtZero:true}
-      }
-    }
+    options: opts
   });
 }
 
@@ -905,10 +922,25 @@ function refreshChartColors() {
   });
 }
 
-function mkChartMulti(id, type, labels, datasets) {
+function mkChartMulti(id, type, labels, datasets, clickFn=null) {
   if(CHARTS[id]){CHARTS[id].destroy();delete CHARTS[id];}
   const el=document.getElementById(id); if(!el) return;
   const ink3=cssVar('--ink3'), border=cssVar('--border');
+  const opts={
+    responsive:true, maintainAspectRatio:true,
+    plugins:{
+      legend:{display:true,position:'bottom',labels:{color:ink3,font:{size:11},boxWidth:10}},
+      tooltip:{callbacks:{label:ctx=>' '+f$(ctx.raw)}}
+    },
+    scales:{
+      x:{ticks:{color:ink3,font:{size:11}},grid:{display:false}},
+      y:{ticks:{color:ink3,font:{size:11},callback:v=>f$(v)},grid:{color:border},beginAtZero:true}
+    }
+  };
+  if(clickFn){
+    opts.onClick = (_e,els)=>{ if(els.length) clickFn(els[0].index, els[0].datasetIndex||0); };
+    opts.onHover = (evt,els)=>{ evt.native.target.style.cursor=els.length?'pointer':'default'; };
+  }
   CHARTS[id]=new Chart(el,{
     type,
     data:{labels,datasets:datasets.map(d=>({
@@ -918,23 +950,13 @@ function mkChartMulti(id, type, labels, datasets) {
       borderWidth:type==='line'?2:0,
       borderRadius:4,
     }))},
-    options:{
-      responsive:true, maintainAspectRatio:true,
-      plugins:{
-        legend:{display:true,position:'bottom',labels:{color:ink3,font:{size:11},boxWidth:10}},
-        tooltip:{callbacks:{label:ctx=>' '+f$(ctx.raw)}}
-      },
-      scales:{
-        x:{ticks:{color:ink3,font:{size:11}},grid:{display:false}},
-        y:{ticks:{color:ink3,font:{size:11},callback:v=>f$(v)},grid:{color:border},beginAtZero:true}
-      }
-    }
+    options:opts
   });
 }
 
 // ── Drill-down panel ─────────────────────────────────────────────────────────
 const COL_PRTS = [
-  {label:'Partner',   fn:r=>`<strong>${gf(r,FP.name)||'—'}</strong>`},
+  {label:'Partner',   fn:r=>`<strong class="drill-link" onclick="openPartnerProfile('${r.id}')">${gf(r,FP.name)||'—'}</strong>`},
   {label:'Stage',     fn:r=>stagePill(gf(r,FP.pipeline))},
   {label:'State',     fn:r=>ga(r,FP.state).map(v=>typeof v==='object'?v.name:v).join(', ')||'—'},
   {label:'FY26 Fees', fn:r=>`<span style="font-variant-numeric:tabular-nums">${f$(gf(r,FP.fy26))}</span>`},
@@ -942,7 +964,7 @@ const COL_PRTS = [
   {label:'Team',      fn:r=>ga(r,FP.team).map(v=>typeof v==='object'?v.name:v).join(', ')||'—'},
 ];
 const COL_EVTS = [
-  {label:'Event',        fn:r=>`<strong>${gf(r,FE.nameT)||gf(r,FE.name)||'—'}</strong>`},
+  {label:'Event',        fn:r=>`<strong class="drill-link" onclick="openEventModal('${r.id}')">${gf(r,FE.nameT)||gf(r,FE.name)||'—'}</strong>`},
   {label:'Date',         fn:r=>fdt(gf(r,FE.date))},
   {label:'Participants', fn:r=>gf(r,FE.parts)||'—'},
   {label:'Sat',          fn:r=>scoreRing((EVT_SCORES[r.id]||{}).sat)},
@@ -950,7 +972,7 @@ const COL_EVTS = [
   {label:'Facilitator',  fn:r=>ga(r,FE.facDisp).join(', ')||'—'},
 ];
 const COL_FEES = [
-  {label:'Partnership',  fn:r=>ga(r,FF.name).map(v=>typeof v==='object'?v.name:v).join(', ')||'—'},
+  {label:'Partnership',  fn:r=>{const n=ga(r,FF.name).map(v=>typeof v==='object'?v.name:v).join(', ')||'—'; const p=D.partners.find(x=>gf(x,FP.name)===n); return p?`<span class="drill-link" onclick="openPartnerProfile('${p.id}')">${n}</span>`:n;}},
   {label:'FY',           fn:r=>gf(r,FF.fy)||'—'},
   {label:'Amount',       fn:r=>`<span style="font-variant-numeric:tabular-nums">${f$(gf(r,FF.amount))}</span>`},
   {label:'Stage',        fn:r=>{const s=ga(r,FF.pipeline).map(v=>typeof v==='object'?v.name:v).join('');return stagePill(s||null);}},
@@ -1015,8 +1037,16 @@ function drillComp(){
   showDrill('Competency Improvement',`${improved} of ${fbBoth.length} respondents improved`,fbBoth,cols);
 }
 function drillMous(){
-  const r=D.partners.filter(p=>['MOU Signed','MOU Complete'].includes(gf(p,FP.pipeline)));
-  showDrill('Service MOUs',r.length+' of 15 — Signed or Complete',r,COL_PRTS);
+  const COL_MOU=[
+    {label:'Partner',   fn:m=>{const n=ga(m,FM.partner).join(', ')||'—'; const p=D.partners.find(x=>gf(x,FP.name)===n); return p?`<span class="drill-link" onclick="openPartnerProfile('${p.id}')">${n}</span>`:n;}},
+    {label:'Stage',     fn:m=>stagePill(gf(m,FM.pipeline))},
+    {label:'Signed',    fn:m=>fdt(gf(m,FM.signed))},
+    {label:'Begins',    fn:m=>fdt(gf(m,FM.begins))},
+    {label:'Ends',      fn:m=>{const d=daysTo(gf(m,FM.ends));return `${fdt(gf(m,FM.ends))}${d!=null?' '+daysChip(d):''}`;} },
+    {label:'Amount',    fn:m=>`<span style="font-variant-numeric:tabular-nums">${f$(gf(m,FM.amount))}</span>`},
+  ];
+  const r=D.mous.filter(m=>{const s=gf(m,FM.signed);return s&&new Date(s).getFullYear()===2026;});
+  showDrill('Service MOUs — FY26',r.length+' of 15 signed in 2026',r,COL_MOU);
 }
 function drillEdu(){
   showDrill('Educators Trained — FY26','PL session participants',
@@ -1226,12 +1256,18 @@ function renderOverview() {
   const compPctEl = document.getElementById('okr-comp-pct');
   if (compPctEl) compPctEl.textContent = `${improved} of ${fbBoth.length} respondents improved`;
 
-  // ── OKR 2: Service MOUs — MOU Signed or Complete
+  // ── OKR 2: Service MOUs — signed date falls in FY26 (2026)
   const mouStages  = new Set(['MOU Signed','MOU Complete']);
-  const mouCount   = D.partners.filter(p=>mouStages.has(gf(p,FP.pipeline))).length;
+  // Use MOU table: count records with signed date in 2026
+  const mouCount = D.mous.filter(m=>{
+    const signed = gf(m,FM.signed);
+    if(!signed) return false;
+    const yr = new Date(signed).getFullYear();
+    return yr===2026;
+  }).length;
   setOkr('mou', mouCount, 15);
   const mouPctEl = document.getElementById('okr-mou-pct');
-  if (mouPctEl) mouPctEl.textContent = `${mouCount} MOU Signed or Complete`;
+  if (mouPctEl) mouPctEl.textContent = `${mouCount} MOUs signed in FY26`;
 
   // ── OKR 3: Educators trained — sum of PL session participants
   const eduCount   = D.events.reduce((s,e)=>s+(+gf(e,FE.parts)||0),0);
@@ -1272,19 +1308,22 @@ function renderOverview() {
   const byStage = {};
   D.partners.forEach(p=>{ const s=gf(p,FP.pipeline)||'Unknown'; byStage[s]=(byStage[s]||0)+1; });
   const sLabels = STAGE_ORDER.filter(s=>byStage[s]);
-  mkChart('ch-pipeline','bar',sLabels,sLabels.map(s=>byStage[s]),sLabels.map(s=>STAGE_COLORS[s]||'#999'),'Partnerships');
+  mkChart('ch-pipeline','bar',sLabels,sLabels.map(s=>byStage[s]),sLabels.map(s=>STAGE_COLORS[s]||'#999'),'Partnerships',
+    i=>drillTrackerStages([sLabels[i]],'Pipeline: '+sLabels[i]));
 
   // Fees by stage
   const fByStage = {};
-  D.fees.filter(f=>gf(f,FF.fy)==='FY26').forEach(f=>{ const s=gf(f,FF.pipeline)||'Unknown'; fByStage[s]=(fByStage[s]||0)+(+gf(f,FF.amount)||0); });
+  D.fees.filter(f=>gf(f,FF.fy)==='FY26').forEach(f=>{ const s=ga(f,FF.pipeline).map(v=>typeof v==='object'?v.name:v).join('')||'Unknown'; fByStage[s]=(fByStage[s]||0)+(+gf(f,FF.amount)||0); });
   const fsL = STAGE_ORDER.filter(s=>fByStage[s]);
-  mkChart('ch-fees-stage','bar',fsL,fsL.map(s=>fByStage[s]),fsL.map(s=>STAGE_COLORS[s]||'#999'),'FY26 Fees ($)');
+  mkChart('ch-fees-stage','bar',fsL,fsL.map(s=>fByStage[s]),fsL.map(s=>STAGE_COLORS[s]||'#999'),'FY26 Fees ($)',
+    i=>{ const stage=fsL[i]; const rows=D.fees.filter(f=>gf(f,FF.fy)==='FY26'&&ga(f,FF.pipeline).map(v=>typeof v==='object'?v.name:v).join('')===stage).sort((a,b)=>(+gf(b,FF.amount)||0)-(+gf(a,FF.amount)||0)); showDrill('FY26 Fees — '+stage,rows.length+' records',rows,COL_FEES); });
 
   // States
   const bySt = {};
-  D.partners.forEach(p=>{ const s=gf(p,FP.state)||'Unknown'; bySt[s]=(bySt[s]||0)+1; });
+  D.partners.forEach(p=>{ ga(p,FP.state).map(v=>typeof v==='object'?v.name:v).forEach(s=>{ if(s) bySt[s]=(bySt[s]||0)+1; }); });
   const stSorted = Object.entries(bySt).sort((a,b)=>b[1]-a[1]).slice(0,12);
-  mkChart('ch-states','bar',stSorted.map(x=>x[0]),stSorted.map(x=>x[1]),stSorted.map(()=>cssVar('--teal')),'Partners');
+  mkChart('ch-states','bar',stSorted.map(x=>x[0]),stSorted.map(x=>x[1]),stSorted.map(()=>cssVar('--teal')),'Partners',
+    i=>{ const st=stSorted[i][0]; const rows=D.partners.filter(p=>ga(p,FP.state).map(v=>typeof v==='object'?v.name:v).includes(st)); showDrill('Partners in '+st,rows.length+' partners',rows,COL_PRTS); });
 
   // Events by month
   const byMo = {};
@@ -1292,7 +1331,8 @@ function renderOverview() {
   const mos = Object.keys(byMo).sort().slice(-12);
   mkChart('ch-evt-month','line',
     mos.map(m=>new Date(m+'-01').toLocaleDateString('en-US',{month:'short',year:'2-digit'})),
-    mos.map(m=>byMo[m]),[cssVar('--teal')],'Events');
+    mos.map(m=>byMo[m]),[cssVar('--teal')],'Events',
+    i=>{ const mo=mos[i]; const rows=D.events.filter(e=>{const d=gf(e,FE.date);return d&&d.slice(0,7)===mo;}).sort((a,b)=>(gf(b,FE.date)||'').localeCompare(gf(a,FE.date)||'')); showDrill('Events — '+new Date(mo+'-15').toLocaleDateString('en-US',{month:'long',year:'numeric'}),rows.length+' events',rows,COL_EVTS); });
 }
 
 // ── Success Tracker ───────────────────────────────────────────────────────────
@@ -1312,9 +1352,14 @@ function renderSuccessTracker() {
       stages:['Verbal Agreement'], color:'#e07c2a' },
     { label:'Collaborations', sub:'Active collaboration in progress',
       stages:['Collaboration'], color:'#22a878' },
-    { label:'MOUs (Signed / Complete)', sub:'MOU Sent · MOU Signed · MOU Complete',
-      stages:['MOU Sent','MOU Signed','MOU Complete'], color:'#0d7a6b' },
-    { label:'Fees for Service (FY26)', sub:'Awarded revenue this fiscal year',
+    { label:'MOUs Signed', sub:'MOU Signed stage',
+      stages:['MOU Signed'], color:'#0d7a6b' },
+    { label:'MOUs Complete', sub:'MOU Complete stage',
+      stages:['MOU Complete'], color:'#065040' },
+    { label:'Fees for Service — Proposed (FY26)', sub:'Proposed fees in pipeline',
+      stages:['Proposal/SOW Writing','SOW sent','Verbal Agreement'],
+      isProposedFee:true, color:'rgba(13,122,107,0.5)' },
+    { label:'Fees for Service — Awarded (FY26)', sub:'Awarded revenue this fiscal year',
       stages:['MOU Sent','MOU Signed','MOU Complete','Verbal Agreement','Collaboration'],
       isFee:true, target:900000, color:'#1a7a4a' },
     { label:'Other / On Ice', sub:'On Ice · Rejected',
@@ -1328,11 +1373,16 @@ function renderSuccessTracker() {
       const val = feeSum(...c.stages);
       pct = Math.min(100, Math.round(val/c.target*100));
       display = f$(val);
+    } else if(c.isProposedFee){
+      const val = feeSum(...c.stages);
+      const propTotal = D.partners.reduce((s,p)=>s+(+gf(p,FP.proposed)||0),0)||1;
+      pct = Math.min(100, Math.round(val/propTotal*100));
+      display = f$(val);
     } else {
       pct = Math.min(100, Math.round(n/total*100));
       display = n.toLocaleString();
     }
-    const drillFn = c.isFee ? `drillRev()` : `drillTrackerStages(${JSON.stringify(c.stages)},${JSON.stringify(c.label)})`;
+    const drillFn = (c.isFee||c.isProposedFee) ? `drillTrackerStages(${JSON.stringify(c.stages)},${JSON.stringify(c.label)})` : `drillTrackerStages(${JSON.stringify(c.stages)},${JSON.stringify(c.label)})`;
     return `<div class="tracker-row" onclick="${drillFn}">
       <div class="tracker-label">
         <div class="tracker-lbl-main">${c.label}</div>
@@ -1348,25 +1398,30 @@ function renderSuccessTracker() {
 
 // ── Fees for Service Chart ────────────────────────────────────────────────────
 function renderFeesChart() {
-  const ACTUAL_STAGES  = new Set(['MOU Signed','MOU Complete']);
-  const ACTIVE_STAGES  = new Set(['Verbal Agreement','Collaboration','MOU Sent']);
   const years = ['FY25','FY26'];
-
   const actual={}, projected={};
   years.forEach(y=>{actual[y]=0;projected[y]=0;});
 
   D.fees.forEach(f=>{
-    const fy = gf(f,FF.fy); if(!years.includes(fy)) return;
-    const amt = +gf(f,FF.amount)||0; if(!amt) return;
-    const pipe = ga(f,FF.pipeline).map(v=>typeof v==='object'?v.name:v).join('');
-    if(ACTUAL_STAGES.has(pipe)||ACTIVE_STAGES.has(pipe)) actual[fy]+=amt;
+    const fy=gf(f,FF.fy); if(!years.includes(fy)) return;
+    const amt=+gf(f,FF.amount)||0; if(!amt) return;
+    const pipe=ga(f,FF.pipeline).map(v=>typeof v==='object'?v.name:v).join('');
+    if(FEE_ACTUAL.has(pipe)||FEE_ACTIVE.has(pipe)) actual[fy]+=amt;
     else projected[fy]+=amt;
   });
 
   mkChartMulti('ch-fees-fy','bar',years,[
-    {label:'Projected',  data:years.map(y=>projected[y]), color:'rgba(13,122,107,0.35)'},
+    {label:'Projected',      data:years.map(y=>projected[y]), color:'rgba(13,122,107,0.35)'},
     {label:'Actual/Awarded', data:years.map(y=>actual[y]),    color:'rgba(13,122,107,0.9)'},
-  ]);
+  ], (yearIdx, dsIdx)=>{
+    const fy=years[yearIdx], isActual=dsIdx===1;
+    const rows=D.fees.filter(f=>{
+      if(gf(f,FF.fy)!==fy) return false;
+      const pipe=ga(f,FF.pipeline).map(v=>typeof v==='object'?v.name:v).join('');
+      return isActual?(FEE_ACTUAL.has(pipe)||FEE_ACTIVE.has(pipe)):(!FEE_ACTUAL.has(pipe)&&!FEE_ACTIVE.has(pipe));
+    }).sort((a,b)=>(+gf(b,FF.amount)||0)-(+gf(a,FF.amount)||0));
+    showDrill(`${fy} — ${isActual?'Actual/Awarded':'Projected'}`,f$(rows.reduce((s,r)=>s+(+gf(r,FF.amount)||0),0))+' total',rows,COL_FEES);
+  });
 }
 
 // ── Opportunities View ────────────────────────────────────────────────────────
@@ -1376,8 +1431,6 @@ function renderOpportunities(q='') {
   let accs = D.accounts.slice().sort((a,b)=>(gf(a,FA.name)||'').localeCompare(gf(b,FA.name)||''));
   if(lc) accs=accs.filter(a=>(gf(a,FA.name)||'').toLowerCase().includes(lc));
 
-  if(!accs.length){el.innerHTML='<div class="empty-state">No accounts found</div>';return;}
-
   // Build a map: accountId → [partner records]
   const accPrts = {};
   D.partners.forEach(p=>{
@@ -1385,6 +1438,10 @@ function renderOpportunities(q='') {
       (accPrts[aId]=accPrts[aId]||[]).push(p);
     });
   });
+
+  // Only show accounts that have at least one linked partnership
+  accs = accs.filter(a=>( accPrts[a.id]||[]).length>0);
+  if(!accs.length){el.innerHTML='<div class="empty-state">No accounts with partnerships found</div>';return;}
 
   el.innerHTML = accs.map((a,i)=>{
     const id=a.id;
@@ -1401,8 +1458,8 @@ function renderOpportunities(q='') {
         + prts.map(p=>{
             const team=ga(p,FP.team).map(v=>typeof v==='object'?v.name:v).join(', ')||'—';
             const days=daysTo(gf(p,FP.end));
-            return `<div class="opp-prt-row">
-              <span style="font-weight:500;color:var(--ink)">${gf(p,FP.name)||'—'}</span>
+            return `<div class="opp-prt-row" onclick="openPartnerProfile('${p.id}')">
+              <span class="drill-link">${gf(p,FP.name)||'—'}</span>
               <span>${stagePill(gf(p,FP.pipeline))}</span>
               <span style="font-variant-numeric:tabular-nums">${f$(gf(p,FP.fy26))}</span>
               <span>${fdt(gf(p,FP.end))} ${days!=null?daysChip(days):''}</span>
@@ -1482,6 +1539,66 @@ function closeAccModal(){document.getElementById('acc-overlay').classList.remove
 document.addEventListener('DOMContentLoaded',()=>{
   document.getElementById('acc-overlay')?.addEventListener('click',e=>{if(e.target.id==='acc-overlay')closeAccModal();});
 });
+
+function openPartnerProfile(id){
+  const p=D.partners.find(r=>r.id===id); if(!p) return;
+  const name=gf(p,FP.name)||'Partnership';
+  const team=ga(p,FP.team).map(v=>typeof v==='object'?v.name:v).join(', ')||'—';
+  const type=ga(p,FP.partType).map(v=>typeof v==='object'?v.name:v).join(', ')||'—';
+  const state=ga(p,FP.state).map(v=>typeof v==='object'?v.name:v).join(', ')||'—';
+  const services=ga(p,FP.services).map(v=>typeof v==='object'?v.name:v).join(', ')||'—';
+  const acc=ga(p,FP.account)[0];
+  const accName=acc?(D.accounts.find(a=>a.id===acc)||{}).fields?.[FA.name]||'—':'—';
+  const fields=[
+    {k:'Pipeline Stage',        v:stagePill(gf(p,FP.pipeline))},
+    {k:'Partner Type',          v:type},
+    {k:'Account',               v:`<span class="drill-link" onclick="openAccProfile('${acc||''}');closeAccModal()">${accName}</span>`},
+    {k:'State',                 v:state},
+    {k:'Team',                  v:team},
+    {k:'Start Date',            v:fdt(gf(p,FP.start))},
+    {k:'End Date',              v:fdt(gf(p,FP.end))+' '+daysChip(daysTo(gf(p,FP.end)))},
+    {k:'FY26 Fees (Awarded)',   v:`<strong style="font-variant-numeric:tabular-nums">${f$(gf(p,FP.fy26))}</strong>`},
+    {k:'Proposed Fees',         v:`<span style="font-variant-numeric:tabular-nums">${f$(gf(p,FP.proposed))}</span>`},
+    {k:'Services',              v:services},
+    {k:'Missing Info',          v:gf(p,FP.missing)||'<span style="color:var(--good)">None</span>'},
+  ];
+  document.getElementById('acc-modal-title').textContent=name;
+  document.getElementById('acc-modal-body').innerHTML=
+    fields.map(f=>`<div class="acc-field-row"><span class="acc-field-key">${f.k}</span><span class="acc-field-val">${f.v}</span></div>`).join('')
+    +`<div class="flex gap-8 mt-16">
+      <button class="btn-sm primary flex-1" onclick="openPrtDrawer('${id}');closeAccModal()">Edit Partnership</button>
+      <button class="btn-sm" onclick="closeAccModal()">Close</button>
+    </div>`;
+  document.getElementById('acc-overlay').classList.add('open');
+}
+
+function openEventModal(id){
+  const e=D.events.find(r=>r.id===id); if(!e) return;
+  const name=gf(e,FE.nameT)||gf(e,FE.name)||'Event';
+  const sc=EVT_SCORES[id]||{};
+  const fac=ga(e,FE.facDisp).join(', ')||'—';
+  const pids=ga(e,FE.partner);
+  const partners=pids.map(pid=>{const p=D.partners.find(x=>x.id===pid);return p?`<span class="drill-link" onclick="openPartnerProfile('${pid}');closeAccModal()">${gf(p,FP.name)}</span>`:pid;}).join(', ')||'—';
+  const fields=[
+    {k:'Date',           v:fdt(gf(e,FE.date))},
+    {k:'Format',         v:gf(e,FE.format)||'—'},
+    {k:'PL Type',        v:gf(e,FE.plType)||'—'},
+    {k:'Facilitator',    v:fac},
+    {k:'Partner',        v:partners},
+    {k:'Participants',   v:`<strong>${gf(e,FE.parts)||'—'}</strong>`},
+    {k:'Satisfaction',   v:scoreRing(sc.sat)},
+    {k:'NPS',            v:scoreRing(sc.nps!=null?sc.nps+1:null,2)},
+    {k:'Obj. Met',       v:sc.objMet!=null?fpct(sc.objMet*20):'—'},
+    {k:'Facilitator Eff',v:scoreRing(sc.facEff)},
+    {k:'Before → After', v:sc.before!=null&&sc.after!=null?`${sc.before.toFixed(1)} → ${sc.after.toFixed(1)}`:'—'},
+    {k:'Feedback Count', v:gf(e,FE.fbCount)||'—'},
+  ];
+  document.getElementById('acc-modal-title').textContent=name;
+  document.getElementById('acc-modal-body').innerHTML=
+    fields.map(f=>`<div class="acc-field-row"><span class="acc-field-key">${f.k}</span><span class="acc-field-val">${f.v}</span></div>`).join('')
+    +`<div class="flex gap-8 mt-16"><button class="btn-sm" onclick="closeAccModal()">Close</button></div>`;
+  document.getElementById('acc-overlay').classList.add('open');
+}
 
 // ── Partnerships ──────────────────────────────────────────────────────────────
 function renderPartnerships(f={}) {
@@ -1754,12 +1871,21 @@ function renderLeadPanel() {
   document.getElementById('my-evt-count').textContent = myEvts.length;
   document.getElementById('my-sat-val').textContent   = avgSat ? avgSat.toFixed(1) : '—';
 
+  // Store for KPI drill clicks
+  MY_DATA.mine = mine; MY_DATA.evts = myEvts;
+  const kpiWire = (id, fn) => { const el=document.getElementById(id)?.closest('.card'); if(el){el.style.cursor='pointer';el.onclick=fn;} };
+  kpiWire('my-prt-count', ()=>showDrill('My Partnerships', MY_DATA.mine.length+' total', MY_DATA.mine, COL_PRTS));
+  kpiWire('my-fees-val',  ()=>{ const r=MY_DATA.mine.filter(p=>(+gf(p,FP.fy26)||0)>0).sort((a,b)=>(+gf(b,FP.fy26)||0)-(+gf(a,FP.fy26)||0)); showDrill('My FY26 Awarded Fees', f$(r.reduce((s,p)=>s+(+gf(p,FP.fy26)||0),0)), r, COL_PRTS); });
+  kpiWire('my-evt-count', ()=>showDrill('My Events', MY_DATA.evts.length+' events', [...MY_DATA.evts].sort((a,b)=>(gf(b,FE.date)||'').localeCompare(gf(a,FE.date)||'')), COL_EVTS));
+  kpiWire('my-sat-val',   ()=>showDrill('My Satisfaction Scores', 'Events with scores', MY_DATA.evts.filter(e=>EVT_SCORES[e.id]?.sat!=null).sort((a,b)=>((EVT_SCORES[b.id]||{}).sat||0)-((EVT_SCORES[a.id]||{}).sat||0)), COL_EVTS));
+
   // ── My Pipeline chart ────────────────────────────────────────────────────
   const byStage = {};
   mine.forEach(p=>{ const s=gf(p,FP.pipeline)||'Unknown'; byStage[s]=(byStage[s]||0)+1; });
   const sLabels = STAGE_ORDER.filter(s=>byStage[s]);
   mkChart('ch-my-pipeline','bar',sLabels,sLabels.map(s=>byStage[s]),
-    sLabels.map(s=>STAGE_COLORS[s]||'#999'),'Partnerships');
+    sLabels.map(s=>STAGE_COLORS[s]||'#999'),'Partnerships',
+    i=>drillTrackerStages([sLabels[i]],'My Pipeline: '+sLabels[i]));
 
   // ── My Fees chart (Awarded / Proposed toggle) ────────────────────────────
   const feeField = MY_FEES_MODE==='awarded' ? FP.fy26 : FP.proposed;
@@ -1768,7 +1894,8 @@ function renderLeadPanel() {
   const fsL = STAGE_ORDER.filter(s=>feesByStage[s]);
   const feeLabel = MY_FEES_MODE==='awarded' ? 'FY26 Awarded ($)' : 'FY26 Proposed ($)';
   mkChart('ch-my-fees','bar',fsL,fsL.map(s=>feesByStage[s]),
-    fsL.map(s=>STAGE_COLORS[s]||'#999'), feeLabel);
+    fsL.map(s=>STAGE_COLORS[s]||'#999'), feeLabel,
+    i=>{ const stage=fsL[i]; const r=mine.filter(p=>(gf(p,FP.pipeline)||'Unknown')===stage&&(+gf(p,feeField)||0)>0); showDrill('My Fees — '+stage, feeLabel, r, COL_PRTS); });
 
   const cardEl = document.getElementById('portfolio-cards');
   cardEl.innerHTML = mine.length===0
@@ -1780,7 +1907,7 @@ function renderLeadPanel() {
         let pct=0;
         if(sd&&ed){ pct=clamp((Date.now()-new Date(sd+' '))/(new Date(ed+' ')-new Date(sd+' '))*100,0,100); }
         const stMap={Active:'pill-teal',Renewal:'pill-good',Proposal:'pill-warn',Negotiation:'pill-crit'};
-        return `<div class="portfolio-card">
+        return `<div class="portfolio-card" style="cursor:pointer" onclick="openPartnerProfile('${p.id}')">
           <div class="pc-name">${gf(p,FP.name)||'—'}</div>
           <div class="pc-row">
             <span class="pill ${stMap[stage]||'pill-gray'}">${stage}</span>
@@ -1793,8 +1920,8 @@ function renderLeadPanel() {
           <div class="prog-wrap"><div class="prog-fill" style="width:${pct.toFixed(0)}%"></div></div>
           <div class="next-action">→ ${nextAction(p)}</div>
           <div class="pc-actions">
-            <button class="btn-sm primary" onclick="openPrtDrawer('${p.id}')">Edit</button>
-            <button class="btn-sm" onclick="showStageMenu(event,'${p.id}')">Stage ▾</button>
+            <button class="btn-sm primary" onclick="event.stopPropagation();openPrtDrawer('${p.id}')">Edit</button>
+            <button class="btn-sm" onclick="event.stopPropagation();showStageMenu(event,'${p.id}')">Stage ▾</button>
           </div>
         </div>`;
       }).join('');
@@ -1808,8 +1935,8 @@ function renderLeadPanel() {
       const name=gf(r,FE.nameT)||gf(r,FE.name)||'—';
       const pids=ga(r,FE.partner);
       const pn=pids.map(id=>(D.partners.find(p=>p.id===id)||{}).fields?.[FP.name]).filter(Boolean).join(', ')||'—';
-      return `<tr>
-        <td><strong>${name}</strong></td>
+      return `<tr onclick="openEventModal('${r.id}')">
+        <td><span class="drill-link">${name}</span></td>
         <td>${fdt(gf(r,FE.date))}</td>
         <td style="font-size:12px;color:var(--ink2)">${pn}</td>
         <td style="font-variant-numeric:tabular-nums">${gf(r,FE.parts)||'—'}</td>
