@@ -457,15 +457,11 @@ button{cursor:pointer;font-family:inherit;}
       </div>
     </div>
 
-    <!-- Charts row 1: Pipeline by Stage + Events by Month -->
-    <div class="grid-2 mb-16">
+    <!-- Charts row 1: Pipeline by Stage -->
+    <div class="mb-16">
       <div class="card chart-card">
         <div class="section-hd"><div class="section-title">Pipeline by Stage</div><div class="section-sub">Number of partnerships at each pipeline stage — click a bar to see the partner list</div></div>
         <div><canvas id="ch-pipeline"></canvas></div>
-      </div>
-      <div class="card chart-card">
-        <div class="section-hd"><div class="section-title">Events by Month</div><div class="section-sub">Professional learning sessions delivered over the past 12 months — click a month to see its events</div></div>
-        <div><canvas id="ch-evt-month"></canvas></div>
       </div>
     </div>
 
@@ -487,11 +483,17 @@ button{cursor:pointer;font-family:inherit;}
     </div>
 
     <!-- Charts row 3: Partners by State -->
-    <div class="grid-2">
+    <div class="grid-2 mb-16">
       <div class="card chart-card">
         <div class="section-hd"><div class="section-title">Partners by State</div><div class="section-sub">Geographic reach of partnerships — click a state to see its partner list</div></div>
         <div><canvas id="ch-states"></canvas></div>
       </div>
+    </div>
+
+    <!-- Events by Month — full width -->
+    <div class="card chart-card">
+      <div class="section-hd"><div class="section-title">Events by Month</div><div class="section-sub">Professional learning sessions delivered over the past 12 months — click a month to see its events</div></div>
+      <div><canvas id="ch-evt-month"></canvas></div>
     </div>
   </div>
 
