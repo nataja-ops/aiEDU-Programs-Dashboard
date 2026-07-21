@@ -271,6 +271,9 @@ button{cursor:pointer;font-family:inherit;}
 .tracker-bar-wrap{flex:1;height:7px;background:var(--border);border-radius:4px;overflow:hidden;}
 .tracker-bar-fill{height:100%;border-radius:4px;transition:width .5s ease;}
 .tracker-val{width:80px;text-align:right;font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink);}
+/* FY26 Goals section */
+.overview-goals-section{background:linear-gradient(135deg,var(--navy) 0%,var(--navy-light) 100%);border-radius:var(--radius);padding:20px;margin-bottom:16px;}
+.overview-goals-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.10em;color:var(--teal-bright);margin-bottom:12px;}
 /* Drill-down panel */
 #drill-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:350;justify-content:center;align-items:flex-start;padding:40px 16px 16px;}
 #drill-overlay.open{display:flex;}
@@ -394,17 +397,10 @@ button{cursor:pointer;font-family:inherit;}
       </div>
     </div>
 
-    <!-- Program Partnership Pipeline -->
-    <div class="mb-16">
-      <div class="section-hd">
-        <div><div class="section-title">Program Partnership Pipeline</div><div class="section-sub">Program progress by pipeline category</div></div>
-      </div>
-      <div class="card" style="padding:16px 20px" id="success-tracker">
-        <div class="empty-state">Loading…</div>
-      </div>
-    </div>
-
-    <div class="okr-grid" id="okr-row">
+    <!-- FY26 Goals section -->
+    <div class="overview-goals-section mb-16">
+      <div class="overview-goals-label">FY26 Goals</div>
+      <div class="okr-grid" id="okr-row">
       <div class="okr-tile">
         <div class="okr-eyebrow">FY26 Goal</div>
         <div class="okr-current" id="okr-comp-val">—</div>
@@ -452,6 +448,19 @@ button{cursor:pointer;font-family:inherit;}
         <div class="okr-pct" id="okr-rev-pct">FY26 awarded fees</div>
       </div>
     </div>
+    </div><!-- /overview-goals-section -->
+
+    <!-- Program Partnership Pipeline -->
+    <div class="mb-16">
+      <div class="section-hd">
+        <div><div class="section-title">Program Partnership Pipeline</div><div class="section-sub">Program progress by pipeline category</div></div>
+      </div>
+      <div class="card" style="padding:16px 20px" id="success-tracker">
+        <div class="empty-state">Loading…</div>
+      </div>
+    </div>
+
+    <!-- Charts row 1: Pipeline by Stage + Fees for Service side by side -->
     <div class="grid-2 mb-16">
       <div class="card chart-card">
         <div class="section-hd"><div class="section-title">Pipeline by Stage</div><div class="section-sub">Partnerships per stage</div></div>
@@ -459,30 +468,32 @@ button{cursor:pointer;font-family:inherit;}
       </div>
       <div class="card chart-card">
         <div class="section-hd">
+          <div><div class="section-title">Fees for Service</div><div class="section-sub">Projected vs. Actual by fiscal year</div></div>
+        </div>
+        <canvas id="ch-fees-fy" style="max-height:300px"></canvas>
+      </div>
+    </div>
+
+    <!-- Charts row 2: FY26 Fees by Stage + Partners by State -->
+    <div class="grid-2 mb-16">
+      <div class="card chart-card">
+        <div class="section-hd">
           <div><div class="section-title">FY26 Fees by Stage</div><div class="section-sub">Fee pipeline breakdown</div></div>
           <span id="fy26-proposed-chip" class="pill pill-teal" style="cursor:pointer;font-size:11px" onclick="drillProposedFees()">Proposed: —</span>
         </div>
         <div><canvas id="ch-fees-stage"></canvas></div>
       </div>
-    </div>
-    <div class="grid-2">
       <div class="card chart-card">
         <div class="section-hd"><div class="section-title">Partners by State</div><div class="section-sub">Geographic distribution</div></div>
         <div><canvas id="ch-states"></canvas></div>
       </div>
+    </div>
+
+    <!-- Charts row 3: Events by Month -->
+    <div class="grid-2">
       <div class="card chart-card">
         <div class="section-hd"><div class="section-title">Events by Month</div><div class="section-sub">Sessions delivered</div></div>
         <div><canvas id="ch-evt-month"></canvas></div>
-      </div>
-    </div>
-
-    <!-- Fees for Service Chart -->
-    <div class="mt-20">
-      <div class="section-hd">
-        <div><div class="section-title">Fees for Service</div><div class="section-sub">Projected vs. Actual by fiscal year</div></div>
-      </div>
-      <div class="card chart-card">
-        <canvas id="ch-fees-fy" style="max-height:300px"></canvas>
       </div>
     </div>
   </div>
@@ -713,7 +724,13 @@ const T = {
   acc:'tbliOUsLsV3k6hy8g', prt:'tbl9CLNpNz0oOfAzV', log:'tblA1wXyoO3pjeto5',
   fee:'tblgRodZdvORj3P9q', mou:'tbl0r7iGdBFEsqoJd', evt:'tblgLGSJhm0nB9Lhf',
   fb:'tblWTdC7kk80jfMOO',  srv:'tblmccdSXvckLRT5O', stf:'tblTngHWDZOIeIR0p',
-  cat:'tblk39heoW6mkzLYI'  // Community Catalyst Applications
+  cat:'tblk39heoW6mkzLYI', npsYr:'tblOo6xPKh95d9xpr'
+};
+// NPS by Administration Year fields
+const FNPS = {
+  name: 'fldFd3SNHFnCkdjf9',  // "NPS by Year Name"
+  score:'fld7BODFs3Vg7Z9R2',  // "NPS Score (Auto)" formula
+  count:'fldbRDIY8a4xYTRs7',  // "Number of Surveys" count
 };
 // Catalyst Application fields
 const FCAT = {
@@ -816,7 +833,7 @@ const STAGE_ORDER = [
 ];
 
 // ── State ────────────────────────────────────────────────────────────────────
-let D = { partners:[], fees:[], mous:[], events:[], feedback:[], surveys:[], staff:[], catalyst:[], accounts:[] };
+let D = { partners:[], fees:[], mous:[], events:[], feedback:[], surveys:[], staff:[], catalyst:[], accounts:[], npsYears:[] };
 let EVT_SCORES = {}; // eventId → { sat, facEff, objMet, before, after, nps }
 let LEAD = null;
 let CHARTS = {};
@@ -1288,7 +1305,7 @@ function buildEventScores() {
 // ── Load ──────────────────────────────────────────────────────────────────────
 const FY26_START = '2025-12-31';
 const FY26_END   = '2027-01-01';
-const CACHE_KEY  = 'aiedu_dash_v17';
+const CACHE_KEY  = 'aiedu_dash_v19';
 const CACHE_TTL  = 3 * 60 * 1000; // 3 minutes
 
 function loadProgress(pct) {
@@ -1318,7 +1335,7 @@ async function fetchFresh() {
   const fAcc = Object.values(FA);
   const fCat = Object.values(FCAT);
 
-  const [partners, fees, mous, staff, surveys, events, feedback, catalyst, accounts] = await Promise.all([
+  const [partners, fees, mous, staff, surveys, events, feedback, catalyst, accounts, npsYears] = await Promise.all([
     atFetch(BASE, T.prt, fPrt),
     atFetch(BASE, T.fee, fFee, feeFilter),
     atFetch(BASE, T.mou, fMou),
@@ -1328,8 +1345,9 @@ async function fetchFresh() {
     atFetch(BASE, T.fb,  fFb),
     atFetch(BASE, T.cat, fCat),
     atFetch(BASE, T.acc, fAcc),
+    atFetch(BASE, T.npsYr, Object.values(FNPS)),
   ]);
-  return { partners, fees, mous, events, feedback, surveys, staff, catalyst, accounts };
+  return { partners, fees, mous, events, feedback, surveys, staff, catalyst, accounts, npsYears };
 }
 
 async function loadAll() {
@@ -1398,10 +1416,9 @@ function renderStats() {
   const plEvts  = D.events.filter(isPLEvent);
   // PL participants — events with a PL Type set
   const plParts = D.events.filter(e=>gf(e,FE.plType)).reduce((s,e)=>s+(+gf(e,FE.parts)||0),0);
-  // NPS from pre-calculated "NPS Score (Calculated)" lookup field — average across unique year scores
-  const npsRaw = D.surveys.flatMap(s=>ga(s,FS.npsScore).map(v=>+(typeof v==='object'?v.name:v))).filter(v=>!isNaN(v));
-  const npsUniq = [...new Set(npsRaw)];
-  const npsScore = npsUniq.length ? Math.round(npsUniq.reduce((a,b)=>a+b,0)/npsUniq.length) : null;
+  // NPS from "NPS by Administration Year" table — average NPS Score (Auto) across all year records
+  const npsYrVals = D.npsYears.map(r=>+gf(r,FNPS.score)).filter(v=>!isNaN(v)&&v!=null);
+  const npsScore = npsYrVals.length ? Math.round(npsYrVals.reduce((a,b)=>a+b,0)/npsYrVals.length) : null;
   // Avg Sat from event feedback (1-5 scale)
   const satArr  = Object.values(EVT_SCORES).map(s=>s.sat).filter(v=>v!=null);
   const avgSat  = satArr.length ? satArr.reduce((a,b)=>a+b)/satArr.length : null;
