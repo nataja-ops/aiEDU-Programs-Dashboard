@@ -145,8 +145,17 @@ button{cursor:pointer;font-family:inherit;}
 .pill-crit{background:rgba(196,53,53,.12);color:var(--crit);}
 .pill-gray{background:var(--surface3);color:var(--ink2);}
 /* Chart card */
-.chart-card{padding:20px;}
+.chart-card{padding:20px;position:relative;}
 .chart-card canvas{max-height:240px;}
+.chart-expand-btn{position:absolute;top:12px;right:12px;width:22px;height:22px;display:flex;align-items:center;justify-content:center;background:var(--surface2);border:1px solid var(--border);border-radius:4px;cursor:pointer;font-size:11px;color:var(--ink3);line-height:1;opacity:0;transition:opacity .15s;}
+.chart-card:hover .chart-expand-btn{opacity:1;}
+/* Chart lightbox */
+#chart-lightbox{display:none;position:fixed;inset:0;z-index:600;background:rgba(0,0,0,.6);align-items:center;justify-content:center;}
+#chart-lightbox.open{display:flex;}
+#chart-lightbox-inner{background:var(--surface1);border-radius:var(--radius);padding:28px 24px;width:min(90vw,900px);max-height:88vh;position:relative;overflow:hidden;display:flex;flex-direction:column;gap:12px;}
+#chart-lightbox-title{font-weight:600;font-size:15px;color:var(--ink1);}
+#chart-lightbox-close{position:absolute;top:12px;right:14px;cursor:pointer;font-size:18px;color:var(--ink3);line-height:1;}
+#chart-lightbox canvas{max-height:60vh;width:100%!important;}
 /* Lead panel */
 #lead-panel{
   margin-bottom:20px;background:var(--teal-l);
@@ -310,9 +319,9 @@ button{cursor:pointer;font-family:inherit;}
 <div id="statsbar">
   <div class="stat-item"><span class="stat-val" id="s-partners">—</span><span class="stat-lbl">Partners</span></div>
   <div class="stat-item"><span class="stat-val" id="s-active">—</span><span class="stat-lbl">Active</span></div>
-  <div class="stat-item"><span class="stat-val" id="s-fees">—</span><span class="stat-lbl">FY26 Fees</span></div>
-  <div class="stat-item"><span class="stat-val" id="s-events">—</span><span class="stat-lbl">Events</span></div>
-  <div class="stat-item"><span class="stat-val" id="s-parts">—</span><span class="stat-lbl">Participants</span></div>
+  <div class="stat-item"><span class="stat-val" id="s-fees">—</span><span class="stat-lbl">Fees Awarded</span></div>
+  <div class="stat-item"><span class="stat-val" id="s-events">—</span><span class="stat-lbl">Events (PL)</span></div>
+  <div class="stat-item"><span class="stat-val" id="s-parts">—</span><span class="stat-lbl">PL Participants</span></div>
   <div class="stat-item"><span class="stat-val" id="s-nps">—</span><span class="stat-lbl">Avg NPS</span></div>
   <div class="stat-item"><span class="stat-val" id="s-sat">—</span><span class="stat-lbl">Avg Sat</span></div>
 </div>
@@ -555,11 +564,10 @@ button{cursor:pointer;font-family:inherit;}
       <div class="grid-3 mb-16">
         <div class="card chart-card"><div class="section-title mb-12">Satisfaction Distribution</div><div><canvas id="ch-sat-dist"></canvas></div></div>
         <div class="card chart-card"><div class="section-title mb-12">NPS Trend by Month</div><div><canvas id="ch-nps-trend"></canvas></div></div>
-        <div class="card chart-card"><div class="section-title mb-12">Facilitator Effectiveness</div><div><canvas id="ch-fac-eff"></canvas></div></div>
       </div>
       <div class="card table-wrap">
         <table class="data-table" id="fb-tbl">
-          <thead><tr><th>Session</th><th>Date</th><th>Facilitator</th><th>Responses</th><th>Sat</th><th>NPS</th><th>Before→After</th><th>Obj Met</th><th>Fac Eff</th></tr></thead>
+          <thead><tr><th>Session</th><th>Date</th><th>Facilitator</th><th>Responses</th><th>Sat</th><th>NPS</th><th>Before→After</th><th>Obj Met</th></tr></thead>
           <tbody><tr><td colspan="9" class="empty-state">Loading…</td></tr></tbody>
         </table>
       </div>
@@ -591,6 +599,15 @@ button{cursor:pointer;font-family:inherit;}
   </div>
 
 </main>
+
+<!-- Chart lightbox -->
+<div id="chart-lightbox" onclick="if(event.target===this)closeChartLightbox()">
+  <div id="chart-lightbox-inner">
+    <div id="chart-lightbox-title"></div>
+    <span id="chart-lightbox-close" onclick="closeChartLightbox()">✕</span>
+    <canvas id="chart-lightbox-canvas"></canvas>
+  </div>
+</div>
 
 <!-- Drill-down panel -->
 <div id="drill-overlay" onclick="if(event.target===this)closeDrill()">
@@ -702,7 +719,8 @@ const FP = {
 };
 const FF = {
   name:'fldm0J2jZ5FNoeij4', amount:'fld74B4jxPOYfABSr', fy:'fldueOo2EOiAGsWev',
-  pipeline:'fldEz8N4Ct9efAPcl', team:'fld0orJul8RatY2gf'
+  pipeline:'fldEz8N4Ct9efAPcl', team:'fld0orJul8RatY2gf',
+  funding:'fld8htK5AFFWuroAW',  // "Funding Stage (from Associated Partnership)"
 };
 const FM = {
   contract:'fldwdDFVJ51CcOqxv', begins:'fldxzUbvz1RYElzjG', ends:'fldEANQWfvf7PTYEV',
@@ -720,6 +738,7 @@ const FE = {
   partner:'fld7n8KZUu5X6Ee1h', // "Partner Account"
   format:'fldlMSFVbJIaogWau',  // "In-person v. Virtual"
   plType:'fld2n02ofIL7eFgBE',  // "PL Type"
+  type:'fldTAh841PRVcbAth',    // "Event Type" (multipleSelects)
   fbCount:'fldmBU2sUNSxX2NiN', // "# Feedback Submissions"
   npsAuto:'fldmbXdTKC1Tkg8f2', // "NPS (Auto)" rollup from feedback
 };
@@ -739,7 +758,8 @@ const FS = {
   name:'fldTYrXYvXejikT51', season:'fldKFteQSdn1Y5SPB', district:'flddsEyZeSAcX7CG4',
   owner:'fldRFH3iuCClYHXNZ', satPct:'fldyAVBAIbl1aBGVO', commPct:'fldWgaNecjCNYwTqF',
   resPct:'fld8X2zvhDzgIx4KX', objPct:'fldWr9LoaT6FHJI54', aiPct:'fld45HKCatlvjCaKq',
-  recRating:'fldR1T5JOetNKbsAC'
+  recRating:'fldR1T5JOetNKbsAC', npsPoints:'fldiskA4NFpwwaipQ', // "NPS Points (+1/0/-1)"
+  sat:'fld0LRFQ5VR079Ewi',  // "How satisfied are you..." (singleSelect)
 };
 const FST = {
   name:'fldpmvWNm6cmygmVS', role:'fldtPyBVQFJyK0Pja',
@@ -822,9 +842,9 @@ const gf  = (r,f) => r?.fields?.[f] ?? null;
 const ga  = (r,f) => { const v = r?.fields?.[f]; return Array.isArray(v) ? v : (v ? [v] : []); };
 const f$  = v => v==null ? '—' : '$'+Math.round(+v).toLocaleString();
 const fpct= v => v==null ? '—' : Math.round(+v)+'%';
-const fdt = v => { if(!v) return '—'; const d=new Date(v+'T00:00:00'); return d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); };
+const fdt = v => { if(!v) return '—'; const d=new Date(v.slice(0,10)+'T00:00:00'); return d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); };
 const fsc = v => v==null||isNaN(+v) ? '—' : (+v).toFixed(1);
-const daysTo = v => { if(!v) return null; return Math.round((new Date(v+'T00:00:00')-Date.now())/86400000); };
+const daysTo = v => { if(!v) return null; return Math.round((new Date(v.slice(0,10)+'T00:00:00')-Date.now())/86400000); };
 const clamp = (v,a,b) => Math.min(b,Math.max(a,v));
 
 function toast(msg, type='info') {
@@ -986,6 +1006,14 @@ const COL_ACCS = [
   {label:'Partnerships', fn:r=>{ const n=D.partners.filter(p=>ga(p,FP.account).includes(r.id)).length; return n||'0'; }},
   {label:'Team',         fn:r=>ga(r,FA.team).map(v=>typeof v==='object'?v.name:v).join(', ')||'—'},
 ];
+const COL_SURVEYS = [
+  {label:'Partner',  fn:r=>gf(r,FS.name)||'—'},
+  {label:'Season',   fn:r=>gf(r,FS.season)||'—'},
+  {label:'District', fn:r=>gf(r,FS.district)||'—'},
+  {label:'NPS',      fn:r=>{const v=+gf(r,FS.npsPoints);return v===1?'<span class="pill pill-good">Promoter</span>':v===-1?'<span class="pill pill-crit">Detractor</span>':'<span class="pill pill-gray">Passive</span>';}},
+  {label:'Sat %',    fn:r=>{ const v=gf(r,FS.satPct); return v!=null?v+'%':'—'; }},
+  {label:'Owner',    fn:r=>ga(r,FS.owner).map(v=>typeof v==='object'?v.name:v).join(', ')||'—'},
+];
 
 function showDrill(title, sub, rows, cols) {
   document.getElementById('drill-title').textContent = title;
@@ -1010,21 +1038,20 @@ function drillActive(){
   showDrill('Active Accounts', r.length+' accounts', r, COL_ACCS);
 }
 function drillFY26Fees(){
-  const r=D.fees.filter(f=>gf(f,FF.fy)==='FY26').sort((a,b)=>(+gf(b,FF.amount)||0)-(+gf(a,FF.amount)||0));
-  showDrill('FY26 Fees for Service', f$(r.reduce((s,f)=>s+(+gf(f,FF.amount)||0),0))+' total', r, COL_FEES);
+  const r=D.fees.filter(f=>{const s=ga(f,FF.funding).map(v=>(typeof v==='object'?v.name:v)).join(' ').toLowerCase();return s.includes('award');}).sort((a,b)=>(+gf(b,FF.amount)||0)-(+gf(a,FF.amount)||0));
+  showDrill('Fees Awarded (All Years)', f$(r.reduce((s,f)=>s+(+gf(f,FF.amount)||0),0))+' total', r, COL_FEES);
 }
 function drillAllEvents(){
-  showDrill('Events (FY26)', D.events.length+' events',
-    [...D.events].sort((a,b)=>(gf(b,FE.date)||'').localeCompare(gf(a,FE.date)||'')), COL_EVTS);
+  const r=D.events.filter(isPLEvent).sort((a,b)=>(gf(b,FE.date)||'').localeCompare(gf(a,FE.date)||''));
+  showDrill('Events (PL, excl. Gov/Private Dinner)', r.length+' events', r, COL_EVTS);
 }
 function drillParticipants(){
-  showDrill('Events by Participants', 'Sorted by attendance',
-    D.events.filter(e=>gf(e,FE.parts)).sort((a,b)=>(+gf(b,FE.parts)||0)-(+gf(a,FE.parts)||0)), COL_EVTS);
+  const r=D.events.filter(e=>gf(e,FE.plType)&&gf(e,FE.parts)).sort((a,b)=>(+gf(b,FE.parts)||0)-(+gf(a,FE.parts)||0));
+  showDrill('PL Participants by Event', 'Sorted by attendance', r, COL_EVTS);
 }
 function drillNPS(){
-  showDrill('NPS by Event', 'Sorted highest to lowest',
-    D.events.filter(e=>EVT_SCORES[e.id]?.nps!=null)
-      .sort((a,b)=>((EVT_SCORES[b.id]||{}).nps||0)-((EVT_SCORES[a.id]||{}).nps||0)), COL_EVTS);
+  const r=D.surveys.filter(s=>{const v=gf(s,FS.npsPoints);return v!=null&&v!==''&&!isNaN(+v);}).sort((a,b)=>(+gf(b,FS.npsPoints)||0)-(+gf(a,FS.npsPoints)||0));
+  showDrill('NPS — Partner Survey', r.length+' responses', r, COL_SURVEYS);
 }
 function drillSat(){
   showDrill('Satisfaction by Event', 'Sorted highest to lowest',
@@ -1090,6 +1117,38 @@ function drillTrackerStages(stages,title){
 }
 
 // Wire stat bar + OKR tile clicks (called at boot, elements are static)
+// ── Chart lightbox ────────────────────────────────────────────────────────────
+let LB_CHART = null;
+function openChartLightbox(canvasId, title) {
+  const src = CHARTS[canvasId]; if(!src) return;
+  const lb = document.getElementById('chart-lightbox');
+  const lbCanvas = document.getElementById('chart-lightbox-canvas');
+  document.getElementById('chart-lightbox-title').textContent = title||'';
+  if(LB_CHART){ LB_CHART.destroy(); LB_CHART=null; }
+  // Clone chart config from live chart
+  const cfg = src.config;
+  LB_CHART = new Chart(lbCanvas, { type:cfg.type, data:cfg.data, options:{...cfg.options, maintainAspectRatio:false, responsive:true} });
+  lb.classList.add('open');
+}
+function closeChartLightbox(){
+  document.getElementById('chart-lightbox').classList.remove('open');
+  if(LB_CHART){ LB_CHART.destroy(); LB_CHART=null; }
+}
+function addExpandButtons(){
+  document.querySelectorAll('.chart-card').forEach(card=>{
+    if(card.querySelector('.chart-expand-btn')) return;
+    const canvas = card.querySelector('canvas'); if(!canvas) return;
+    const titleEl = card.querySelector('.section-title');
+    const title = titleEl ? titleEl.textContent : '';
+    const btn = document.createElement('span');
+    btn.className='chart-expand-btn';
+    btn.title='Enlarge chart';
+    btn.textContent='⤢';
+    btn.onclick=()=>openChartLightbox(canvas.id, title);
+    card.appendChild(btn);
+  });
+}
+
 function wireClickTargets(){
   [['s-partners',drillAllPartners],['s-active',drillActive],['s-fees',drillFY26Fees],
    ['s-events',drillAllEvents],['s-parts',drillParticipants],['s-nps',drillNPS],['s-sat',drillSat]]
@@ -1133,7 +1192,7 @@ function buildEventScores() {
 // ── Load ──────────────────────────────────────────────────────────────────────
 const FY26_START = '2025-12-31';
 const FY26_END   = '2027-01-01';
-const CACHE_KEY  = 'aiedu_dash_v6';
+const CACHE_KEY  = 'aiedu_dash_v7';
 const CACHE_TTL  = 3 * 60 * 1000; // 3 minutes
 
 function loadProgress(pct) {
@@ -1223,25 +1282,39 @@ function renderAll() {
   renderFeedback();
   renderSurveys();
   if(LEAD) renderLeadPanel();
+  addExpandButtons();
 }
 
 // ── Stats bar ─────────────────────────────────────────────────────────────────
+const EVT_EXCLUDE_TYPES = new Set(['government','private dinner']);
+function isPLEvent(e){
+  const types = ga(e,FE.type).map(v=>(typeof v==='object'?v.name:v).toLowerCase());
+  return !types.some(t=>EVT_EXCLUDE_TYPES.has(t));
+}
 function renderStats() {
   const active  = D.accounts.filter(a=>(gf(a,FA.status)||'').toLowerCase()==='active').length;
-  const fy26    = D.fees.filter(f=>gf(f,FF.fy)==='FY26').reduce((s,f)=>s+(+gf(f,FF.amount)||0),0);
-  const parts   = D.events.reduce((s,e)=>s+(+gf(e,FE.parts)||0),0);
-  const allScores = Object.values(EVT_SCORES);
-  const npsArr  = allScores.map(s=>s.nps).filter(v=>v!=null);
-  const satArr  = allScores.map(s=>s.sat).filter(v=>v!=null);
-  const avgNps  = npsArr.length ? npsArr.reduce((a,b)=>a+b)/npsArr.length : null;
+  // All-time fees where funding stage contains "award"
+  const awarded = D.fees.filter(f=>{
+    const s=ga(f,FF.funding).map(v=>(typeof v==='object'?v.name:v)).join(' ').toLowerCase();
+    return s.includes('award');
+  }).reduce((s,f)=>s+(+gf(f,FF.amount)||0),0);
+  // Events excluding Government and Private Dinner
+  const plEvts  = D.events.filter(isPLEvent);
+  // PL participants — events with a PL Type set
+  const plParts = D.events.filter(e=>gf(e,FE.plType)).reduce((s,e)=>s+(+gf(e,FE.parts)||0),0);
+  // NPS from partner survey npsPoints (-1/0/+1)
+  const npsVals = D.surveys.map(s=>{ const v=gf(s,FS.npsPoints); return v==null||v===''?null:+v; }).filter(v=>v!=null&&!isNaN(v));
+  const avgNps  = npsVals.length ? npsVals.reduce((a,b)=>a+b,0)/npsVals.length : null;
+  // Avg Sat from event feedback (1-5 scale)
+  const satArr  = Object.values(EVT_SCORES).map(s=>s.sat).filter(v=>v!=null);
   const avgSat  = satArr.length ? satArr.reduce((a,b)=>a+b)/satArr.length : null;
   document.getElementById('s-partners').textContent = D.partners.length;
   document.getElementById('s-active').textContent   = active;
-  document.getElementById('s-fees').textContent     = f$(fy26);
-  document.getElementById('s-events').textContent   = D.events.length;
-  document.getElementById('s-parts').textContent    = parts.toLocaleString();
-  document.getElementById('s-nps').textContent      = avgNps ? avgNps.toFixed(1) : '—';
-  document.getElementById('s-sat').textContent      = avgSat ? avgSat.toFixed(1) : '—';
+  document.getElementById('s-fees').textContent     = f$(awarded);
+  document.getElementById('s-events').textContent   = plEvts.length;
+  document.getElementById('s-parts').textContent    = plParts.toLocaleString();
+  document.getElementById('s-nps').textContent      = avgNps!=null ? avgNps.toFixed(1) : '—';
+  document.getElementById('s-sat').textContent      = avgSat!=null ? avgSat.toFixed(1) : '—';
 }
 
 // ── Overview ──────────────────────────────────────────────────────────────────
@@ -1598,7 +1671,6 @@ function openEventModal(id){
     {k:'Satisfaction',   v:scoreRing(sc.sat)},
     {k:'NPS',            v:scoreRing(sc.nps!=null?sc.nps+1:null,2)},
     {k:'Obj. Met',       v:sc.objMet!=null?fpct(sc.objMet*20):'—'},
-    {k:'Facilitator Eff',v:scoreRing(sc.facEff)},
     {k:'Before → After', v:sc.before!=null&&sc.after!=null?`${sc.before.toFixed(1)} → ${sc.after.toFixed(1)}`:'—'},
     {k:'Feedback Count', v:gf(e,FE.fbCount)||'—'},
   ];
@@ -1617,7 +1689,7 @@ function renderPartnerships(f={}) {
   const stageEl = document.getElementById('f-stage'), curSt=stageEl.value;
   stageEl.innerHTML = '<option value="">All Stages</option>'+stagesSorted.map(s=>`<option${s===curSt?' selected':''}>${s}</option>`).join('');
 
-  let rows = D.partners;
+  let rows = D.partners.filter(p=>gf(p,FP.name));
   // FP.state is multipleLookupValues → returns array through REST API
   const stateOf = r => ga(r, FP.state).map(v => typeof v==='object'?v.name:v).join(', ');
   if(f.stage)  rows=rows.filter(r=>gf(r,FP.pipeline)===f.stage);
@@ -1679,7 +1751,7 @@ function renderContracts(f={}) {
   mkChart('ch-fees-pipe','bar',fsL,fsL.map(s=>fByStage[s]),fsL.map(s=>STAGE_COLORS[s]||'#999'),'FY26 Fees ($)');
 
   // Table
-  let rows = D.mous;
+  let rows = D.mous.filter(m=>pname(m)!=='—');
   if(f.stage) rows=rows.filter(r=>gf(r,FM.pipeline)===f.stage);
   if(f.search){ const q=f.search.toLowerCase(); rows=rows.filter(r=>(pname(r)||'').toLowerCase().includes(q)||(gf(r,FM.contract)||'').toLowerCase().includes(q)); }
 
@@ -1706,7 +1778,7 @@ function renderEvents(f={}) {
   const typeEl = document.getElementById('f-evt-type'), cur=typeEl.value;
   typeEl.innerHTML = '<option value="">All Types</option>'+types.map(t=>`<option${t===cur?' selected':''}>${t}</option>`).join('');
 
-  let rows = D.events;
+  let rows = D.events.filter(e=>gf(e,FE.nameT)||gf(e,FE.name));
   if(f.type) rows=rows.filter(r=>gf(r,FE.plType)===f.type);
   if(f.search){ const q=f.search.toLowerCase(); rows=rows.filter(r=>(gf(r,FE.nameT)||gf(r,FE.name)||'').toLowerCase().includes(q)); }
   rows.sort((a,b)=>(gf(b,FE.date)||'').localeCompare(gf(a,FE.date)||''));
@@ -1764,7 +1836,6 @@ function renderFeedback() {
         <td>${sc.nps!=null?scoreRing(sc.nps+1,2):'<span style="color:var(--ink3)">—</span>'}</td>
         <td style="font-variant-numeric:tabular-nums;font-size:12px">${arrow}</td>
         <td>${sc.objMet!=null?fpct(sc.objMet*20):'—'}</td>
-        <td>${scoreRing(sc.facEff)}</td>
       </tr>`;
     }).join('');
 
@@ -1787,17 +1858,6 @@ function renderFeedback() {
     nMos.map(m=>{ const a=npsByMo[m]; return +(a.reduce((x,y)=>x+y)/a.length).toFixed(2); }),
     [cssVar('--teal')],'Avg NPS');
 
-  // Facilitator effectiveness (avg per facilitator from EVT_SCORES joined to events)
-  const facMap = {};
-  D.events.forEach(e=>{
-    const sc=EVT_SCORES[e.id]; if(!sc||sc.facEff==null) return;
-    ga(e,FE.facDisp).forEach(f=>(facMap[f]=facMap[f]||[]).push(sc.facEff));
-  });
-  const facSorted = Object.entries(facMap).map(([f,a])=>[f,a.reduce((x,y)=>x+y)/a.length]).sort((a,b)=>b[1]-a[1]).slice(0,8);
-  mkChart('ch-fac-eff','bar',
-    facSorted.map(x=>x[0].split(' ')[0]),
-    facSorted.map(x=>+x[1].toFixed(2)),
-    facSorted.map(()=>cssVar('--teal')),'Avg Effectiveness');
 }
 
 // ── Partner Surveys ───────────────────────────────────────────────────────────
@@ -1806,7 +1866,7 @@ function renderSurveys(f={}) {
   const seasEl = document.getElementById('f-season'), cur=seasEl.value;
   seasEl.innerHTML = '<option value="">All Seasons</option>'+seasons.map(s=>`<option${s===cur?' selected':''}>${s}</option>`).join('');
 
-  let rows = D.surveys;
+  let rows = D.surveys.filter(s=>gf(s,FS.name)||gf(s,FS.district));
   if(f.season) rows=rows.filter(r=>gf(r,FS.season)===f.season);
 
   const avg = fld => { const a=rows.map(r=>+gf(r,fld)).filter(v=>v>0); return a.length?a.reduce((x,y)=>x+y)/a.length:null; };
