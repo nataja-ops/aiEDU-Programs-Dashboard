@@ -1566,8 +1566,8 @@ function renderStats() {
   const plEvts  = D.events.filter(isPLEvent);
   // PL participants — events with a PL Type set
   const plParts = D.events.filter(e=>gf(e,FE.plType)).reduce((s,e)=>s+(+gf(e,FE.parts)||0),0);
-  // NPS from "NPS by Administration Year" table — average NPS Score (Auto) across all year records
-  const npsYrVals = D.npsYears.map(r=>+gf(r,FNPS.score)).filter(v=>!isNaN(v)&&v!=null);
+  // NPS from Partner Survey — "NPS Score (Calculated) (from NPS by Administration Year)"
+  const npsYrVals = D.surveys.flatMap(s=>ga(s,FS.npsScore).map(v=>+v).filter(v=>!isNaN(v)));
   const npsScore = npsYrVals.length ? Math.round(npsYrVals.reduce((a,b)=>a+b,0)/npsYrVals.length) : null;
   // Avg Sat from event feedback (1-5 scale)
   const satArr  = Object.values(EVT_SCORES).map(s=>s.sat).filter(v=>v!=null);
