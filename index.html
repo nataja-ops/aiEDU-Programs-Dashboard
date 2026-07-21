@@ -2537,7 +2537,7 @@ function renderWorkspaceOps() {
   mine.forEach(p=>{
     const name=gf(p,FP.name)||'Unnamed';
     const stage=gf(p,FP.pipeline)||'';
-    if(!gf(p,FP.end))                                       flagItems.push({name, reason:'Missing end date',   id:p.id, done:false});
+    if(FEE_STAGES.has(stage)&&!gf(p,FP.end))                flagItems.push({name, reason:'Missing end date',         id:p.id, done:false});
     if(FEE_STAGES.has(stage)&&!(+gf(p,FP.fy26)||0))        flagItems.push({name, reason:'Missing fees for service', id:p.id, done:false});
   });
   D.mous.filter(m=>ga(m,FM.partner).some(n=>mine.some(p=>gf(p,FP.name)===n))).forEach(m=>{
@@ -2568,7 +2568,7 @@ function renderWorkspaceOps() {
   mine.forEach(p=>{
     const name = gf(p,FP.name)||'Unnamed';
     const stage = gf(p,FP.pipeline)||'';
-    if(!gf(p,FP.end))                                          issues.push({name, reason:'Missing end date',          color:'#c43535', id:p.id, type:'partner'});
+    if(FEE_REQ_STAGES.has(stage)&&!gf(p,FP.end))               issues.push({name, reason:'Missing end date',          color:'#c43535', id:p.id, type:'partner'});
     if(FEE_REQ_STAGES.has(stage)&&!(+gf(p,FP.fy26)||0))       issues.push({name, reason:'Missing fees for service',  color:'#9b5ca5', id:p.id, type:'partner'});
   });
 
