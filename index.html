@@ -411,6 +411,54 @@ button{cursor:pointer;font-family:inherit;}
       </div>
     </div>
 
+    <!-- FY26 Goals section -->
+    <div class="overview-goals-section mb-16">
+      <div class="overview-goals-label">FY26 Goals</div>
+      <div class="okr-grid" id="okr-row">
+      <div class="okr-tile">
+        <div class="okr-eyebrow">Target: 80% · Competency Improvement</div>
+        <div class="okr-current" id="okr-comp-val">—</div>
+        <div class="okr-bar-bg"><div class="okr-bar-fill" id="okr-comp-bar" style="width:0%"></div></div>
+        <div class="okr-pct" id="okr-comp-pct">— of educators/students improved</div>
+      </div>
+      <div class="okr-tile">
+        <div class="okr-eyebrow">Target: 15 · Service MOUs</div>
+        <div class="okr-current" id="okr-mou-val">—</div>
+        <div class="okr-bar-bg"><div class="okr-bar-fill" id="okr-mou-bar" style="width:0%"></div></div>
+        <div class="okr-pct" id="okr-mou-pct">MOU Signed or Complete</div>
+      </div>
+      <div class="okr-tile">
+        <div class="okr-eyebrow">Target: 2,000 · Educators Trained</div>
+        <div class="okr-current" id="okr-edu-val">—</div>
+        <div class="okr-bar-bg"><div class="okr-bar-fill" id="okr-edu-bar" style="width:0%"></div></div>
+        <div class="okr-pct" id="okr-edu-pct">PL session participants</div>
+      </div>
+      <div class="okr-tile">
+        <div class="okr-eyebrow">Peer Organization MOUs</div>
+        <div class="okr-sub">
+          <div>
+            <div class="okr-sub-item">Partnership MOUs</div>
+            <div class="okr-sub-val" id="okr-peer-val">—</div>
+            <div class="okr-bar-bg" style="margin-top:5px"><div class="okr-bar-fill" id="okr-peer-bar" style="width:0%"></div></div>
+            <div class="okr-pct" id="okr-peer-pct">of 5</div>
+          </div>
+          <div>
+            <div class="okr-sub-item">Catalyst</div>
+            <div class="okr-sub-val" id="okr-cat-val">—</div>
+            <div class="okr-bar-bg" style="margin-top:5px"><div class="okr-bar-fill" id="okr-cat-bar" style="width:0%"></div></div>
+            <div class="okr-pct" id="okr-cat-pct">of 10</div>
+          </div>
+        </div>
+      </div>
+      <div class="okr-tile">
+        <div class="okr-eyebrow">Target: $900,000 · Earned Revenue</div>
+        <div class="okr-current" id="okr-rev-val">—</div>
+        <div class="okr-bar-bg"><div class="okr-bar-fill" id="okr-rev-bar" style="width:0%"></div></div>
+        <div class="okr-pct" id="okr-rev-pct">FY26 awarded fees</div>
+      </div>
+    </div>
+    </div><!-- /overview-goals-section -->
+
     <!-- Program Partnership Pipeline -->
     <div class="mb-16">
       <div class="section-hd mb-8">
@@ -418,6 +466,43 @@ button{cursor:pointer;font-family:inherit;}
       </div>
       <div class="card" style="padding:16px 20px" id="success-tracker">
         <div class="empty-state">Loading…</div>
+      </div>
+    </div>
+
+    <!-- Charts row 1: Pipeline by Stage + Fees for Service side by side -->
+    <div class="grid-2 mb-16">
+      <div class="card chart-card">
+        <div class="section-hd"><div class="section-title">Pipeline by Stage</div><div class="section-sub">Number of partnerships at each pipeline stage — click a bar to see the partner list</div></div>
+        <div><canvas id="ch-pipeline"></canvas></div>
+      </div>
+      <div class="card chart-card">
+        <div class="section-hd">
+          <div><div class="section-title">Fees for Service</div><div class="section-sub">Projected fees (in-progress partnerships) vs. actual awarded revenue by fiscal year — click a bar to drill into fee records</div></div>
+        </div>
+        <canvas id="ch-fees-fy" style="max-height:300px"></canvas>
+      </div>
+    </div>
+
+    <!-- Charts row 2: FY26 Fees by Stage + Partners by State -->
+    <div class="grid-2 mb-16">
+      <div class="card chart-card">
+        <div class="section-hd">
+          <div><div class="section-title">FY26 Fees by Stage</div><div class="section-sub">Total fee value per pipeline stage for FY26 — click a bar to view individual fee records</div></div>
+          <span id="fy26-proposed-chip" class="pill pill-teal" style="cursor:pointer;font-size:11px" onclick="drillProposedFees()">Proposed: —</span>
+        </div>
+        <div><canvas id="ch-fees-stage"></canvas></div>
+      </div>
+      <div class="card chart-card">
+        <div class="section-hd"><div class="section-title">Partners by State</div><div class="section-sub">Geographic reach of partnerships — click a state to see its partner list</div></div>
+        <div><canvas id="ch-states"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Charts row 3: Events by Month -->
+    <div class="grid-2">
+      <div class="card chart-card">
+        <div class="section-hd"><div class="section-title">Events by Month</div><div class="section-sub">Professional learning sessions delivered over the past 12 months — click a month to see its events</div></div>
+        <div><canvas id="ch-evt-month"></canvas></div>
       </div>
     </div>
   </div>
@@ -1275,7 +1360,7 @@ function buildEventScores() {
 // ── Load ──────────────────────────────────────────────────────────────────────
 const FY26_START = '2025-12-31';
 const FY26_END   = '2027-01-01';
-const CACHE_KEY  = 'aiedu_dash_v23';
+const CACHE_KEY  = 'aiedu_dash_v24';
 const CACHE_TTL  = 3 * 60 * 1000; // 3 minutes
 
 function loadProgress(pct) {
