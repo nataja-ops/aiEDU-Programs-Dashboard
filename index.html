@@ -137,6 +137,16 @@ button{cursor:pointer;font-family:inherit;}
 /* My Workspace stats */
 .my-stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;}
 @media(max-width:700px){.my-stat-row{grid-template-columns:repeat(2,1fr);}}
+/* Ops panel */
+.ops-item{display:flex;align-items:flex-start;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);cursor:pointer;}
+.ops-item:last-child{border-bottom:none;}
+.ops-item:hover .ops-item-name{color:var(--teal);}
+.ops-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:4px;}
+.ops-item-body{flex:1;min-width:0;}
+.ops-item-name{font-size:13px;font-weight:500;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ops-item-meta{font-size:11px;color:var(--ink3);margin-top:2px;}
+.ops-item-action{font-size:11px;color:var(--teal);flex-shrink:0;align-self:center;}
+.ops-section-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--ink3);margin:10px 0 4px;}
 /* Table */
 .data-table{width:100%;border-collapse:collapse;font-size:13px;}
 .data-table th{
@@ -354,12 +364,31 @@ button{cursor:pointer;font-family:inherit;}
     <div class="flex items-center justify-between mb-16">
       <div>
         <div class="section-title">My Workspace — <span id="lead-name-disp"></span></div>
-        <div class="section-sub">Your partnerships at each pipeline stage</div>
+        <div class="section-sub">Your partnerships, weekly reminders, and data quality checks</div>
       </div>
       <div class="flex gap-8">
         <button class="btn-sm" onclick="switchTab('overview')">← Back to Dashboard</button>
         <button class="btn-sm" id="lead-logout">Sign out</button>
       </div>
+    </div>
+
+    <!-- Weekly Ops Panel -->
+    <div class="grid-2 mb-16" id="ws-ops">
+      <div class="card" style="padding:16px 20px">
+        <div class="section-title mb-4">This Week</div>
+        <div class="section-sub mb-12">Upcoming renewals and events requiring your attention</div>
+        <div id="ws-reminders"><div class="empty-state">Loading…</div></div>
+      </div>
+      <div class="card" style="padding:16px 20px">
+        <div class="section-title mb-4">Data Quality</div>
+        <div class="section-sub mb-12">Missing fields on your partnerships — click any item to open and update</div>
+        <div id="ws-missing"><div class="empty-state">Loading…</div></div>
+      </div>
+    </div>
+
+    <!-- My Pipeline -->
+    <div class="section-hd mb-8">
+      <div><div class="section-title">My Pipeline</div><div class="section-sub">Your partnerships by stage — click a row to expand</div></div>
     </div>
     <div class="card" style="padding:16px 20px" id="ws-pipeline">
       <div class="empty-state">Loading…</div>
@@ -1318,7 +1347,7 @@ function buildEventScores() {
 // ── Load ──────────────────────────────────────────────────────────────────────
 const FY26_START = '2025-12-31';
 const FY26_END   = '2027-01-01';
-const CACHE_KEY  = 'aiedu_dash_v25';
+const CACHE_KEY  = 'aiedu_dash_v26';
 const CACHE_TTL  = 3 * 60 * 1000; // 3 minutes
 
 function loadProgress(pct) {
@@ -1409,7 +1438,7 @@ function renderAll() {
   renderEvents();
   renderFeedback();
   renderSurveys();
-  if(LEAD) renderWorkspacePipeline();
+  if(LEAD){ renderWorkspacePipeline(); renderWorkspaceOps(); }
   addExpandButtons();
 }
 
@@ -2192,6 +2221,93 @@ function renderWorkspacePipeline() {
   }).join('');
 }
 
+// ── Workspace Ops Dashboard ───────────────────────────────────────────────────
+function renderWorkspaceOps() {
+  if(!LEAD) return;
+  const teamNames = p => ga(p,FP.team).map(v=>typeof v==='object'?v.name:v);
+  const mine = D.partners.filter(p=>teamNames(p).some(x=>x.trim().toLowerCase()===LEAD.name.trim().toLowerCase()));
+
+  // ── "This Week" reminders ──────────────────────────────────────────────
+  const remEl = document.getElementById('ws-reminders'); if(!remEl) return;
+  const todayStr = new Date().toISOString().slice(0,10);
+  const in30 = new Date(); in30.setDate(in30.getDate()+30);
+  const in30Str = in30.toISOString().slice(0,10);
+
+  // Expiring MOUs (mine, ending within 30 days)
+  const expiring = mine.filter(p=>{
+    const ed=gf(p,FP.end); if(!ed) return false;
+    return ed >= todayStr && ed <= in30Str;
+  }).sort((a,b)=>(gf(a,FP.end)||'').localeCompare(gf(b,FP.end)||''));
+
+  // My events this week
+  const dow = new Date().getDay();
+  const mon = new Date(); mon.setDate(mon.getDate()-((dow+6)%7)); mon.setHours(0,0,0,0);
+  const sun = new Date(mon); sun.setDate(mon.getDate()+6);
+  const monStr = mon.toISOString().slice(0,10), sunStr = sun.toISOString().slice(0,10);
+  const myEvts = D.events.filter(e=>{
+    const d=(gf(e,FE.date)||'').slice(0,10);
+    return d>=monStr && d<=sunStr && (ga(e,FE.facDisp).some(x=>x===LEAD.name)||ga(e,FE.fac).some(x=>x===LEAD.id));
+  }).sort((a,b)=>(gf(a,FE.date)||'').localeCompare(gf(b,FE.date)||''));
+
+  let remHtml = '';
+  if(expiring.length){
+    remHtml += `<div class="ops-section-lbl">Renewals Due (&le;30 days)</div>`;
+    remHtml += expiring.map(p=>{
+      const d=daysTo(gf(p,FP.end));
+      return `<div class="ops-item" onclick="openPartnerProfile('${p.id}')">
+        <div class="ops-dot" style="background:#e07b1e"></div>
+        <div class="ops-item-body">
+          <div class="ops-item-name">${gf(p,FP.name)||'—'}</div>
+          <div class="ops-item-meta">Ends ${fdt(gf(p,FP.end))} · ${d!=null?daysChip(d):''}</div>
+        </div>
+        <span class="ops-item-action">Open →</span>
+      </div>`;
+    }).join('');
+  }
+  if(myEvts.length){
+    remHtml += `<div class="ops-section-lbl">My Events This Week</div>`;
+    remHtml += myEvts.map(e=>`<div class="ops-item" onclick="openEventModal('${e.id}')">
+      <div class="ops-dot" style="background:var(--teal)"></div>
+      <div class="ops-item-body">
+        <div class="ops-item-name">${gf(e,FE.nameT)||gf(e,FE.name)||'—'}</div>
+        <div class="ops-item-meta">${fdt(gf(e,FE.date))} · ${gf(e,FE.format)||'—'}</div>
+      </div>
+      <span class="ops-item-action">Open →</span>
+    </div>`).join('');
+  }
+  remEl.innerHTML = remHtml || '<div class="empty-state">Nothing due this week</div>';
+
+  // ── Data quality ──────────────────────────────────────────────────────
+  const misEl = document.getElementById('ws-missing'); if(!misEl) return;
+  const issues = [];
+
+  mine.forEach(p=>{
+    const name = gf(p,FP.name)||'Unnamed';
+    if(!gf(p,FP.end))   issues.push({name, reason:'Missing end date',   color:'#c43535', id:p.id, type:'partner'});
+    if(!(+gf(p,FP.fy26)||0)) issues.push({name, reason:'Missing FY26 fees', color:'#9b5ca5', id:p.id, type:'partner'});
+  });
+
+  // MOUs for my partnerships missing signed date
+  const myPrtNames = new Set(mine.map(p=>gf(p,FP.name)).filter(Boolean));
+  D.mous.filter(m=>ga(m,FM.partner).some(n=>myPrtNames.has(n))).forEach(m=>{
+    if(gf(m,FM.signed) && !gf(m,FM.dateSigned)){
+      const n=ga(m,FM.partner).join(', ')||'MOU';
+      issues.push({name:n, reason:'MOU signed but no date recorded', color:'#e07b1e', id:null, mouId:m.id, type:'mou'});
+    }
+  });
+
+  misEl.innerHTML = issues.length===0
+    ? '<div class="empty-state" style="color:var(--good)">✓ All data looks complete</div>'
+    : issues.map(i=>`<div class="ops-item" onclick="${i.type==='mou'?'':(`openPartnerProfile('${i.id}')`)}" style="${i.type==='mou'?'cursor:default':''}">
+        <div class="ops-dot" style="background:${i.color}"></div>
+        <div class="ops-item-body">
+          <div class="ops-item-name">${i.name}</div>
+          <div class="ops-item-meta">${i.reason}</div>
+        </div>
+        ${i.type==='partner'?'<span class="ops-item-action">Fix →</span>':''}
+      </div>`).join('');
+}
+
 // ── Drawers ───────────────────────────────────────────────────────────────────
 function openPrtDrawer(id) {
   const p=D.partners.find(r=>r.id===id); if(!p) return;
@@ -2299,6 +2415,7 @@ document.getElementById('login-ok').addEventListener('click',()=>{
   document.getElementById('ws-nav-tab').style.display='';
   document.getElementById('lead-name-disp').textContent = LEAD.name;
   renderWorkspacePipeline();
+  renderWorkspaceOps();
   toast('Welcome, '+LEAD.name+'!','success');
   switchTab('workspace');
 });
