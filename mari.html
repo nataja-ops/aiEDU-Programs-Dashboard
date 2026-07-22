@@ -163,11 +163,14 @@ a{color:var(--teal)}
 
   <!-- TASKS -->
   <div class="tab-panel" id="tab-tasks">
-    <div class="filters">
-      <select class="form-sel" id="f-ts"><option value="">All Statuses</option></select>
-      <select class="form-sel" id="f-tp"><option value="">All Priorities</option></select>
-      <select class="form-sel" id="f-tpr"><option value="">All Projects</option></select>
-      <input class="form-inp" id="f-ts-q" placeholder="Search tasks…">
+    <div class="filters" style="justify-content:space-between">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <select class="form-sel" id="f-ts"><option value="">All Statuses</option></select>
+        <select class="form-sel" id="f-tp"><option value="">All Priorities</option></select>
+        <select class="form-sel" id="f-tpr"><option value="">All Projects</option></select>
+        <input class="form-inp" id="f-ts-q" placeholder="Search tasks…">
+      </div>
+      <button style="padding:6px 14px;background:var(--teal);color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer" onclick="openAddTaskModal()">+ Add Task</button>
     </div>
     <div id="tasks-list"><div class="spin"></div></div>
   </div>
@@ -195,8 +198,52 @@ a{color:var(--teal)}
 
 <div id="toast"></div>
 
+<!-- Add Task modal -->
+<div id="add-task-ov" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:500;justify-content:center;align-items:flex-start;padding-top:60px">
+  <div style="background:var(--surface);border-radius:12px;padding:28px;width:480px;max-width:calc(100vw - 32px);box-shadow:0 24px 48px rgba(0,0,0,.25)">
+    <div style="font-size:17px;font-weight:700;margin-bottom:4px">Add a Task</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:20px">Saves directly to the Tasks Management table in Airtable.</div>
+    <div style="margin-bottom:12px">
+      <label style="display:block;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px">Task Name *</label>
+      <input class="form-inp" id="at-name" placeholder="What needs to be done?" style="width:100%">
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+      <div>
+        <label style="display:block;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px">Project</label>
+        <select class="form-sel" id="at-project" style="width:100%"><option value="">— None —</option></select>
+      </div>
+      <div>
+        <label style="display:block;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px">Priority</label>
+        <select class="form-sel" id="at-priority" style="width:100%">
+          <option value="">— None —</option>
+          <option>High</option><option>Medium</option><option>Low</option>
+        </select>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+      <div>
+        <label style="display:block;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px">Due Date</label>
+        <input class="form-inp" id="at-due" type="date" style="width:100%">
+      </div>
+      <div>
+        <label style="display:block;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px">Status</label>
+        <select class="form-sel" id="at-status" style="width:100%"><option value="">— None —</option></select>
+      </div>
+    </div>
+    <div style="margin-bottom:16px">
+      <label style="display:block;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px">Description</label>
+      <textarea class="form-inp" id="at-desc" rows="3" placeholder="Optional notes…" style="width:100%;resize:vertical"></textarea>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button id="at-ok" style="flex:1;padding:8px;background:var(--teal);color:#fff;border:none;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer">Save Task</button>
+      <button onclick="document.getElementById('add-task-ov').style.display='none'" style="padding:8px 16px;background:none;border:1px solid var(--border);border-radius:6px;font-size:13px;cursor:pointer">Cancel</button>
+    </div>
+  </div>
+</div>
+
 <script>
 const BASE = 'appgdtYPttWwiBZzA';
+const TASKS_TBL = 'tblAZe9Jl8vYTS3mV';
 
 const FT = {
   name:       'fldridBBnkTxGKibf',
@@ -298,6 +345,18 @@ function toast(msg,type='info'){
 }
 
 // ── fetch ──────────────────────────────────────────────────────────────────
+async function apiWrite(method, baseId, tableId, payload){
+  const p=new URLSearchParams({path:`v0/${baseId}/${tableId}`});
+  const res=await fetch('/api/airtable?'+p,{
+    method,
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({...payload,typecast:true}),
+  });
+  const data=await res.json();
+  if(!res.ok||data.error) throw new Error((data.error&&data.error.message)||`HTTP ${res.status}`);
+  return data;
+}
+
 async function atFetch(tableId, fields){
   let records=[],offset=null;
   do {
@@ -500,6 +559,47 @@ function buildFilters(){
   ['f-ts','f-tp','f-tpr','f-ts-q'].forEach(id=>document.getElementById(id)?.addEventListener('input',renderTasks));
   ['f-ps','f-pp','f-ps-q'].forEach(id=>document.getElementById(id)?.addEventListener('input',renderProjects));
 }
+
+// ── Add Task modal ───────────────────────────────────────────────────────────
+function openAddTaskModal(){
+  // populate Status options from live task data
+  const statSel=document.getElementById('at-status');
+  statSel.innerHTML='<option value="">— None —</option>';
+  [...new Set(D.tasks.map(t=>gf(t,FT.status)).filter(Boolean))].sort()
+    .forEach(s=>{const o=document.createElement('option');o.value=s;o.textContent=s;statSel.appendChild(o);});
+  // populate Project dropdown
+  const projSel=document.getElementById('at-project');
+  projSel.innerHTML='<option value="">— None —</option>';
+  D.projects.slice().sort((a,b)=>(gf(a,FP.name)||'').localeCompare(gf(b,FP.name)||''))
+    .forEach(p=>{const o=document.createElement('option');o.value=p.id;o.textContent=gf(p,FP.name)||'Unnamed';projSel.appendChild(o);});
+  // reset fields
+  document.getElementById('at-name').value='';
+  document.getElementById('at-due').value='';
+  document.getElementById('at-desc').value='';
+  document.getElementById('at-priority').value='';
+  document.getElementById('add-task-ov').style.display='flex';
+}
+
+document.getElementById('at-ok').addEventListener('click', async()=>{
+  const name=document.getElementById('at-name').value.trim();
+  if(!name){toast('Task name is required','info');return;}
+  const btn=document.getElementById('at-ok');
+  btn.disabled=true;btn.textContent='Saving…';
+  const fields={};
+  fields[FT.name]=name;
+  const st=document.getElementById('at-status').value;if(st)fields[FT.status]=st;
+  const pr=document.getElementById('at-priority').value;if(pr)fields[FT.priority]=pr;
+  const du=document.getElementById('at-due').value;if(du)fields[FT.dueDate]=du;
+  const de=document.getElementById('at-desc').value.trim();if(de)fields[FT.desc]=de;
+  const proj=document.getElementById('at-project').value;if(proj)fields[FT.projects]=[proj];
+  try{
+    await apiWrite('POST',BASE,TASKS_TBL,{fields});
+    document.getElementById('add-task-ov').style.display='none';
+    toast('Task saved to Airtable ✓','success');
+    await loadData();
+  }catch(err){toast('Save failed: '+err.message,'error');}
+  finally{btn.disabled=false;btn.textContent='Save Task';}
+});
 
 // ── tabs ────────────────────────────────────────────────────────────────────
 document.querySelectorAll('.nav-tab').forEach(btn=>{

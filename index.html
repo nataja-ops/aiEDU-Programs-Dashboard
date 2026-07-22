@@ -354,7 +354,7 @@ button{cursor:pointer;font-family:inherit;}
   <div class="stat-item"><span class="stat-val" id="s-active">—</span><span class="stat-lbl">Active</span></div>
   <div class="stat-item"><span class="stat-val" id="s-fees">—</span><span class="stat-lbl">Fees Awarded</span></div>
   <div class="stat-item"><span class="stat-val" id="s-events">—</span><span class="stat-lbl">Events (PL)</span></div>
-  <div class="stat-item"><span class="stat-val" id="s-parts">—</span><span class="stat-lbl">PL Participants</span></div>
+  <div class="stat-item"><span class="stat-val" id="s-parts">—</span><span class="stat-lbl">Participants</span></div>
   <div class="stat-item"><span class="stat-val" id="s-nps">—</span><span class="stat-lbl">NPS</span></div>
   <div class="stat-item"><span class="stat-val" id="s-sat">—</span><span class="stat-lbl">Avg Sat</span></div>
 </div>
@@ -563,9 +563,12 @@ button{cursor:pointer;font-family:inherit;}
 
   <!-- EVENTS -->
   <div class="tab-panel" id="tab-events">
-    <div class="mb-12">
-      <div class="section-title">Events</div>
-      <div class="section-sub">All professional learning and partner events — filter by type or search by name</div>
+    <div class="section-hd mb-12">
+      <div>
+        <div class="section-title">Events</div>
+        <div class="section-sub">All professional learning and partner events — filter by type or search by name</div>
+      </div>
+      <button class="btn-sm primary" onclick="openLogEventModal()">+ Log Event</button>
     </div>
     <div class="section-hd mb-12">
       <div class="flex gap-8 items-center flex-wrap">
@@ -735,7 +738,10 @@ button{cursor:pointer;font-family:inherit;}
         <div class="section-title" id="drill-title">Detail</div>
         <div class="section-sub" id="drill-sub"></div>
       </div>
-      <button class="icon-btn" onclick="closeDrill()">✕</button>
+      <div class="flex gap-8 items-center">
+        <button class="btn-sm" onclick="exportDrillCSV()" title="Export to CSV">↓ CSV</button>
+        <button class="icon-btn" onclick="closeDrill()">✕</button>
+      </div>
     </div>
     <div id="drill-chart-section" style="display:none;padding:16px 24px 8px;border-bottom:1px solid var(--border);flex-shrink:0">
       <canvas id="drill-chart-canvas" style="max-height:220px"></canvas>
@@ -796,12 +802,58 @@ button{cursor:pointer;font-family:inherit;}
 
 <div id="toast-wrap"></div>
 
+<!-- Log Event modal -->
+<div id="log-evt-ov" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:500;justify-content:center;align-items:flex-start;padding-top:60px;overflow-y:auto">
+  <div style="background:var(--surface);border-radius:12px;padding:28px;width:520px;max-width:calc(100vw - 32px);box-shadow:0 24px 48px rgba(0,0,0,.25);margin-bottom:24px">
+    <div class="modal-title">Log an Event</div>
+    <div class="modal-sub">Creates a new record in the Events table in Airtable.</div>
+    <div class="grid-2 mt-16" style="gap:12px">
+      <div class="form-group" style="margin:0">
+        <label class="form-label">Event Name *</label>
+        <input class="form-input" id="le-name" placeholder="Event name">
+      </div>
+      <div class="form-group" style="margin:0">
+        <label class="form-label">Date *</label>
+        <input class="form-input" id="le-date" type="date">
+      </div>
+    </div>
+    <div class="form-group mt-12">
+      <label class="form-label">Partner Account</label>
+      <input class="form-input" id="le-partner" placeholder="Partner name (optional)">
+    </div>
+    <div class="grid-2 mt-0" style="gap:12px">
+      <div class="form-group" style="margin:0">
+        <label class="form-label">Format</label>
+        <select class="form-select" id="le-format"><option value="">— Select —</option></select>
+      </div>
+      <div class="form-group" style="margin:0">
+        <label class="form-label">PL Type</label>
+        <select class="form-select" id="le-pltype"><option value="">— Select —</option></select>
+      </div>
+    </div>
+    <div class="grid-2 mt-12" style="gap:12px">
+      <div class="form-group" style="margin:0">
+        <label class="form-label"># Participants</label>
+        <input class="form-input" id="le-parts" type="number" min="0" placeholder="0">
+      </div>
+      <div class="form-group" style="margin:0">
+        <label class="form-label">Facilitator</label>
+        <input class="form-input" id="le-fac" placeholder="Name">
+      </div>
+    </div>
+    <div class="flex gap-8 mt-16">
+      <button class="btn-sm primary flex-1" id="le-ok">Save to Airtable</button>
+      <button class="btn-sm" onclick="document.getElementById('log-evt-ov').style.display='none'">Cancel</button>
+    </div>
+  </div>
+</div>
+
 <!-- Login modal -->
 <!-- Request modal -->
 <div id="req-ov" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:500;justify-content:center;align-items:flex-start;padding-top:60px">
   <div style="background:var(--surface);border-radius:12px;padding:28px;width:480px;max-width:calc(100vw - 32px);box-shadow:0 24px 48px rgba(0,0,0,.25)">
     <div class="modal-title">Submit a Request</div>
-    <div class="modal-sub">Questions or support requests go directly to the Programs team.</div>
+    <div class="modal-sub">Goes directly into the team blockers log in Airtable.</div>
     <div class="form-group mt-16">
       <label class="form-label">Your Name</label>
       <input class="form-input" id="req-name" placeholder="Your name">
@@ -817,11 +869,19 @@ button{cursor:pointer;font-family:inherit;}
       </select>
     </div>
     <div class="form-group">
-      <label class="form-label">Message</label>
+      <label class="form-label">Priority</label>
+      <select class="form-select" id="req-priority">
+        <option value="Medium">Medium</option>
+        <option value="High">High</option>
+        <option value="Low">Low</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Description</label>
       <textarea class="form-input" id="req-msg" rows="4" placeholder="Describe your request…" style="resize:vertical"></textarea>
     </div>
     <div class="flex gap-8 mt-16">
-      <button class="btn-sm primary flex-1" id="req-ok">Send Request</button>
+      <button class="btn-sm primary flex-1" id="req-ok">Submit to Airtable</button>
       <button class="btn-sm" onclick="document.getElementById('req-ov').style.display='none'">Cancel</button>
     </div>
   </div>
@@ -851,6 +911,7 @@ const T = {
   fb:'tblWTdC7kk80jfMOO',  srv:'tblmccdSXvckLRT5O', stf:'tblTngHWDZOIeIR0p',
   cat:'tblk39heoW6mkzLYI', npsYr:'tblOo6xPKh95d9xpr',
   plSess:'tblBLCqGBDdz6DiNV', plProd:'tbl4sM0EQWBNQNd51',
+  blockers:'tblf7y815B8SzJZrM',
 };
 // NPS by Administration Year fields
 const FNPS = {
@@ -1209,7 +1270,9 @@ const COL_SURVEYS = [
   {label:'Owner',    fn:r=>ga(r,FS.owner).map(v=>typeof v==='object'?v.name:v).join(', ')||'—'},
 ];
 
+let DRILL_ROWS=[], DRILL_COLS=[], DRILL_TITLE='';
 function showDrill(title, sub, rows, cols, chartFn=null) {
+  DRILL_ROWS=rows; DRILL_COLS=cols; DRILL_TITLE=title;
   document.getElementById('drill-title').textContent = title;
   document.getElementById('drill-sub').textContent   = sub||'';
   document.getElementById('drill-thead').innerHTML   =
@@ -1257,8 +1320,23 @@ function drillAllEvents(){
   showDrill('Events (PL, excl. Gov/Private Dinner)', r.length+' events', r, COL_EVTS);
 }
 function drillParticipants(){
-  const r=D.events.filter(e=>gf(e,FE.plType)&&gf(e,FE.parts)).sort((a,b)=>(+gf(b,FE.parts)||0)-(+gf(a,FE.parts)||0));
-  showDrill('PL Participants by Event', 'Sorted by attendance', r, COL_EVTS);
+  const evts=D.events.filter(isPLEvent).filter(e=>+gf(e,FE.parts)>0);
+  const byType={};
+  evts.forEach(e=>{
+    const types=ga(e,FE.type).map(v=>typeof v==='object'?v.name:v).filter(Boolean);
+    (types.length?types:['Uncategorized']).forEach(t=>(byType[t]=byType[t]||[]).push(e));
+  });
+  const total=evts.reduce((s,e)=>s+(+gf(e,FE.parts)||0),0);
+  // Open panel then override tbody with grouped rows
+  showDrill('Participants by Event',total.toLocaleString()+' total participants',[],COL_EVTS);
+  let html='';
+  Object.keys(byType).sort().forEach(t=>{
+    const rows=byType[t].sort((a,b)=>(+gf(b,FE.parts)||0)-(+gf(a,FE.parts)||0));
+    const typeTotal=rows.reduce((s,e)=>s+(+gf(e,FE.parts)||0),0);
+    html+=`<tr><td colspan="${COL_EVTS.length}" style="background:var(--teal-light);padding:7px 16px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--teal)">${t} <span style="opacity:.65;font-weight:400">${typeTotal.toLocaleString()} participants</span></td></tr>`;
+    html+=rows.map(r=>`<tr>${COL_EVTS.map(c=>`<td>${c.fn(r)}</td>`).join('')}</tr>`).join('');
+  });
+  document.getElementById('drill-tbody').innerHTML=html||`<tr><td colspan="${COL_EVTS.length}" class="empty-state">No records found</td></tr>`;
 }
 function drillNPS(){
   const r=D.surveys.filter(s=>{const v=gf(s,FS.npsPoints);return v!=null&&v!==''&&!isNaN(+v);}).sort((a,b)=>(+gf(b,FS.npsPoints)||0)-(+gf(a,FS.npsPoints)||0));
@@ -1577,12 +1655,11 @@ function renderStats() {
   }).reduce((s,f)=>s+(+gf(f,FF.amount)||0),0);
   // Events excluding Government and Private Dinner
   const plEvts  = D.events.filter(isPLEvent);
-  // PL participants — events with a PL Type set
-  const plParts = D.events.filter(e=>gf(e,FE.plType)).reduce((s,e)=>s+(+gf(e,FE.parts)||0),0);
-  // NPS — most recent year from NPS by Administration Year table
-  const npsYrForStat = [...D.npsYears].filter(r=>gf(r,FNPS.score)!=null&&gf(r,FNPS.name))
-    .sort((a,b)=>(gf(a,FNPS.name)||'').localeCompare(gf(b,FNPS.name)||''));
-  const npsScore = npsYrForStat.length ? Math.round(+gf(npsYrForStat[npsYrForStat.length-1],FNPS.score)) : null;
+  // Participants — all events with standard exclusions (Government, Private Dinner)
+  const plParts = D.events.filter(isPLEvent).reduce((s,e)=>s+(+gf(e,FE.parts)||0),0);
+  // NPS — average of all non-empty NPS Score (Calculated) rows from NPS by Administration Year
+  const npsYrForStat = D.npsYears.filter(r=>{ const v=+gf(r,FNPS.score); return !isNaN(v)&&gf(r,FNPS.score)!=null; });
+  const npsScore = npsYrForStat.length ? Math.round(npsYrForStat.reduce((a,b)=>a+(+gf(b,FNPS.score)||0),0)/npsYrForStat.length) : null;
   // Avg Sat from event feedback (1-5 scale)
   const satArr  = Object.values(EVT_SCORES).map(s=>s.sat).filter(v=>v!=null);
   const avgSat  = satArr.length ? satArr.reduce((a,b)=>a+b)/satArr.length : null;
@@ -2520,12 +2597,20 @@ function renderWorkspacePipeline() {
           const sd=gf(p,FP.start), ed=gf(p,FP.end), days=daysTo(ed);
           let pct2=0; if(sd&&ed){pct2=Math.min(100,Math.max(0,(Date.now()-new Date(sd+' '))/(new Date(ed+' ')-new Date(sd+' '))*100));}
           const stMap={'MOU Signed':'pill-teal','MOU Complete':'pill-good','Verbal Agreement':'pill-warn'};
-          return `<div class="portfolio-card" style="cursor:pointer" onclick="openPartnerProfile('${p.id}')">
-            <div class="pc-name">${gf(p,FP.name)||'—'}</div>
-            <div class="pc-row"><span class="pill ${stMap[stage]||'pill-gray'}">${stage}</span><span style="font-weight:600">${f$(fy26)}</span></div>
+          return `<div class="portfolio-card">
+            <div class="pc-name" style="cursor:pointer" onclick="openPartnerProfile('${p.id}')">${gf(p,FP.name)||'—'}</div>
+            <div class="pc-row">
+              <select class="form-select" style="font-size:11px;padding:3px 6px;height:auto" onchange="updatePartnerStage('${p.id}',this.value)" onclick="event.stopPropagation()">
+                ${STAGE_ORDER.map(s=>`<option${s===stage?' selected':''}>${s}</option>`).join('')}
+              </select>
+              <span style="font-weight:600">${f$(fy26)}</span>
+            </div>
             <div class="pc-row"><span style="font-size:11px;color:var(--ink3)">Ends ${fdt(ed)}</span>${days!=null?daysChip(days):''}</div>
             <div class="prog-wrap"><div class="prog-fill" style="width:${pct2.toFixed(0)}%"></div></div>
-            <div class="next-action">→ ${nextAction(p)}</div>
+            <div class="pc-row" style="margin-top:4px">
+              <span class="next-action" style="flex:1">→ ${nextAction(p)}</span>
+              <a href="https://airtable.com/${BASE}/${T.prt}/${p.id}" target="_blank" style="font-size:10px;color:var(--teal);opacity:.7;text-decoration:none" title="Open in Airtable" onclick="event.stopPropagation()">↗ AT</a>
+            </div>
           </div>`;
         }).join('');
     return `<div class="tracker-group" id="wstrk-${i}">
@@ -2783,28 +2868,32 @@ document.querySelectorAll('.nav-tab').forEach(b=>b.addEventListener('click',()=>
 const REQ_KEY = 'aiedu_requests';
 function openRequestModal(){ document.getElementById('req-ov').style.display='flex'; }
 
-document.getElementById('req-ok').addEventListener('click',()=>{
-  const name = document.getElementById('req-name').value.trim();
-  const type = document.getElementById('req-type').value;
-  const msg  = document.getElementById('req-msg').value.trim();
-  if(!name||!msg){ toast('Please fill in your name and message','info'); return; }
-  const req = { name, type, msg, ts: new Date().toISOString() };
-  // Store locally
+document.getElementById('req-ok').addEventListener('click', async ()=>{
+  const name     = document.getElementById('req-name').value.trim();
+  const type     = document.getElementById('req-type').value;
+  const priority = document.getElementById('req-priority').value;
+  const msg      = document.getElementById('req-msg').value.trim();
+  if(!name||!msg){ toast('Please fill in your name and description','info'); return; }
+  const btn = document.getElementById('req-ok');
+  btn.disabled = true; btn.textContent = 'Submitting…';
   try {
-    const existing = JSON.parse(localStorage.getItem(REQ_KEY)||'[]');
-    existing.unshift(req);
-    localStorage.setItem(REQ_KEY, JSON.stringify(existing.slice(0,50)));
-  } catch(e){}
-  // Open mailto
-  const subject = encodeURIComponent(`[Programs Dashboard] ${type} from ${name}`);
-  const body    = encodeURIComponent(`Name: ${name}\nType: ${type}\n\nMessage:\n${msg}`);
-  window.open(`mailto:nataja@aiedu.org?subject=${subject}&body=${body}`,'_blank');
-  document.getElementById('req-ov').style.display='none';
-  document.getElementById('req-name').value='';
-  document.getElementById('req-msg').value='';
-  toast('Request sent — your email client should open','success');
-  // Refresh ops panel if workspace is active
-  if(LEAD) renderWorkspaceOps();
+    await apiWrite('POST', BASE, T.blockers, { fields: {
+      'Blocker':      type,
+      'Owner':        name,
+      'Description':  msg,
+      'Priority':     priority,
+      'Date Raised':  new Date().toISOString().slice(0,10),
+    }});
+    document.getElementById('req-ov').style.display='none';
+    document.getElementById('req-name').value='';
+    document.getElementById('req-msg').value='';
+    toast('Request logged in Airtable ✓','success');
+    if(LEAD) renderWorkspaceOps();
+  } catch(err){
+    toast('Submit failed: '+err.message,'error');
+  } finally {
+    btn.disabled=false; btn.textContent='Submit to Airtable';
+  }
 });
 
 // ── Theme toggle ──────────────────────────────────────────────────────────────
@@ -2915,6 +3004,80 @@ document.querySelectorAll('[data-fbtab]').forEach(btn=>{
     if(tab==='pl') renderFeedback();
   });
 });
+
+// ── Log Event modal ───────────────────────────────────────────────────────────
+function openLogEventModal(){
+  // Populate dropdowns from live data
+  const fmts=[...new Set(D.events.map(e=>gf(e,FE.format)).filter(Boolean))].sort();
+  const pts=[...new Set(D.events.map(e=>gf(e,FE.plType)).filter(Boolean))].sort();
+  const fmtEl=document.getElementById('le-format');
+  fmtEl.innerHTML='<option value="">— Select —</option>'+fmts.map(f=>`<option>${f}</option>`).join('');
+  const ptEl=document.getElementById('le-pltype');
+  ptEl.innerHTML='<option value="">— Select —</option>'+pts.map(p=>`<option>${p}</option>`).join('');
+  document.getElementById('le-date').value=new Date().toISOString().slice(0,10);
+  document.getElementById('log-evt-ov').style.display='flex';
+}
+document.getElementById('le-ok').addEventListener('click', async ()=>{
+  const name=document.getElementById('le-name').value.trim();
+  const date=document.getElementById('le-date').value;
+  if(!name||!date){ toast('Event name and date are required','info'); return; }
+  const fields={
+    'Event Name': name,
+    'Date':       date,
+    'Partner Account': document.getElementById('le-partner').value.trim()||undefined,
+    'In-person v. Virtual': document.getElementById('le-format').value||undefined,
+    'PL Type':    document.getElementById('le-pltype').value||undefined,
+    'Number of Participants': +document.getElementById('le-parts').value||undefined,
+    'Facilitator / Presenter': document.getElementById('le-fac').value.trim()||undefined,
+  };
+  // Remove undefined keys
+  Object.keys(fields).forEach(k=>fields[k]===undefined&&delete fields[k]);
+  const btn=document.getElementById('le-ok');
+  btn.disabled=true; btn.textContent='Saving…';
+  try {
+    await apiWrite('POST', BASE, T.evt, {fields});
+    document.getElementById('log-evt-ov').style.display='none';
+    ['le-name','le-partner','le-fac','le-parts'].forEach(id=>document.getElementById(id).value='');
+    toast('Event logged ✓','success');
+    // Bust cache so new event appears on next refresh
+    try{ localStorage.removeItem(CACHE_KEY); }catch(e){}
+  } catch(err){ toast('Save failed: '+err.message,'error'); }
+  finally{ btn.disabled=false; btn.textContent='Save to Airtable'; }
+});
+
+// ── Export drill panel as CSV ─────────────────────────────────────────────────
+function exportDrillCSV(){
+  if(!DRILL_COLS.length){ toast('Nothing to export','info'); return; }
+  const esc=v=>'"'+String(v).replace(/"/g,'""')+'"';
+  const header=DRILL_COLS.map(c=>esc(c.label)).join(',');
+  const body=DRILL_ROWS.map(r=>DRILL_COLS.map(c=>{
+    const raw=c.fn(r); // may contain HTML
+    const txt=raw.replace(/<[^>]+>/g,'').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>');
+    return esc(txt.trim());
+  }).join(',')).join('\n');
+  const blob=new Blob([header+'\n'+body],{type:'text/csv'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=(DRILL_TITLE||'export').replace(/[^a-z0-9]+/gi,'_').toLowerCase()+'.csv';
+  a.click();
+}
+
+// ── Open in Airtable (partner record) ────────────────────────────────────────
+function openInAirtable(tableId, recId){
+  window.open(`https://airtable.com/${BASE}/${tableId}/${recId}`,'_blank');
+}
+
+// ── Inline pipeline stage update (workspace) ──────────────────────────────────
+async function updatePartnerStage(recId, newStage){
+  try {
+    await apiWrite('PATCH', BASE, T.prt, {id: recId, fields: {'Pipeline Status': newStage}});
+    // Update local data so re-render reflects change immediately
+    const p=D.partners.find(x=>x.id===recId);
+    if(p){ p.fields[Object.keys(p.fields).find(k=>k===Object.keys(FP).map(f=>FP[f]).find(v=>v===k))||''] = newStage; }
+    toast('Stage updated to '+newStage,'success');
+    try{ localStorage.removeItem(CACHE_KEY); }catch(e){}
+  } catch(err){ toast('Update failed: '+err.message,'error'); }
+}
 
 // ── Boot ──────────────────────────────────────────────────────────────────────
 wireClickTargets();
