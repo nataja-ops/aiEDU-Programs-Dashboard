@@ -2377,7 +2377,8 @@ function renderSurveys(f={}) {
   const seasEl = document.getElementById('f-season'), cur=seasEl.value;
   seasEl.innerHTML = '<option value="">All Seasons</option>'+seasons.map(s=>`<option${s===cur?' selected':''}>${s}</option>`).join('');
 
-  let rows = D.surveys.filter(s=>gf(s,FS.name)||gf(s,FS.district));
+  const hasSurveyData = s => [FS.satPct,FS.commPct,FS.resPct,FS.objPct,FS.aiPct,FS.recRating,FS.npsPoints].some(f=>{ const v=gf(s,f); return v!=null&&v!==''&&+v>0; });
+  let rows = D.surveys.filter(hasSurveyData);
   if(f.season) rows=rows.filter(r=>gf(r,FS.season)===f.season);
 
   const avg = fld => { const a=rows.map(r=>+gf(r,fld)).filter(v=>v>0); return a.length?a.reduce((x,y)=>x+y)/a.length:null; };
