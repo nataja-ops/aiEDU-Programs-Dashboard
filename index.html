@@ -485,7 +485,13 @@ button{cursor:pointer;font-family:inherit;}
 
     <!-- Charts row 3: Partners by State — full width -->
     <div class="card chart-card mb-16">
-      <div class="section-hd"><div class="section-title">Partners by State</div><div class="section-sub">Geographic reach of partnerships — click a state to see its partner list</div></div>
+      <div class="section-hd">
+        <div><div class="section-title">Partners by State</div><div class="section-sub">Active partnerships only — click a state to see its partner list</div></div>
+        <div class="flex gap-8 items-center" style="flex-wrap:wrap">
+          <select class="form-select" id="st-f-svc" style="width:auto"><option value="">All Service Lines</option></select>
+          <select class="form-select" id="st-f-stage" style="width:auto"><option value="">All Stages</option></select>
+        </div>
+      </div>
       <div><canvas id="ch-states"></canvas></div>
     </div>
 
@@ -1539,7 +1545,7 @@ function buildEventScores() {
 // ── Load ──────────────────────────────────────────────────────────────────────
 const FY26_START = '2025-12-31';
 const FY26_END   = '2027-01-01';
-const CACHE_KEY  = 'aiedu_dash_v28';
+const CACHE_KEY  = 'aiedu_dash_v29';
 const CACHE_TTL  = 3 * 60 * 1000; // 3 minutes
 
 function loadProgress(pct) {
@@ -1685,6 +1691,36 @@ function setOkr(prefix, current, target, fmt) {
   if (pctEl) pctEl.textContent  = pct+'% toward goal';
 }
 
+function renderStateChart(){
+  const svcVal=(document.getElementById('st-f-svc')||{}).value||'';
+  const stgVal=(document.getElementById('st-f-stage')||{}).value||'';
+  const activeAccIds=new Set(D.accounts.filter(a=>(gf(a,FA.status)||'').toLowerCase()==='active').map(a=>a.id));
+  let ps=D.partners.filter(p=>ga(p,FP.account).some(id=>activeAccIds.has(id)));
+  if(svcVal) ps=ps.filter(p=>ga(p,FP.services).map(v=>typeof v==='object'?v.name:v).includes(svcVal));
+  if(stgVal) ps=ps.filter(p=>gf(p,FP.pipeline)===stgVal);
+  const stStateMap={};
+  ps.forEach(p=>{
+    const states=ga(p,FP.state).map(v=>typeof v==='object'?v.name:v).filter(Boolean);
+    const stage=gf(p,FP.pipeline)||'Unknown';
+    states.forEach(st=>{if(!stStateMap[st])stStateMap[st]={};stStateMap[st][stage]=(stStateMap[st][stage]||0)+1;});
+  });
+  const stSorted=Object.entries(stStateMap).map(([st,sg])=>[st,Object.values(sg).reduce((a,b)=>a+b,0)]).sort((a,b)=>b[1]-a[1]).slice(0,15).map(x=>x[0]);
+  const stStages=new Set();stSorted.forEach(st=>Object.keys(stStateMap[st]).forEach(s=>stStages.add(s)));
+  const stDatasets=STAGE_ORDER.filter(s=>stStages.has(s)).map(stage=>({label:stage,data:stSorted.map(st=>stStateMap[st][stage]||0),backgroundColor:STAGE_COLORS[stage]||'#aaa'}));
+  stStages.has('Unknown')&&stDatasets.push({label:'Unknown',data:stSorted.map(st=>stStateMap[st]['Unknown']||0),backgroundColor:'#aaa'});
+  if(CHARTS['ch-states']){CHARTS['ch-states'].destroy();delete CHARTS['ch-states'];}
+  const stEl=document.getElementById('ch-states');
+  if(!stEl)return;
+  const ink3=cssVar('--ink3'),bdr=cssVar('--border');
+  CHARTS['ch-states']=new Chart(stEl,{type:'bar',data:{labels:stSorted,datasets:stDatasets},options:{responsive:true,maintainAspectRatio:true,
+    plugins:{legend:{display:true,position:'bottom',labels:{color:ink3,font:{size:11},boxWidth:10}},
+      tooltip:{callbacks:{label:ctx=>` ${ctx.dataset.label}: ${ctx.raw}`}}},
+    scales:{x:{stacked:true,ticks:{color:ink3,font:{size:11}},grid:{display:false}},y:{stacked:true,ticks:{color:ink3,font:{size:11}},grid:{color:bdr},beginAtZero:true}},
+    onClick:(_e,els)=>{if(els.length){const st=stSorted[els[0].index];const rows=ps.filter(p=>ga(p,FP.state).map(v=>typeof v==='object'?v.name:v).includes(st));showDrill('Partners in '+st,rows.length+' partners',rows,COL_PRTS);}},
+    onHover:(evt,els)=>{evt.native.target.style.cursor=els.length?'pointer':'default';}
+  }});
+}
+
 function renderOverview() {
   // ── OKR 1: Competency improvement — % where after knowledge > before knowledge
   const fbBoth     = D.feedback.filter(f=>gf(f,FFB.before)!=null && gf(f,FFB.after)!=null);
@@ -1764,28 +1800,24 @@ function renderOverview() {
   const propChip=document.getElementById('fy26-proposed-chip');
   if(propChip) propChip.textContent='Proposed: '+f$(propTotal);
 
-  // States — stacked by pipeline status
-  const stStateMap = {};
-  D.partners.forEach(p=>{
-    const states=ga(p,FP.state).map(v=>typeof v==='object'?v.name:v).filter(Boolean);
-    const stage=gf(p,FP.pipeline)||'Unknown';
-    states.forEach(st=>{ if(!stStateMap[st]) stStateMap[st]={}; stStateMap[st][stage]=(stStateMap[st][stage]||0)+1; });
-  });
-  const stSorted=Object.entries(stStateMap).map(([st,sg])=>[st,Object.values(sg).reduce((a,b)=>a+b,0)]).sort((a,b)=>b[1]-a[1]).slice(0,12).map(x=>x[0]);
-  const stStages=new Set(); stSorted.forEach(st=>Object.keys(stStateMap[st]).forEach(s=>stStages.add(s)));
-  const stDatasets=STAGE_ORDER.filter(s=>stStages.has(s)).map(stage=>({label:stage,data:stSorted.map(st=>stStateMap[st][stage]||0),backgroundColor:STAGE_COLORS[stage]||'#aaa'}));
-  stStages.has('Unknown')&&stDatasets.push({label:'Unknown',data:stSorted.map(st=>stStateMap[st]['Unknown']||0),backgroundColor:'#aaa'});
-  if(CHARTS['ch-states']){CHARTS['ch-states'].destroy();delete CHARTS['ch-states'];}
-  const stEl=document.getElementById('ch-states');
-  if(stEl){ const ink3=cssVar('--ink3'),bdr=cssVar('--border');
-    CHARTS['ch-states']=new Chart(stEl,{type:'bar',data:{labels:stSorted,datasets:stDatasets},options:{responsive:true,maintainAspectRatio:true,
-      plugins:{legend:{display:true,position:'bottom',labels:{color:ink3,font:{size:11},boxWidth:10}},
-        tooltip:{callbacks:{label:ctx=>` ${ctx.dataset.label}: ${ctx.raw}`}}},
-      scales:{x:{stacked:true,ticks:{color:ink3,font:{size:11}},grid:{display:false}},y:{stacked:true,ticks:{color:ink3,font:{size:11}},grid:{color:bdr},beginAtZero:true}},
-      onClick:(_e,els)=>{ if(els.length){const st=stSorted[els[0].index];const rows=D.partners.filter(p=>ga(p,FP.state).map(v=>typeof v==='object'?v.name:v).includes(st));showDrill('Partners in '+st,rows.length+' partners',rows,COL_PRTS);} },
-      onHover:(evt,els)=>{evt.native.target.style.cursor=els.length?'pointer':'default';}
-    }});
-  }
+  // States — populate filters then render
+  (()=>{
+    const svcSel=document.getElementById('st-f-svc');
+    const stageSel=document.getElementById('st-f-stage');
+    if(svcSel && svcSel.options.length===1){
+      const svcs=[...new Set(D.partners.flatMap(p=>ga(p,FP.services).map(v=>typeof v==='object'?v.name:v)).filter(Boolean))].sort();
+      svcs.forEach(s=>{const o=document.createElement('option');o.value=s;o.textContent=s;svcSel.appendChild(o);});
+    }
+    if(stageSel && stageSel.options.length===1){
+      STAGE_ORDER.forEach(s=>{const o=document.createElement('option');o.value=s;o.textContent=s;stageSel.appendChild(o);});
+    }
+    if(!svcSel._stWired){
+      svcSel._stWired=true;
+      svcSel.addEventListener('change',renderStateChart);
+      stageSel.addEventListener('change',renderStateChart);
+    }
+  })();
+  renderStateChart();
 
   // Events by month
   const byMo = {};
