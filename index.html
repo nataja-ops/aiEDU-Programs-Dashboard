@@ -243,10 +243,13 @@ button{cursor:pointer;font-family:inherit;}
 .stage-pop{position:fixed;background:var(--surface);border:1px solid var(--border);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.12);padding:5px;min-width:170px;z-index:250;}
 .stage-opt{padding:6px 10px;border-radius:5px;font-size:13px;cursor:pointer;color:var(--ink);display:flex;align-items:center;gap:8px;}
 .stage-opt:hover{background:var(--surface2);}
-/* Login modal */
-#login-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:400;align-items:center;justify-content:center;}
-#login-ov.open{display:flex;}
-#login-modal{background:var(--surface);border-radius:12px;padding:32px;width:340px;box-shadow:0 24px 48px rgba(0,0,0,.2);}
+/* Login screen */
+#login-ov{display:flex;position:fixed;inset:0;background:var(--navy);z-index:1000;align-items:center;justify-content:center;flex-direction:column;}
+#login-ov.hidden{display:none;}
+#login-modal{background:var(--surface);border-radius:16px;padding:40px 36px;width:360px;max-width:calc(100vw - 32px);box-shadow:0 32px 64px rgba(0,0,0,.4);text-align:center;}
+#login-modal .login-logo{width:48px;height:48px;background:var(--teal-bright);border-radius:10px;display:inline-flex;align-items:center;justify-content:center;color:var(--navy);font-weight:700;font-size:18px;margin-bottom:16px;}
+#dashboard-wrap{display:none;}
+#dashboard-wrap.visible{display:block;}
 .modal-title{font-size:18px;font-weight:700;margin-bottom:6px;}
 .modal-sub{font-size:13px;color:var(--ink2);margin-bottom:20px;}
 /* Utils */
@@ -329,6 +332,7 @@ button{cursor:pointer;font-family:inherit;}
 </head>
 <body>
 
+<div id="dashboard-wrap">
 <header id="topbar">
   <div class="logo">
     <div class="logo-mark">ai</div>
@@ -864,7 +868,9 @@ button{cursor:pointer;font-family:inherit;}
   </div>
 </div>
 
-<!-- Login modal -->
+</div><!-- /dashboard-wrap -->
+
+<!-- Login screen -->
 <!-- Request modal -->
 <div id="req-ov" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:500;justify-content:center;align-items:flex-start;padding-top:60px">
   <div style="background:var(--surface);border-radius:12px;padding:28px;width:480px;max-width:calc(100vw - 32px);box-shadow:0 24px 48px rgba(0,0,0,.25)">
@@ -905,13 +911,11 @@ button{cursor:pointer;font-family:inherit;}
 
 <div id="login-ov">
   <div id="login-modal">
-    <div class="modal-title">Sign In to My Workspace</div>
-    <div class="modal-sub">Use your aiEDU Google account to access your personalized dashboard.</div>
-    <div id="google-btn-wrap" style="display:flex;justify-content:center;margin:20px 0"></div>
-    <div id="login-err" style="display:none;color:var(--crit);font-size:12px;text-align:center;margin-top:8px"></div>
-    <div style="text-align:center;margin-top:12px">
-      <button class="btn-sm" id="login-cancel">Cancel</button>
-    </div>
+    <div class="login-logo">ai</div>
+    <div class="modal-title">aiEDU Programs Dashboard</div>
+    <div class="modal-sub">Sign in with your aiEDU Google account to continue.</div>
+    <div id="google-btn-wrap" style="display:flex;justify-content:center;margin:24px 0 8px"></div>
+    <div id="login-err" style="display:none;color:var(--crit);font-size:12px;text-align:center;margin-top:12px;line-height:1.4"></div>
   </div>
 </div>
 
@@ -2883,44 +2887,33 @@ function handleGoogleCredential(response){
     return WS_USERS.some(u=>n.includes(u)&&(u.includes(emailUser)||emailUser.includes(u.split(' ')[0])));
   });
   if(!matched){
-    document.getElementById('login-err').textContent='Your account ('+payload.email+') is not authorized for My Workspace.';
+    document.getElementById('login-err').textContent='Your account ('+payload.email+') is not authorized. Contact your administrator.';
     document.getElementById('login-err').style.display='';
     return;
   }
   LEAD={id:matched.id, name:gf(matched,FST.name), email:payload.email};
-  document.getElementById('login-ov').classList.remove('open');
+  document.getElementById('login-ov').classList.add('hidden');
+  document.getElementById('dashboard-wrap').classList.add('visible');
   document.getElementById('lead-name-disp').textContent = LEAD.name;
-  renderWorkspacePipeline();
-  renderWorkspaceOps();
+  // If data is already loaded render workspace; otherwise loadAll() will render when ready
+  if(D.partners.length){ renderWorkspacePipeline(); renderWorkspaceOps(); }
   toast('Welcome, '+LEAD.name+'!','success');
-  switchTab('workspace');
-}
-
-function showLogin(){
-  document.getElementById('login-err').style.display='none';
-  // Render the Google button each time the modal opens
-  const wrap=document.getElementById('google-btn-wrap');
-  wrap.innerHTML='';
-  if(typeof google!=='undefined'&&google.accounts){
-    google.accounts.id.renderButton(wrap,{theme:'outline',size:'large',text:'signin_with',shape:'rectangular',width:240});
-  } else {
-    wrap.innerHTML='<div style="font-size:12px;color:var(--muted)">Google Sign-In loading… refresh and try again.</div>';
-  }
-  document.getElementById('login-ov').classList.add('open');
 }
 
 // Initialize Google Sign-In — fires when GIS library is ready
 function initGoogleSignIn(){
   if(GOOGLE_CLIENT_ID==='YOUR_GOOGLE_CLIENT_ID') return;
-  google.accounts.id.initialize({client_id:GOOGLE_CLIENT_ID,callback:handleGoogleCredential,auto_select:false,cancel_on_tap_outside:true});
+  google.accounts.id.initialize({client_id:GOOGLE_CLIENT_ID,callback:handleGoogleCredential,auto_select:false});
+  const wrap=document.getElementById('google-btn-wrap');
+  google.accounts.id.renderButton(wrap,{theme:'outline',size:'large',text:'signin_with',shape:'rectangular',width:240});
 }
 window.onGoogleLibraryLoad = initGoogleSignIn;
 
-document.getElementById('login-cancel').addEventListener('click',()=>document.getElementById('login-ov').classList.remove('open'));
-
 document.getElementById('lead-logout').addEventListener('click',()=>{
   LEAD=null;
-  switchTab('overview');
+  document.getElementById('dashboard-wrap').classList.remove('visible');
+  document.getElementById('login-ov').classList.remove('hidden');
+  document.getElementById('login-err').style.display='none';
   toast('Signed out','info');
 });
 
@@ -2930,10 +2923,7 @@ function switchTab(name) {
   document.querySelectorAll('.nav-tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===name));
   document.querySelectorAll('.tab-panel').forEach(p=>p.classList.toggle('active',p.id==='tab-'+name));
 }
-document.querySelectorAll('.nav-tab').forEach(b=>b.addEventListener('click',()=>{
-  if(b.dataset.tab==='workspace' && !LEAD){ showLogin(); return; }
-  switchTab(b.dataset.tab);
-}));
+document.querySelectorAll('.nav-tab').forEach(b=>b.addEventListener('click',()=>switchTab(b.dataset.tab)));
 
 // ── Request modal ─────────────────────────────────────────────────────────────
 const REQ_KEY = 'aiedu_requests';
