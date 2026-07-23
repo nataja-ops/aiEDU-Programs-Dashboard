@@ -1012,12 +1012,22 @@ const FNPS = {
 };
 // Catalyst Application fields
 const FCAT = {
-  pathway:  'fldX8RcFIcGOKSgx1',
-  grant:    'fld3pINW7F3bgHtjk', // allocated grant amount — non-null = awarded
-  students: 'fld0R3mbTTA4hTKkU',
-  educators:'fldc7zaTop1F4Ix5T',
-  state:    'fldWv0dymp1fnBnSW',
-  orgType:  'fldI6AyFOvRJOZACL',
+  pathway:   'fldX8RcFIcGOKSgx1',
+  grant:     'fld3pINW7F3bgHtjk', // allocated grant amount — non-null = awarded
+  students:  'fld0R3mbTTA4hTKkU',
+  educators: 'fldc7zaTop1F4Ix5T',
+  state:     'fldWv0dymp1fnBnSW',
+  orgType:   'fldI6AyFOvRJOZACL',
+  orgName:   'fldSWc4wvqlsEx6xU', // Applying Organization Legal Name
+  funding:   'fldBfdcpICyow0YIa', // Approved Funding (lookup)
+  duration:  'fldT6ufv51U6jKOHL', // Grant Duration
+  contact:   'fldlj4yyPJK2zezH2', // Primary Contact Name
+  contactTitle:'fldahLGflIZvw1aUw',
+  contactEmail:'fldpEP77W5yqSVjqj',
+  objective: 'fld8Ufm8H3EvcfeEy', // Grant Objective
+  mission:   'fldHxYDdElDJYDdcV', // Mission Statement
+  communities:'fldCVBZsG1e2hE0rc', // Communities Served
+  budget:    'fldH1rxepk3bnzkcR',  // Current Annual Operating Budget
 };
 const FP = {
   name:'fldpkporCZ8A6HZTT', pipeline:'fldEoTQtHQMygOKT3', start:'fldZtu03mx9rpSMEl',
@@ -1081,7 +1091,8 @@ const FS = {
 };
 const FST = {
   name:'fldpmvWNm6cmygmVS', role:'fldtPyBVQFJyK0Pja',
-  status:'fldqKfGLiTPAJp27T', type:'fldpOPwPNOf1gY3op'
+  status:'fldqKfGLiTPAJp27T', type:'fldpOPwPNOf1gY3op',
+  email:'fldKEzLB05y0neORc',
 };
 // PL Sessions fields
 const FPLS = {
@@ -3105,8 +3116,10 @@ function handleGoogleCredential(response){
     return;
   }
   const emailUser = payload.email.split('@')[0].toLowerCase();
-  // Match against any staff record by email username
+  // Match by email field first (most reliable), then fall back to name heuristics
   const matched = D.staff.find(s=>{
+    const staffEmail = (gf(s,FST.email)||'').toLowerCase();
+    if(staffEmail && staffEmail===payload.email.toLowerCase()) return true;
     const n=(gf(s,FST.name)||'').toLowerCase();
     return n.startsWith(emailUser)||emailUser.startsWith(n.split(' ')[0])||n.split(' ').some(part=>part===emailUser);
   });
@@ -3118,7 +3131,14 @@ function handleGoogleCredential(response){
     return;
   }
   // WS_USERS controls who gets a personal Workspace tab — others can view all other tabs
-  const hasWorkspace = WS_USERS.some(u=>(gf(matched,FST.name)||'').toLowerCase().includes(u));
+  const staffName = (gf(matched,FST.name)||'').toLowerCase();
+  const staffEmailUser = (gf(matched,FST.email)||payload.email).split('@')[0].toLowerCase();
+  const hasWorkspace = WS_USERS.some(u=>{
+    if(staffName.includes(u)) return true;
+    if(staffEmailUser===u.replace(/\s+/g,'.')) return true; // 'ashley renick' → 'ashley.renick'
+    if(!u.includes(' ')&&staffEmailUser===u) return true;   // single-name entry e.g. 'nataja'
+    return false;
+  });
   PENDING_CREDENTIAL = null;
   LEAD={id:matched.id, name:gf(matched,FST.name), email:payload.email, hasWorkspace};
   document.getElementById('ws-nav-tab').style.display = hasWorkspace ? '' : 'none';
