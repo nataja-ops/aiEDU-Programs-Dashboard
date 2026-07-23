@@ -243,6 +243,14 @@ button{cursor:pointer;font-family:inherit;}
 .stage-pop{position:fixed;background:var(--surface);border:1px solid var(--border);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.12);padding:5px;min-width:170px;z-index:250;}
 .stage-opt{padding:6px 10px;border-radius:5px;font-size:13px;cursor:pointer;color:var(--ink);display:flex;align-items:center;gap:8px;}
 .stage-opt:hover{background:var(--surface2);}
+/* Landing page cards */
+.landing-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px 16px;cursor:pointer;transition:box-shadow .15s,border-color .15s;}
+.landing-card:hover{box-shadow:0 4px 16px rgba(0,0,0,.1);border-color:var(--teal);}
+.lc-icon{font-size:24px;margin-bottom:8px;}
+.lc-title{font-size:14px;font-weight:700;color:var(--ink);margin-bottom:4px;}
+.lc-sub{font-size:11px;color:var(--ink2);line-height:1.4;}
+/* Quick entry modal */
+#qe-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:500;justify-content:center;align-items:flex-start;padding-top:80px;}
 /* Login screen */
 #login-ov{display:flex;position:fixed;inset:0;background:var(--navy);z-index:1000;align-items:center;justify-content:center;flex-direction:column;}
 #login-ov.hidden{display:none;}
@@ -339,7 +347,8 @@ button{cursor:pointer;font-family:inherit;}
     <span>Programs</span>
   </div>
   <nav id="nav">
-    <button class="nav-tab active" data-tab="overview">Overview</button>
+    <button class="nav-tab" data-tab="landing" id="nav-landing">Home</button>
+    <button class="nav-tab" data-tab="overview">Overview</button>
     <button class="nav-tab" data-tab="partnerships">Partnerships</button>
     <button class="nav-tab" data-tab="events">Events</button>
     <button class="nav-tab" data-tab="feedback">Partner Feedback</button>
@@ -364,6 +373,57 @@ button{cursor:pointer;font-family:inherit;}
 </div>
 
 <main id="content">
+
+  <!-- LANDING -->
+  <div class="tab-panel active" id="tab-landing">
+    <div style="max-width:760px;margin:0 auto;padding:8px 0 32px">
+      <div id="landing-greeting" style="font-size:22px;font-weight:700;color:var(--ink);margin-bottom:4px">Welcome back</div>
+      <div style="font-size:14px;color:var(--ink2);margin-bottom:32px">Where would you like to start today?</div>
+
+      <!-- Nav cards -->
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:32px" id="landing-cards">
+        <div class="landing-card" onclick="switchTab('overview');logUsage('tab:overview','landing_card')">
+          <div class="lc-icon">📊</div><div class="lc-title">Overview</div>
+          <div class="lc-sub">Goals, pipeline, and program stats</div>
+        </div>
+        <div class="landing-card" onclick="switchTab('partnerships');logUsage('tab:partnerships','landing_card')">
+          <div class="lc-icon">🤝</div><div class="lc-title">Partnerships</div>
+          <div class="lc-sub">Accounts, stages, and contracts</div>
+        </div>
+        <div class="landing-card" onclick="switchTab('events');logUsage('tab:events','landing_card')">
+          <div class="lc-icon">📅</div><div class="lc-title">Events</div>
+          <div class="lc-sub">Sessions, participants, and feedback</div>
+        </div>
+        <div class="landing-card" onclick="switchTab('feedback');logUsage('tab:feedback','landing_card')">
+          <div class="lc-icon">📋</div><div class="lc-title">Partner Feedback</div>
+          <div class="lc-sub">NPS and survey results</div>
+        </div>
+        <div class="landing-card" onclick="switchTab('content');logUsage('tab:content','landing_card')">
+          <div class="lc-icon">📚</div><div class="lc-title">Products</div>
+          <div class="lc-sub">PL catalog and sessions</div>
+        </div>
+        <div class="landing-card" onclick="switchTab('workspace');logUsage('tab:workspace','landing_card')">
+          <div class="lc-icon">🗂</div><div class="lc-title">My Workspace</div>
+          <div class="lc-sub">Your pipeline and ops report</div>
+        </div>
+      </div>
+
+      <!-- Sr. Lead ops snapshot (only visible when LEAD is set) -->
+      <div id="landing-ops" style="display:none">
+        <div style="font-size:15px;font-weight:700;color:var(--ink);margin-bottom:12px">Your Ops Report</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px" id="landing-ops-grid">
+          <div class="card" style="padding:16px">
+            <div class="ops-section-lbl" style="margin-bottom:8px">Action Items</div>
+            <div id="landing-action-items"><div class="empty-state">Loading…</div></div>
+          </div>
+          <div class="card" style="padding:16px">
+            <div class="ops-section-lbl" style="margin-bottom:8px">Missing Data — Click to Fix</div>
+            <div id="landing-missing"><div class="empty-state">Loading…</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- MY WORKSPACE -->
   <div class="tab-panel" id="tab-workspace">
@@ -870,6 +930,19 @@ button{cursor:pointer;font-family:inherit;}
 
 </div><!-- /dashboard-wrap -->
 
+<!-- Quick Entry modal -->
+<div id="qe-ov">
+  <div style="background:var(--surface);border-radius:12px;padding:28px;width:400px;max-width:calc(100vw - 32px);box-shadow:0 24px 48px rgba(0,0,0,.25)">
+    <div class="modal-title" id="qe-title">Update Field</div>
+    <div class="modal-sub" id="qe-partner-name" style="font-weight:600;color:var(--teal)"></div>
+    <div id="qe-fields" style="margin:16px 0"></div>
+    <div class="flex gap-8">
+      <button id="qe-ok" style="flex:1;padding:8px;background:var(--teal);color:#fff;border:none;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer">Save to Airtable</button>
+      <button onclick="document.getElementById('qe-ov').style.display='none'" style="padding:8px 16px;background:none;border:1px solid var(--border);border-radius:6px;font-size:13px;cursor:pointer">Cancel</button>
+    </div>
+  </div>
+</div>
+
 <!-- Login screen -->
 <!-- Request modal -->
 <div id="req-ov" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:500;justify-content:center;align-items:flex-start;padding-top:60px">
@@ -929,6 +1002,7 @@ const T = {
   cat:'tblk39heoW6mkzLYI', npsYr:'tblOo6xPKh95d9xpr',
   plSess:'tblBLCqGBDdz6DiNV', plProd:'tbl4sM0EQWBNQNd51',
   blockers:'tblf7y815B8SzJZrM',
+  usage:'tblzPhlFTLhW5JLeB',
 };
 // NPS by Administration Year fields
 const FNPS = {
@@ -955,6 +1029,7 @@ const FP = {
   fundingStage:'fldv1NHNgQmQMHiuk',  // "Funding Stage" singleSelect
   mouSigned:'fldxOLvOZrBpAyhWS',     // "SIGNED (from Program MOU)" lookup
   mouDate:'fld8yKp3q4fYCG07X',       // "Date Signed (from Program MOU)" lookup
+  changeLog:'fldKXjQ7tw0KFtFuB',     // "Partnership Change Log" multilineText
 };
 const FF = {
   name:'fldm0J2jZ5FNoeij4', amount:'fld74B4jxPOYfABSr', fy:'fldueOo2EOiAGsWev',
@@ -1642,6 +1717,7 @@ async function loadAll() {
 }
 
 function renderAll() {
+  renderLanding();
   renderStats();
   renderOverview();
   renderSuccessTracker();
@@ -2108,14 +2184,48 @@ function openPartnerProfile(id){
     {k:'Services',              v:services},
     {k:'Missing Info',          v:gf(p,FP.missing)||'<span style="color:var(--good)">None</span>'},
   ];
+  const changeLog = gf(p,FP.changeLog)||'';
+  const logEntries = changeLog.trim() ? changeLog.trim().split('\n').filter(Boolean).reverse() : [];
+  const logHtml = logEntries.length
+    ? logEntries.map(l=>`<div style="font-size:11px;color:var(--ink2);padding:4px 0;border-bottom:1px solid var(--border)">${l.replace(/\[([^\]]+)\]/g,'<strong>[$1]</strong>')}</div>`).join('')
+    : `<div style="font-size:11px;color:var(--muted)">No entries yet</div>`;
+
   document.getElementById('acc-modal-title').textContent=name;
   document.getElementById('acc-modal-body').innerHTML=
     fields.map(f=>`<div class="acc-field-row"><span class="acc-field-key">${f.k}</span><span class="acc-field-val">${f.v}</span></div>`).join('')
-    +`<div class="flex gap-8 mt-16">
+    +`<div style="margin-top:16px">
+       <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:6px">Change Log</div>
+       <div style="max-height:120px;overflow-y:auto;margin-bottom:8px">${logHtml}</div>
+       <div style="display:flex;gap:6px">
+         <input id="cl-entry" class="form-input" placeholder="Describe the change…" style="flex:1;font-size:12px">
+         <button class="btn-sm primary" onclick="addChangeLogEntry('${id}')">+ Add</button>
+       </div>
+     </div>
+    <div class="flex gap-8 mt-16">
       <button class="btn-sm primary flex-1" onclick="openPrtDrawer('${id}');closeAccModal()">Edit Partnership</button>
       <button class="btn-sm" onclick="closeAccModal()">Close</button>
     </div>`;
   document.getElementById('acc-overlay').classList.add('open');
+}
+
+async function addChangeLogEntry(partnerId){
+  const input = document.getElementById('cl-entry');
+  const text = input?.value?.trim();
+  if(!text) return;
+  const p = D.partners.find(r=>r.id===partnerId); if(!p) return;
+  const who = LEAD ? LEAD.name : 'Team';
+  const date = new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+  const entry = `[${date}] [${who}]: ${text}`;
+  const existing = gf(p,FP.changeLog)||'';
+  const updated = existing ? existing+'\n'+entry : entry;
+  try{
+    await apiWrite('PATCH', BASE, T.prt, {id:partnerId, fields:{'Partnership Change Log': updated}});
+    p.fields[FP.changeLog] = updated;
+    input.value='';
+    openPartnerProfile(partnerId);
+    toast('Entry added ✓','success');
+    logUsage('change_log:add','Feature');
+  } catch(err){ toast('Failed: '+err.message,'error'); }
 }
 
 function openEventModal(id){
@@ -2863,6 +2973,103 @@ async function setStage(id,stage) {
   } catch(err){ toast('Update failed: '+err.message,'error'); }
 }
 
+// ── Usage tracking ────────────────────────────────────────────────────────────
+const SESSION_ID = Math.random().toString(36).slice(2,10);
+function logUsage(action, section){
+  if(!LEAD) return;
+  const now = new Date();
+  const ts = now.toISOString().slice(0,16).replace('T',' ');
+  const date = now.toISOString().slice(0,10);
+  apiWrite('POST', BASE, T.usage, {fields:{
+    'Action': action,
+    'User Name': LEAD.name,
+    'Email': LEAD.email||'',
+    'Section': section||'',
+    'Timestamp': ts,
+    'Session ID': SESSION_ID,
+    'Date': date,
+  }}).catch(()=>{});
+}
+
+// ── Landing page ──────────────────────────────────────────────────────────────
+function renderLanding(){
+  const hr = new Date().getHours();
+  const greet = hr < 12 ? 'Good morning' : hr < 17 ? 'Good afternoon' : 'Good evening';
+  document.getElementById('landing-greeting').textContent = greet + (LEAD ? ', '+LEAD.name.split(' ')[0] : '');
+
+  if(!LEAD){ document.getElementById('landing-ops').style.display='none'; return; }
+  document.getElementById('landing-ops').style.display='';
+
+  const teamNames = p => ga(p,FP.team).map(v=>typeof v==='object'?v.name:v);
+  const mine = D.partners.filter(p=>teamNames(p).some(x=>x.trim().toLowerCase()===LEAD.name.trim().toLowerCase()));
+
+  // Action items
+  const todayStr = new Date().toISOString().slice(0,10);
+  const in30 = new Date(); in30.setDate(in30.getDate()+30);
+  const in30Str = in30.toISOString().slice(0,10);
+  const expiring = mine.filter(p=>{ const ed=gf(p,FP.end); return ed&&ed>=todayStr&&ed<=in30Str; });
+  const dow=new Date().getDay(), mon=new Date(); mon.setDate(mon.getDate()-((dow+6)%7));
+  const sun=new Date(mon); sun.setDate(mon.getDate()+6);
+  const monStr=mon.toISOString().slice(0,10), sunStr=sun.toISOString().slice(0,10);
+  const myEvts=D.events.filter(e=>{ const d=(gf(e,FE.date)||'').slice(0,10); return d>=monStr&&d<=sunStr&&(ga(e,FE.facDisp).some(x=>x===LEAD.name)||ga(e,FE.fac).some(x=>x===LEAD.id)); });
+
+  let actHtml='';
+  expiring.forEach(p=>{ actHtml+=`<div class="ops-item" onclick="openPartnerProfile('${p.id}')"><div class="ops-dot" style="background:#e07b1e"></div><div class="ops-item-body"><div class="ops-item-name">${gf(p,FP.name)||'—'}</div><div class="ops-item-meta">Renewal in ${daysTo(gf(p,FP.end))} days</div></div><span class="ops-item-action">Open →</span></div>`; });
+  myEvts.forEach(e=>{ actHtml+=`<div class="ops-item"><div class="ops-dot" style="background:var(--teal)"></div><div class="ops-item-body"><div class="ops-item-name">${gf(e,FE.nameT)||gf(e,FE.name)||'—'}</div><div class="ops-item-meta">This week · ${gf(e,FE.format)||'—'}</div></div></div>`; });
+  document.getElementById('landing-action-items').innerHTML = actHtml||'<div class="empty-state">All clear this week</div>';
+
+  // Missing data — quick entry
+  const FEE_REQ = new Set(['MOU Sent','MOU Signed','MOU Complete']);
+  const issues=[];
+  mine.forEach(p=>{
+    const name=gf(p,FP.name)||'Unnamed', stage=gf(p,FP.pipeline)||'';
+    if(FEE_REQ.has(stage)&&!(+gf(p,FP.fy26)||0)) issues.push({name,field:'FY26 Fees',type:'fees',id:p.id,color:'#9b5ca5'});
+    if(FEE_REQ.has(stage)&&!gf(p,FP.end))        issues.push({name,field:'End Date',type:'end',id:p.id,color:'#c43535'});
+  });
+  const misHtml = issues.length===0
+    ? '<div class="empty-state" style="color:var(--good)">✓ All complete</div>'
+    : issues.map(i=>`<div class="ops-item" onclick="openQuickEntry('${i.id}','${i.type}','${i.name.replace(/'/g,'\\u0027')}','${i.field}')" style="cursor:pointer">
+        <div style="width:10px;height:10px;border-radius:2px;background:${i.color};flex-shrink:0;margin-top:4px"></div>
+        <div class="ops-item-body"><div class="ops-item-name">${i.name}</div><div class="ops-item-meta">Missing: ${i.field}</div></div>
+        <span class="ops-item-action" style="color:${i.color}">Fix →</span>
+      </div>`).join('');
+  document.getElementById('landing-missing').innerHTML = misHtml;
+}
+
+// ── Quick Entry modal ─────────────────────────────────────────────────────────
+let QE_CURRENT = {};
+function openQuickEntry(partnerId, fieldType, partnerName, fieldLabel){
+  QE_CURRENT = {partnerId, fieldType};
+  document.getElementById('qe-title').textContent = 'Update: '+fieldLabel;
+  document.getElementById('qe-partner-name').textContent = partnerName;
+  const wrap = document.getElementById('qe-fields');
+  if(fieldType==='fees'){
+    wrap.innerHTML=`<label style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;display:block;margin-bottom:4px">FY26 Fees for Service ($)</label><input class="form-input" id="qe-input" type="number" placeholder="e.g. 25000" style="width:100%">`;
+  } else if(fieldType==='end'){
+    wrap.innerHTML=`<label style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;display:block;margin-bottom:4px">Contract End Date</label><input class="form-input" id="qe-input" type="date" style="width:100%">`;
+  }
+  document.getElementById('qe-ov').style.display='flex';
+  setTimeout(()=>document.getElementById('qe-input')?.focus(),50);
+}
+
+document.getElementById('qe-ok').addEventListener('click', async()=>{
+  const val = document.getElementById('qe-input')?.value?.trim();
+  if(!val){ toast('Please enter a value','info'); return; }
+  const btn = document.getElementById('qe-ok');
+  btn.disabled=true; btn.textContent='Saving…';
+  const fields = {};
+  if(QE_CURRENT.fieldType==='fees') fields['FY26 Fees for Service'] = +val;
+  if(QE_CURRENT.fieldType==='end')  fields['MOU End Date'] = val;
+  try{
+    await apiWrite('PATCH', BASE, T.prt, {id:QE_CURRENT.partnerId, fields});
+    document.getElementById('qe-ov').style.display='none';
+    toast('Saved ✓','success');
+    logUsage('quick_entry:'+QE_CURRENT.fieldType, 'Feature');
+    try{ localStorage.removeItem(CACHE_KEY); }catch(e){}
+  } catch(err){ toast('Save failed: '+err.message,'error'); }
+  finally{ btn.disabled=false; btn.textContent='Save to Airtable'; }
+});
+
 // ── Google Sign-In ────────────────────────────────────────────────────────────
 // TODO: Replace with your Google OAuth Client ID from console.cloud.google.com
 const GOOGLE_CLIENT_ID = '420179782563-sjj11him0rguetshd43nlv52f4v9i4vp.apps.googleusercontent.com';
@@ -2895,8 +3102,9 @@ function handleGoogleCredential(response){
   document.getElementById('login-ov').classList.add('hidden');
   document.getElementById('dashboard-wrap').classList.add('visible');
   document.getElementById('lead-name-disp').textContent = LEAD.name;
-  // If data is already loaded render workspace; otherwise loadAll() will render when ready
-  if(D.partners.length){ renderWorkspacePipeline(); renderWorkspaceOps(); }
+  switchTab('landing');
+  if(D.partners.length){ renderLanding(); renderWorkspacePipeline(); renderWorkspaceOps(); }
+  logUsage('login','Landing');
   toast('Welcome, '+LEAD.name+'!','success');
 }
 
@@ -2922,6 +3130,8 @@ document.getElementById('lead-logout').addEventListener('click',()=>{
 function switchTab(name) {
   document.querySelectorAll('.nav-tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===name));
   document.querySelectorAll('.tab-panel').forEach(p=>p.classList.toggle('active',p.id==='tab-'+name));
+  logUsage('tab:'+name, name.charAt(0).toUpperCase()+name.slice(1));
+  if(name==='landing') renderLanding();
 }
 document.querySelectorAll('.nav-tab').forEach(b=>b.addEventListener('click',()=>switchTab(b.dataset.tab)));
 
