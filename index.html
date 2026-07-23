@@ -1717,6 +1717,8 @@ async function loadAll() {
 }
 
 function renderAll() {
+  // If a Google sign-in was pending while data loaded, complete it now
+  if(PENDING_CREDENTIAL && !LEAD) handleGoogleCredential(PENDING_CREDENTIAL);
   renderLanding();
   renderStats();
   renderOverview();
@@ -2998,7 +3000,11 @@ function renderLanding(){
   document.getElementById('landing-greeting').textContent = greet + (LEAD ? ', '+LEAD.name.split(' ')[0] : '');
 
   if(!LEAD){ document.getElementById('landing-ops').style.display='none'; return; }
-  document.getElementById('landing-ops').style.display='';
+  // Show workspace card + ops only for WS_USERS
+  const wsCard = document.querySelector('[onclick*="tab:workspace"]')?.closest('.landing-card');
+  if(wsCard) wsCard.style.display = LEAD.hasWorkspace ? '' : 'none';
+  document.getElementById('landing-ops').style.display = LEAD.hasWorkspace ? '' : 'none';
+  if(!LEAD.hasWorkspace) return;
 
   const teamNames = p => ga(p,FP.team).map(v=>typeof v==='object'?v.name:v);
   const mine = D.partners.filter(p=>teamNames(p).some(x=>x.trim().toLowerCase()===LEAD.name.trim().toLowerCase()));
@@ -3081,6 +3087,8 @@ function parseJwt(token){
   catch(e){ return null; }
 }
 
+let PENDING_CREDENTIAL = null;
+
 function handleGoogleCredential(response){
   const payload = parseJwt(response.credential);
   if(!payload||!payload.email){
@@ -3088,22 +3096,37 @@ function handleGoogleCredential(response){
     document.getElementById('login-err').style.display='';
     return;
   }
-  const emailUser = payload.email.split('@')[0].toLowerCase();
-  const matched = D.staff.find(s=>{
-    const n=(gf(s,FST.name)||'').toLowerCase();
-    return WS_USERS.some(u=>n.includes(u)&&(u.includes(emailUser)||emailUser.includes(u.split(' ')[0])));
-  });
-  if(!matched){
-    document.getElementById('login-err').textContent='Your account ('+payload.email+') is not authorized. Contact your administrator.';
+  // If staff not loaded yet, store credential and wait for data
+  if(!D.staff.length){
+    PENDING_CREDENTIAL = response;
+    document.getElementById('login-err').style.color='var(--teal)';
+    document.getElementById('login-err').textContent='Loading data, signing you in…';
     document.getElementById('login-err').style.display='';
     return;
   }
-  LEAD={id:matched.id, name:gf(matched,FST.name), email:payload.email};
+  const emailUser = payload.email.split('@')[0].toLowerCase();
+  // Match against any staff record by email username
+  const matched = D.staff.find(s=>{
+    const n=(gf(s,FST.name)||'').toLowerCase();
+    return n.startsWith(emailUser)||emailUser.startsWith(n.split(' ')[0])||n.split(' ').some(part=>part===emailUser);
+  });
+  if(!matched){
+    document.getElementById('login-err').style.color='var(--crit)';
+    document.getElementById('login-err').textContent='Your account ('+payload.email+') is not in the staff directory. Contact your administrator.';
+    document.getElementById('login-err').style.display='';
+    PENDING_CREDENTIAL = null;
+    return;
+  }
+  // WS_USERS controls who gets a personal Workspace tab — others can view all other tabs
+  const hasWorkspace = WS_USERS.some(u=>(gf(matched,FST.name)||'').toLowerCase().includes(u));
+  PENDING_CREDENTIAL = null;
+  LEAD={id:matched.id, name:gf(matched,FST.name), email:payload.email, hasWorkspace};
+  document.getElementById('ws-nav-tab').style.display = hasWorkspace ? '' : 'none';
   document.getElementById('login-ov').classList.add('hidden');
   document.getElementById('dashboard-wrap').classList.add('visible');
   document.getElementById('lead-name-disp').textContent = LEAD.name;
   switchTab('landing');
-  if(D.partners.length){ renderLanding(); renderWorkspacePipeline(); renderWorkspaceOps(); }
+  if(D.partners.length){ renderLanding(); if(hasWorkspace){ renderWorkspacePipeline(); renderWorkspaceOps(); } }
   logUsage('login','Landing');
   toast('Welcome, '+LEAD.name+'!','success');
 }
