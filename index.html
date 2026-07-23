@@ -325,6 +325,7 @@ button{cursor:pointer;font-family:inherit;}
 .acc-prt-item{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;}
 .acc-prt-item:last-child{border-bottom:none;}
 </style>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
 
@@ -905,13 +906,10 @@ button{cursor:pointer;font-family:inherit;}
 <div id="login-ov">
   <div id="login-modal">
     <div class="modal-title">Sign In to My Workspace</div>
-    <div class="modal-sub">Select your name to view your personalized portfolio and sessions.</div>
-    <div class="form-group">
-      <label class="form-label">Your Name</label>
-      <select class="form-select" id="lead-select"><option value="">— Choose —</option></select>
-    </div>
-    <div class="flex gap-8 mt-16">
-      <button class="btn-sm primary flex-1" id="login-ok">View My Dashboard</button>
+    <div class="modal-sub">Use your aiEDU Google account to access your personalized dashboard.</div>
+    <div id="google-btn-wrap" style="display:flex;justify-content:center;margin:20px 0"></div>
+    <div id="login-err" style="display:none;color:var(--crit);font-size:12px;text-align:center;margin-top:8px"></div>
+    <div style="text-align:center;margin-top:12px">
       <button class="btn-sm" id="login-cancel">Cancel</button>
     </div>
   </div>
@@ -2861,31 +2859,61 @@ async function setStage(id,stage) {
   } catch(err){ toast('Update failed: '+err.message,'error'); }
 }
 
-// ── Sr. Lead login ────────────────────────────────────────────────────────────
+// ── Google Sign-In ────────────────────────────────────────────────────────────
+// TODO: Replace with your Google OAuth Client ID from console.cloud.google.com
+const GOOGLE_CLIENT_ID = 'YOUR_GOOGLE_CLIENT_ID';
+
 const WS_USERS = ['ashley renick','kristen','lenard','lindsay','nataja'];
-function showLogin() {
-  const stf = D.staff.filter(s=>{
-    const n=(gf(s,FST.name)||'').toLowerCase();
-    return WS_USERS.some(u=>n.includes(u));
-  });
-  stf.sort((a,b)=>(gf(a,FST.name)||'').localeCompare(gf(b,FST.name)||''));
-  const sel=document.getElementById('lead-select');
-  sel.innerHTML='<option value="">— Choose —</option>'+stf.map(s=>`<option value="${s.id}">${gf(s,FST.name)}</option>`).join('');
-  document.getElementById('login-ov').classList.add('open');
+
+function parseJwt(token){
+  try{ return JSON.parse(atob(token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/'))); }
+  catch(e){ return null; }
 }
 
-document.getElementById('login-ok').addEventListener('click',()=>{
-  const sel=document.getElementById('lead-select');
-  if(!sel.value){toast('Select your name','info');return;}
-  const rec=D.staff.find(s=>s.id===sel.value);
-  if(!rec) return;
-  LEAD={id:sel.value, name:gf(rec,FST.name)};
+function handleGoogleCredential(response){
+  const payload = parseJwt(response.credential);
+  if(!payload||!payload.email){
+    document.getElementById('login-err').textContent='Could not read Google account. Try again.';
+    document.getElementById('login-err').style.display='';
+    return;
+  }
+  const emailUser = payload.email.split('@')[0].toLowerCase();
+  const matched = D.staff.find(s=>{
+    const n=(gf(s,FST.name)||'').toLowerCase();
+    return WS_USERS.some(u=>n.includes(u)&&(u.includes(emailUser)||emailUser.includes(u.split(' ')[0])));
+  });
+  if(!matched){
+    document.getElementById('login-err').textContent='Your account ('+payload.email+') is not authorized for My Workspace.';
+    document.getElementById('login-err').style.display='';
+    return;
+  }
+  LEAD={id:matched.id, name:gf(matched,FST.name), email:payload.email};
   document.getElementById('login-ov').classList.remove('open');
   document.getElementById('lead-name-disp').textContent = LEAD.name;
   renderWorkspacePipeline();
   renderWorkspaceOps();
   toast('Welcome, '+LEAD.name+'!','success');
   switchTab('workspace');
+}
+
+function showLogin(){
+  document.getElementById('login-err').style.display='none';
+  // Render the Google button each time the modal opens
+  const wrap=document.getElementById('google-btn-wrap');
+  wrap.innerHTML='';
+  if(typeof google!=='undefined'&&google.accounts){
+    google.accounts.id.renderButton(wrap,{theme:'outline',size:'large',text:'signin_with',shape:'rectangular',width:240});
+  } else {
+    wrap.innerHTML='<div style="font-size:12px;color:var(--muted)">Google Sign-In loading… refresh and try again.</div>';
+  }
+  document.getElementById('login-ov').classList.add('open');
+}
+
+// Initialize Google Sign-In once GIS script is ready
+window.addEventListener('load',()=>{
+  if(typeof google!=='undefined'&&google.accounts&&GOOGLE_CLIENT_ID!=='YOUR_GOOGLE_CLIENT_ID'){
+    google.accounts.id.initialize({client_id:GOOGLE_CLIENT_ID,callback:handleGoogleCredential,auto_select:false,cancel_on_tap_outside:true});
+  }
 });
 
 document.getElementById('login-cancel').addEventListener('click',()=>document.getElementById('login-ov').classList.remove('open'));
