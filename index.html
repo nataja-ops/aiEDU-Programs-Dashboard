@@ -158,7 +158,7 @@ button{cursor:pointer;font-family:inherit;}
 .data-table tr:hover td{background:var(--surface2);}
 .table-wrap{overflow-x:auto;}
 /* Pills */
-.pill{display:inline-flex;align-items:center;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:500;}
+.pill{display:inline-flex;align-items:center;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:500;background:var(--surface3);color:var(--ink2);}
 .pill-teal{background:var(--teal-l);color:var(--teal);}
 .pill-good{background:rgba(26,122,74,.12);color:var(--good);}
 .pill-warn{background:rgba(212,74,20,.12);color:var(--warn);}
@@ -353,6 +353,7 @@ button{cursor:pointer;font-family:inherit;}
     <button class="nav-tab" data-tab="events">Events</button>
     <button class="nav-tab" data-tab="feedback">Partner Feedback</button>
     <button class="nav-tab" data-tab="content">Products</button>
+    <button class="nav-tab" data-tab="catalyst">Community Catalyst</button>
     <button class="nav-tab" data-tab="workspace" id="ws-nav-tab">My Workspace</button>
   </nav>
   <div class="topbar-actions">
@@ -401,6 +402,10 @@ button{cursor:pointer;font-family:inherit;}
         <div class="landing-card" onclick="switchTab('content');logUsage('tab:content','landing_card')">
           <div class="lc-icon">📚</div><div class="lc-title">Products</div>
           <div class="lc-sub">PL catalog and sessions</div>
+        </div>
+        <div class="landing-card" onclick="switchTab('catalyst');logUsage('tab:catalyst','landing_card')">
+          <div class="lc-icon">🌱</div><div class="lc-title">Community Catalyst</div>
+          <div class="lc-sub">Grantee orgs, funding, and CC metrics</div>
         </div>
         <div class="landing-card" onclick="switchTab('workspace');logUsage('tab:workspace','landing_card')">
           <div class="lc-icon">🗂</div><div class="lc-title">My Workspace</div>
@@ -795,6 +800,76 @@ button{cursor:pointer;font-family:inherit;}
           <thead><tr><th>#</th><th>Session Name</th><th>Product(s)</th><th>Format</th><th>Domain</th><th>Duration</th><th>Status</th></tr></thead>
           <tbody><tr><td colspan="7" class="empty-state">Loading…</td></tr></tbody>
         </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- COMMUNITY CATALYST -->
+  <div class="tab-panel" id="tab-catalyst">
+    <div class="mb-12">
+      <div class="section-title">Community Catalyst</div>
+      <div class="section-sub">Grant-funded organizations building AI literacy in their communities</div>
+    </div>
+
+    <!-- KPI tiles -->
+    <div class="stat-row mb-20" id="cat-kpis" style="grid-template-columns:repeat(auto-fill,minmax(160px,1fr))">
+      <div class="stat-card"><div class="stat-val" id="cat-k-orgs">—</div><div class="stat-lbl">Funded Orgs</div></div>
+      <div class="stat-card"><div class="stat-val" id="cat-k-funding">—</div><div class="stat-lbl">Total Approved Funding</div></div>
+      <div class="stat-card"><div class="stat-val" id="cat-k-states">—</div><div class="stat-lbl">States</div></div>
+      <div class="stat-card"><div class="stat-val" id="cat-k-edu">—</div><div class="stat-lbl">Total Educators</div></div>
+      <div class="stat-card"><div class="stat-val" id="cat-k-stu">—</div><div class="stat-lbl">Total Students</div></div>
+    </div>
+
+    <!-- Filters -->
+    <div class="section-hd mb-16" style="flex-wrap:wrap;gap:8px">
+      <input class="form-input" id="cat-search" placeholder="Search organizations…" style="width:220px" oninput="renderCatalyst()">
+      <select class="form-input" id="cat-f-state" style="width:160px" onchange="renderCatalyst()">
+        <option value="">All States</option>
+      </select>
+      <select class="form-input" id="cat-f-type" style="width:180px" onchange="renderCatalyst()">
+        <option value="">All Org Types</option>
+      </select>
+      <select class="form-input" id="cat-f-pathway" style="width:180px" onchange="renderCatalyst()">
+        <option value="">All Pathways</option>
+      </select>
+      <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+        <button class="btn-sm" id="cat-view-cards" onclick="setCatView('cards')" style="font-weight:700">Cards</button>
+        <button class="btn-sm" id="cat-view-table" onclick="setCatView('table')">Table</button>
+      </div>
+    </div>
+
+    <!-- Cards view -->
+    <div id="cat-cards-wrap">
+      <div id="cat-cards" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px">
+        <div class="empty-state">Loading…</div>
+      </div>
+    </div>
+
+    <!-- Table view -->
+    <div id="cat-table-wrap" style="display:none">
+      <div class="table-wrap">
+        <table class="data-table" id="cat-table">
+          <thead><tr>
+            <th>Organization</th><th>State</th><th>Type</th><th>Pathway</th>
+            <th>Approved Funding</th><th>Duration</th><th>Educators</th><th>Students</th><th>Contact</th>
+          </tr></thead>
+          <tbody id="cat-tbody"><tr><td colspan="9" class="empty-state">Loading…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- CC Metrics charts (shown when any data has metrics) -->
+    <div id="cat-metrics-wrap" style="margin-top:32px;display:none">
+      <div class="section-title mb-12" style="font-size:14px">CC Outcome Metrics</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px">
+        <div class="stat-card" style="padding:16px">
+          <div style="font-size:12px;font-weight:600;color:var(--muted);margin-bottom:8px">Grade Distribution</div>
+          <canvas id="cat-chart-grades" height="160"></canvas>
+        </div>
+        <div class="stat-card" style="padding:16px">
+          <div style="font-size:12px;font-weight:600;color:var(--muted);margin-bottom:8px">Outcome Metrics (avg %)</div>
+          <canvas id="cat-chart-outcomes" height="160"></canvas>
+        </div>
       </div>
     </div>
   </div>
@@ -1199,6 +1274,7 @@ async function apiWrite(method, baseId, tableId, payload) {
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const gf  = (r,f) => r?.fields?.[f] ?? null;
 const ga  = (r,f) => { const v = r?.fields?.[f]; return Array.isArray(v) ? v : (v ? [v] : []); };
+const esc = s => String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 const f$  = v => v==null ? '—' : '$'+Math.round(+v).toLocaleString();
 const fpct= v => v==null ? '—' : Math.round(+v)+'%';
 const fdt = v => { if(!v) return '—'; const d=new Date(v.slice(0,10)+'T00:00:00'); return d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); };
@@ -1743,6 +1819,7 @@ function renderAll() {
   renderFeedback();
   renderSurveys();
   renderContent();
+  renderCatalyst();
   if(LEAD){ renderWorkspacePipeline(); renderWorkspaceOps(); }
   addExpandButtons();
 }
@@ -2735,6 +2812,224 @@ function renderPlSessions(f={}) {
     }).join('');
 }
 
+// ── Community Catalyst ────────────────────────────────────────────────────────
+let CAT_VIEW = 'cards';
+function setCatView(v){
+  CAT_VIEW = v;
+  document.getElementById('cat-view-cards').style.fontWeight = v==='cards'?'700':'400';
+  document.getElementById('cat-view-table').style.fontWeight = v==='table'?'700':'400';
+  document.getElementById('cat-cards-wrap').style.display = v==='cards'?'':'none';
+  document.getElementById('cat-table-wrap').style.display  = v==='table'?'':'none';
+}
+
+function renderCatalyst(){
+  const cats = D.catalyst||[];
+
+  // Populate filter dropdowns (once, when options are empty)
+  const stSel = document.getElementById('cat-f-state');
+  if(stSel.options.length<=1){
+    const states = [...new Set(cats.flatMap(r=>ga(r,FCAT.state).map(v=>typeof v==='object'?v.name:v)).filter(Boolean))].sort();
+    states.forEach(s=>{const o=document.createElement('option');o.value=o.textContent=s;stSel.appendChild(o);});
+  }
+  const tySel = document.getElementById('cat-f-type');
+  if(tySel.options.length<=1){
+    const types = [...new Set(cats.flatMap(r=>ga(r,FCAT.orgType).map(v=>typeof v==='object'?v.name:v)).filter(Boolean))].sort();
+    types.forEach(t=>{const o=document.createElement('option');o.value=o.textContent=t;tySel.appendChild(o);});
+  }
+  const pwSel = document.getElementById('cat-f-pathway');
+  if(pwSel.options.length<=1){
+    const paths = [...new Set(cats.flatMap(r=>ga(r,FCAT.pathway).map(v=>typeof v==='object'?v.name:v)).filter(Boolean))].sort();
+    paths.forEach(p=>{const o=document.createElement('option');o.value=o.textContent=p;pwSel.appendChild(o);});
+  }
+
+  // Apply filters
+  const q     = (document.getElementById('cat-search')||{}).value?.toLowerCase()||'';
+  const stVal = (document.getElementById('cat-f-state')||{}).value||'';
+  const tyVal = (document.getElementById('cat-f-type')||{}).value||'';
+  const pwVal = (document.getElementById('cat-f-pathway')||{}).value||'';
+
+  let rows = cats;
+  if(q) rows = rows.filter(r=>{
+    const name = (gf(r,FCAT.orgName)||'').toLowerCase();
+    const comm = ga(r,FCAT.communities).map(v=>typeof v==='object'?v.name:v).join(' ').toLowerCase();
+    return name.includes(q)||comm.includes(q);
+  });
+  if(stVal) rows = rows.filter(r=>ga(r,FCAT.state).some(v=>(typeof v==='object'?v.name:v)===stVal));
+  if(tyVal) rows = rows.filter(r=>ga(r,FCAT.orgType).some(v=>(typeof v==='object'?v.name:v)===tyVal));
+  if(pwVal) rows = rows.filter(r=>ga(r,FCAT.pathway).some(v=>(typeof v==='object'?v.name:v)===pwVal));
+
+  // KPIs (always from full set, not filtered)
+  const totalFunding = cats.reduce((s,r)=>s+(+gf(r,FCAT.funding)||+gf(r,FCAT.grant)||0),0);
+  const totalEdu = cats.reduce((s,r)=>s+(+gf(r,FCAT.educators)||0),0);
+  const totalStu = cats.reduce((s,r)=>s+(+gf(r,FCAT.students)||0),0);
+  const allStates = new Set(cats.flatMap(r=>ga(r,FCAT.state).map(v=>typeof v==='object'?v.name:v)).filter(Boolean));
+  document.getElementById('cat-k-orgs').textContent    = cats.length;
+  document.getElementById('cat-k-funding').textContent = totalFunding ? '$'+Math.round(totalFunding).toLocaleString() : '—';
+  document.getElementById('cat-k-states').textContent  = allStates.size||'—';
+  document.getElementById('cat-k-edu').textContent     = totalEdu ? totalEdu.toLocaleString() : '—';
+  document.getElementById('cat-k-stu').textContent     = totalStu ? totalStu.toLocaleString() : '—';
+
+  // Cards
+  const cardsEl = document.getElementById('cat-cards');
+  if(!rows.length){ cardsEl.innerHTML='<div class="empty-state">No organizations match the current filters.</div>'; }
+  else {
+    cardsEl.innerHTML = rows.map(r=>{
+      const name    = gf(r,FCAT.orgName)||'(Unnamed)';
+      const state   = ga(r,FCAT.state).map(v=>typeof v==='object'?v.name:v).join(', ')||'—';
+      const orgType = ga(r,FCAT.orgType).map(v=>typeof v==='object'?v.name:v).join(', ')||'—';
+      const pathway = ga(r,FCAT.pathway).map(v=>typeof v==='object'?v.name:v).join(', ')||'—';
+      const funding = (+gf(r,FCAT.funding)||+gf(r,FCAT.grant)||0);
+      const dur     = gf(r,FCAT.duration)||'';
+      const contact = gf(r,FCAT.contact)||'';
+      const ctitle  = gf(r,FCAT.contactTitle)||'';
+      const cemail  = gf(r,FCAT.contactEmail)||'';
+      const edu     = +gf(r,FCAT.educators)||0;
+      const stu     = +gf(r,FCAT.students)||0;
+      const mission = gf(r,FCAT.mission)||'';
+      const communities = ga(r,FCAT.communities).map(v=>typeof v==='object'?v.name:v).join(', ')||'';
+
+      const fundStr = funding ? '<span style="color:var(--teal);font-weight:700">$'+Math.round(funding).toLocaleString()+'</span>' : '—';
+      const missionSnip = mission.length>140 ? mission.slice(0,140)+'…' : mission;
+
+      return `<div class="stat-card" style="padding:20px;display:flex;flex-direction:column;gap:10px;cursor:pointer" onclick="openCatProfile(${JSON.stringify(r.id)})">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+          <div style="font-size:14px;font-weight:700;color:var(--ink);line-height:1.3">${esc(name)}</div>
+          <div style="font-size:11px;color:var(--muted);white-space:nowrap;flex-shrink:0">${esc(state)}</div>
+        </div>
+        ${missionSnip?`<div style="font-size:12px;color:var(--muted);line-height:1.5">${esc(missionSnip)}</div>`:''}
+        <div style="display:flex;flex-wrap:wrap;gap:6px">
+          ${orgType&&orgType!=='—'?`<span class="pill">${esc(orgType)}</span>`:''}
+          ${pathway&&pathway!=='—'?`<span class="pill" style="background:rgba(0,160,160,.12);color:var(--teal)">${esc(pathway)}</span>`:''}
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:4px">
+          <div style="text-align:center"><div style="font-size:13px;font-weight:700">${fundStr}</div><div style="font-size:10px;color:var(--muted)">Funding${dur?' · '+esc(dur):''}</div></div>
+          <div style="text-align:center"><div style="font-size:13px;font-weight:700">${edu||'—'}</div><div style="font-size:10px;color:var(--muted)">Educators</div></div>
+          <div style="text-align:center"><div style="font-size:13px;font-weight:700">${stu||'—'}</div><div style="font-size:10px;color:var(--muted)">Students</div></div>
+        </div>
+        ${contact?`<div style="font-size:11px;color:var(--muted);border-top:1px solid var(--border);padding-top:8px">${esc(contact)}${ctitle?' · '+esc(ctitle):''}</div>`:''}
+      </div>`;
+    }).join('');
+  }
+
+  // Table
+  const tbody = document.getElementById('cat-tbody');
+  if(!rows.length){ tbody.innerHTML='<tr><td colspan="9" class="empty-state">No results</td></tr>'; }
+  else {
+    tbody.innerHTML = rows.map(r=>{
+      const name    = gf(r,FCAT.orgName)||'(Unnamed)';
+      const state   = ga(r,FCAT.state).map(v=>typeof v==='object'?v.name:v).join(', ')||'—';
+      const orgType = ga(r,FCAT.orgType).map(v=>typeof v==='object'?v.name:v).join(', ')||'—';
+      const pathway = ga(r,FCAT.pathway).map(v=>typeof v==='object'?v.name:v).join(', ')||'—';
+      const funding = (+gf(r,FCAT.funding)||+gf(r,FCAT.grant)||0);
+      const dur     = gf(r,FCAT.duration)||'—';
+      const edu     = +gf(r,FCAT.educators)||0;
+      const stu     = +gf(r,FCAT.students)||0;
+      const contact = gf(r,FCAT.contact)||'—';
+      return `<tr style="cursor:pointer" onclick="openCatProfile(${JSON.stringify(r.id)})">
+        <td><strong>${esc(name)}</strong></td>
+        <td>${esc(state)}</td><td>${esc(orgType)}</td><td>${esc(pathway)}</td>
+        <td>${funding?'$'+Math.round(funding).toLocaleString():'—'}</td>
+        <td>${esc(dur)}</td><td>${edu||'—'}</td><td>${stu||'—'}</td><td>${esc(contact)}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  // CC Metrics charts (only if any records have metric data)
+  const METRIC_FIELDS = [
+    {id:'fldek7uOzuyvk479C',label:'Teachers'},
+    {id:'fldqiOhXFYYLbXoyS',label:'Satisfied w/ PL'},
+    {id:'fldrDSO1st4gQaOxY',label:'Increased Confidence'},
+    {id:'fldYhMKgYCV5LmHj1',label:'AI Literacy'},
+    {id:'fldakGyxT4S0B7Kik',label:'AI Readiness'},
+    {id:'fldcLUotkw0yFlFFj',label:'Concrete PD Plan'},
+  ];
+  const hasMetrics = cats.some(r=>METRIC_FIELDS.some(m=>gf(r,m.id)!=null&&gf(r,m.id)!==''));
+  document.getElementById('cat-metrics-wrap').style.display = hasMetrics?'':'none';
+
+  if(hasMetrics){
+    // Grade distribution: avg across all orgs with data
+    const GRADE_FIELDS = [
+      {id:'fldHbnobpxTMGzuOS',label:'PK-3'},
+      {id:'flda2D6YHTHBg6h8n',label:'4-5'},
+      {id:'fldDTn92GfgJ82JhK',label:'6-8'},
+      {id:'fld2maDAKXeJhKNwI',label:'9-12'},
+    ];
+    const gradeAvgs = GRADE_FIELDS.map(f=>{
+      const vals = cats.map(r=>+gf(r,f.id)||0).filter(v=>v>0);
+      return vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : 0;
+    });
+
+    const gradeCtx = document.getElementById('cat-chart-grades');
+    if(gradeCtx._catChart) gradeCtx._catChart.destroy();
+    gradeCtx._catChart = new Chart(gradeCtx, {
+      type:'bar',
+      data:{labels:GRADE_FIELDS.map(f=>f.label),datasets:[{label:'Avg %',data:gradeAvgs.map(v=>Math.round(v*10)/10),backgroundColor:'rgba(0,160,160,.7)',borderRadius:4}]},
+      options:{plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,max:100,ticks:{callback:v=>v+'%'}}}}
+    });
+
+    // Outcome metrics avg
+    const outcomeAvgs = METRIC_FIELDS.map(m=>{
+      const vals = cats.map(r=>+gf(r,m.id)||0).filter(v=>v>0);
+      return vals.length ? Math.round(vals.reduce((a,b)=>a+b,0)/vals.length*10)/10 : 0;
+    });
+    const outCtx = document.getElementById('cat-chart-outcomes');
+    if(outCtx._catChart) outCtx._catChart.destroy();
+    outCtx._catChart = new Chart(outCtx, {
+      type:'bar',
+      data:{labels:METRIC_FIELDS.map(m=>m.label),datasets:[{label:'Avg %',data:outcomeAvgs,backgroundColor:'rgba(0,100,160,.65)',borderRadius:4}]},
+      options:{indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{beginAtZero:true,max:100,ticks:{callback:v=>v+'%'}}}}
+    });
+  }
+}
+
+function openCatProfile(id){
+  const r = (D.catalyst||[]).find(x=>x.id===id);
+  if(!r) return;
+  const name      = gf(r,FCAT.orgName)||'(Unnamed)';
+  const state     = ga(r,FCAT.state).map(v=>typeof v==='object'?v.name:v).join(', ')||'—';
+  const orgType   = ga(r,FCAT.orgType).map(v=>typeof v==='object'?v.name:v).join(', ')||'—';
+  const pathway   = ga(r,FCAT.pathway).map(v=>typeof v==='object'?v.name:v).join(', ')||'—';
+  const funding   = (+gf(r,FCAT.funding)||+gf(r,FCAT.grant)||0);
+  const budget    = +gf(r,FCAT.budget)||0;
+  const dur       = gf(r,FCAT.duration)||'—';
+  const contact   = gf(r,FCAT.contact)||'';
+  const ctitle    = gf(r,FCAT.contactTitle)||'';
+  const cemail    = gf(r,FCAT.contactEmail)||'';
+  const mission   = gf(r,FCAT.mission)||'';
+  const objective = gf(r,FCAT.objective)||'';
+  const comm      = ga(r,FCAT.communities).map(v=>typeof v==='object'?v.name:v).join(', ')||'';
+  const edu       = +gf(r,FCAT.educators)||0;
+  const stu       = +gf(r,FCAT.students)||0;
+
+  const row = (label,val)=>val&&val!=='—'?`<div style="display:flex;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)"><span style="font-size:12px;color:var(--muted);width:140px;flex-shrink:0">${label}</span><span style="font-size:13px;color:var(--ink)">${val}</span></div>`:'';
+
+  const body = document.getElementById('profile-body');
+  body.innerHTML = `
+    <div style="margin-bottom:16px">
+      <div style="font-size:18px;font-weight:700;color:var(--ink)">${esc(name)}</div>
+      <div style="font-size:13px;color:var(--muted);margin-top:4px">${esc(state)} · ${esc(orgType)}</div>
+    </div>
+    ${mission?`<div style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:16px;padding:12px;background:var(--bg);border-radius:8px;border-left:3px solid var(--teal)">${esc(mission)}</div>`:''}
+    <div style="margin-bottom:16px">
+      ${row('Pathway', pathway)}
+      ${row('Approved Funding', funding?'$'+Math.round(funding).toLocaleString():'—')}
+      ${row('Grant Duration', dur)}
+      ${row('Annual Budget', budget?'$'+Math.round(budget).toLocaleString():'—')}
+      ${row('Communities Served', comm)}
+      ${row('Educators', edu||'')}
+      ${row('Students', stu||'')}
+    </div>
+    ${objective?`<div style="margin-bottom:16px"><div style="font-size:12px;font-weight:600;color:var(--muted);margin-bottom:6px">GRANT OBJECTIVE</div><div style="font-size:13px;color:var(--ink);line-height:1.6">${esc(objective)}</div></div>`:''}
+    ${contact?`<div style="background:var(--bg);border-radius:8px;padding:12px"><div style="font-size:12px;font-weight:600;color:var(--muted);margin-bottom:8px">PRIMARY CONTACT</div>
+      <div style="font-size:13px;font-weight:600">${esc(contact)}</div>
+      ${ctitle?`<div style="font-size:12px;color:var(--muted)">${esc(ctitle)}</div>`:''}
+      ${cemail?`<a href="mailto:${esc(cemail)}" style="font-size:12px;color:var(--teal)">${esc(cemail)}</a>`:''}
+    </div>`:''}`;
+
+  document.getElementById('profile-name').textContent = name;
+  document.getElementById('profile-ov').style.display='flex';
+}
+
 // ── My Workspace Pipeline ─────────────────────────────────────────────────────
 function renderWorkspacePipeline() {
   if(!LEAD) return;
@@ -3175,6 +3470,7 @@ function switchTab(name) {
   document.querySelectorAll('.tab-panel').forEach(p=>p.classList.toggle('active',p.id==='tab-'+name));
   logUsage('tab:'+name, name.charAt(0).toUpperCase()+name.slice(1));
   if(name==='landing') renderLanding();
+  if(name==='catalyst') renderCatalyst();
 }
 document.querySelectorAll('.nav-tab').forEach(b=>b.addEventListener('click',()=>switchTab(b.dataset.tab)));
 
