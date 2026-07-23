@@ -336,7 +336,6 @@ button{cursor:pointer;font-family:inherit;}
   <nav id="nav">
     <button class="nav-tab active" data-tab="overview">Overview</button>
     <button class="nav-tab" data-tab="partnerships">Partnerships</button>
-    <button class="nav-tab" data-tab="contracts">Contracts</button>
     <button class="nav-tab" data-tab="events">Events</button>
     <button class="nav-tab" data-tab="feedback">Partner Feedback</button>
     <button class="nav-tab" data-tab="content">Products</button>
@@ -504,123 +503,130 @@ button{cursor:pointer;font-family:inherit;}
 
   <!-- PARTNERSHIPS -->
   <div class="tab-panel" id="tab-partnerships">
-    <!-- Full Opportunities View -->
-    <div class="section-hd mb-12">
-      <div><div class="section-title">Opportunities &amp; Accounts</div><div class="section-sub">All partner accounts and their associated partnerships — search by name and click any row to open the record</div></div>
-      <input class="form-input" id="opp-search" placeholder="Search accounts…" style="width:200px">
+    <div class="flex gap-8 mb-16" id="prt-subtabs">
+      <button class="btn-sm primary" data-prttab="partners">Partnerships</button>
+      <button class="btn-sm" data-prttab="contracts">Contracts</button>
     </div>
-    <div id="opp-list"><div class="empty-state">Loading…</div></div>
 
-    <!-- Partnerships Table -->
-    <div class="section-hd mt-24 mb-12">
-      <div class="section-title">All Partnerships</div>
-      <div class="flex gap-8 items-center" style="flex-wrap:wrap">
-        <select class="form-select" id="f-stage" style="width:auto"><option value="">All Stages</option></select>
-        <select class="form-select" id="f-state" style="width:auto"><option value="">All States</option></select>
-        <input class="form-input" id="f-search" placeholder="Search…" style="width:160px">
+    <!-- Partnerships sub-view -->
+    <div id="prt-partners-view">
+      <!-- Full Opportunities View -->
+      <div class="section-hd mb-12">
+        <div><div class="section-title">Opportunities &amp; Accounts</div><div class="section-sub">All partner accounts and their associated partnerships — search by name and click any row to open the record</div></div>
+        <input class="form-input" id="opp-search" placeholder="Search accounts…" style="width:200px">
       </div>
-    </div>
-    <div class="card table-wrap">
-      <table class="data-table" id="prt-tbl">
-        <thead><tr><th>Partner</th><th>Stage</th><th>State</th><th>FY26 Fees</th><th>Contract End</th><th>Team</th><th>Missing</th><th></th></tr></thead>
-        <tbody><tr><td colspan="8" class="empty-state">Loading…</td></tr></tbody>
-      </table>
-    </div>
-  </div>
+      <div id="opp-list"><div class="empty-state">Loading…</div></div>
 
-  <!-- CONTRACTS -->
-  <div class="tab-panel" id="tab-contracts">
-    <div class="section-hd mb-12">
-      <div><div class="section-title">Contracts &amp; MOUs</div><div class="section-sub">Active and historical MOUs with partner organizations — filter by stage, search by partner name</div></div>
-      <div class="flex gap-8 items-center">
-        <select class="form-select" id="f-mou-stage" style="width:auto"><option value="">All Stages</option></select>
-        <input class="form-input" id="f-mou-search" placeholder="Search…" style="width:160px">
-      </div>
-    </div>
-    <div class="grid-2 mb-16">
-      <div class="card chart-card">
-        <div class="section-hd mb-8">
-          <div>
-            <div class="section-title">Fees for Service — <span id="fees-pipe-fy-lbl">FY26</span></div>
-            <div class="section-sub">Contracted fee value by pipeline stage — click a bar to see fee records</div>
-          </div>
-          <div class="toggle-group">
-            <button class="toggle-btn" data-feesfy="FY25" id="fpy-fy25">FY25</button>
-            <button class="toggle-btn active" data-feesfy="FY26" id="fpy-fy26">FY26</button>
-            <button class="toggle-btn" data-feesfy="FY27" id="fpy-fy27">FY27</button>
-            <button class="toggle-btn" data-feesfy="FY28" id="fpy-fy28">FY28</button>
-          </div>
+      <!-- Partnerships Table -->
+      <div class="section-hd mt-24 mb-12">
+        <div class="section-title">All Partnerships</div>
+        <div class="flex gap-8 items-center" style="flex-wrap:wrap">
+          <select class="form-select" id="f-stage" style="width:auto"><option value="">All Stages</option></select>
+          <select class="form-select" id="f-state" style="width:auto"><option value="">All States</option></select>
+          <input class="form-input" id="f-search" placeholder="Search…" style="width:160px">
         </div>
-        <div><canvas id="ch-fees-pipe"></canvas></div>
       </div>
-      <div class="card" style="padding:16px">
-        <div class="section-title mb-4">Renewals — Next 90 Days</div>
-        <div class="section-sub mb-12">MOUs expiring within 90 days — prioritize outreach for timely renewal</div>
-        <div id="renewals-list"><div class="empty-state">Loading…</div></div>
+      <div class="card table-wrap">
+        <table class="data-table" id="prt-tbl">
+          <thead><tr><th>Partner</th><th>Stage</th><th>State</th><th>FY26 Fees</th><th>Contract End</th><th>Team</th><th>Missing</th><th></th></tr></thead>
+          <tbody><tr><td colspan="8" class="empty-state">Loading…</td></tr></tbody>
+        </table>
       </div>
     </div>
-    <div class="card table-wrap">
-      <table class="data-table" id="mou-tbl">
-        <thead><tr><th>Partner</th><th>Stage</th><th>Begins</th><th>Ends</th><th>Signed</th><th>Amount</th><th>Team</th><th></th></tr></thead>
-        <tbody><tr><td colspan="8" class="empty-state">Loading…</td></tr></tbody>
-      </table>
+
+    <!-- Contracts sub-view -->
+    <div id="prt-contracts-view" style="display:none">
+      <div class="section-hd mb-12">
+        <div><div class="section-title">Contracts &amp; MOUs</div><div class="section-sub">Active and historical MOUs with partner organizations — filter by stage, search by partner name</div></div>
+        <div class="flex gap-8 items-center">
+          <select class="form-select" id="f-mou-stage" style="width:auto"><option value="">All Stages</option></select>
+          <input class="form-input" id="f-mou-search" placeholder="Search…" style="width:160px">
+        </div>
+      </div>
+      <div class="grid-2 mb-16">
+        <div class="card chart-card">
+          <div class="section-hd mb-8">
+            <div>
+              <div class="section-title">Fees for Service — <span id="fees-pipe-fy-lbl">FY26</span></div>
+              <div class="section-sub">Contracted fee value by pipeline stage — click a bar to see fee records</div>
+            </div>
+            <div class="toggle-group">
+              <button class="toggle-btn" data-feesfy="FY25" id="fpy-fy25">FY25</button>
+              <button class="toggle-btn active" data-feesfy="FY26" id="fpy-fy26">FY26</button>
+              <button class="toggle-btn" data-feesfy="FY27" id="fpy-fy27">FY27</button>
+              <button class="toggle-btn" data-feesfy="FY28" id="fpy-fy28">FY28</button>
+            </div>
+          </div>
+          <div><canvas id="ch-fees-pipe"></canvas></div>
+        </div>
+        <div class="card" style="padding:16px">
+          <div class="section-title mb-4">Renewals — Next 90 Days</div>
+          <div class="section-sub mb-12">MOUs expiring within 90 days — prioritize outreach for timely renewal</div>
+          <div id="renewals-list"><div class="empty-state">Loading…</div></div>
+        </div>
+      </div>
+      <div class="card table-wrap">
+        <table class="data-table" id="mou-tbl">
+          <thead><tr><th>Partner</th><th>Stage</th><th>Begins</th><th>Ends</th><th>Signed</th><th>Amount</th><th>Team</th><th></th></tr></thead>
+          <tbody><tr><td colspan="8" class="empty-state">Loading…</td></tr></tbody>
+        </table>
+      </div>
     </div>
   </div>
 
   <!-- EVENTS -->
   <div class="tab-panel" id="tab-events">
-    <div class="section-hd mb-12">
-      <div>
-        <div class="section-title">Events</div>
-        <div class="section-sub">All professional learning and partner events — filter by type or search by name</div>
-      </div>
-      <button class="btn-sm primary" onclick="openLogEventModal()">+ Log Event</button>
+    <div class="flex gap-8 mb-16" id="evt-subtabs">
+      <button class="btn-sm primary" data-evttab="events">Events</button>
+      <button class="btn-sm" data-evttab="pl-feedback">PL Session Feedback</button>
     </div>
-    <div class="section-hd mb-12">
-      <div class="flex gap-8 items-center flex-wrap">
-        <div class="toggle-group" id="evt-date-filter">
-          <button class="toggle-btn active" data-evtdate="">All</button>
-          <button class="toggle-btn" data-evtdate="past">Past</button>
-          <button class="toggle-btn" data-evtdate="today">Today</button>
-          <button class="toggle-btn" data-evtdate="week">This Week</button>
-          <button class="toggle-btn" data-evtdate="month">This Month</button>
-          <button class="toggle-btn" data-evtdate="future">Upcoming</button>
+
+    <!-- Events sub-view -->
+    <div id="evt-events-view">
+      <div class="section-hd mb-12">
+        <div>
+          <div class="section-title">Events</div>
+          <div class="section-sub">All professional learning and partner events — filter by type or search by name</div>
         </div>
-        <select class="form-select" id="f-evt-type" style="width:auto"><option value="">All Types</option></select>
-        <select class="form-select" id="f-evt-partner" style="width:auto"><option value="">All Partners</option></select>
-        <input class="form-input" id="f-evt-search" placeholder="Search…" style="width:160px">
+        <button class="btn-sm primary" onclick="openLogEventModal()">+ Log Event</button>
+      </div>
+      <div class="section-hd mb-12">
+        <div class="flex gap-8 items-center flex-wrap">
+          <div class="toggle-group" id="evt-date-filter">
+            <button class="toggle-btn active" data-evtdate="">All</button>
+            <button class="toggle-btn" data-evtdate="past">Past</button>
+            <button class="toggle-btn" data-evtdate="today">Today</button>
+            <button class="toggle-btn" data-evtdate="week">This Week</button>
+            <button class="toggle-btn" data-evtdate="month">This Month</button>
+            <button class="toggle-btn" data-evtdate="future">Upcoming</button>
+          </div>
+          <select class="form-select" id="f-evt-type" style="width:auto"><option value="">All Types</option></select>
+          <select class="form-select" id="f-evt-partner" style="width:auto"><option value="">All Partners</option></select>
+          <input class="form-input" id="f-evt-search" placeholder="Search…" style="width:160px">
+        </div>
+      </div>
+      <div class="grid-4 mb-16">
+        <div class="card kpi-tile"><div class="kpi-val" id="ev-total">—</div><div class="kpi-lbl">Total Events</div></div>
+        <div class="card kpi-tile"><div class="kpi-val" id="ev-parts">—</div><div class="kpi-lbl">Participants</div></div>
+        <div class="card kpi-tile"><div class="kpi-val" id="ev-sat">—</div><div class="kpi-lbl">Avg Satisfaction</div></div>
+        <div class="card kpi-tile"><div class="kpi-val" id="ev-nps">—</div><div class="kpi-lbl">Avg NPS</div></div>
+      </div>
+      <!-- Events This Week -->
+      <div class="card mb-16" style="padding:16px 20px" id="evt-this-week-card">
+        <div class="section-title mb-4">Events This Week</div>
+        <div class="section-sub mb-12">Sessions scheduled for the current week (Mon–Sun)</div>
+        <div id="evt-this-week"><div class="empty-state">Loading…</div></div>
+      </div>
+      <div class="card table-wrap">
+        <table class="data-table" id="evt-tbl">
+          <thead><tr><th>Event</th><th style="min-width:130px">Date</th><th>Facilitator</th><th>Format</th><th>Participants</th><th>Sat</th><th>NPS</th><th>Obj Met</th></tr></thead>
+          <tbody><tr><td colspan="8" class="empty-state">Loading…</td></tr></tbody>
+        </table>
       </div>
     </div>
-    <div class="grid-4 mb-16">
-      <div class="card kpi-tile"><div class="kpi-val" id="ev-total">—</div><div class="kpi-lbl">Total Events</div></div>
-      <div class="card kpi-tile"><div class="kpi-val" id="ev-parts">—</div><div class="kpi-lbl">Participants</div></div>
-      <div class="card kpi-tile"><div class="kpi-val" id="ev-sat">—</div><div class="kpi-lbl">Avg Satisfaction</div></div>
-      <div class="card kpi-tile"><div class="kpi-val" id="ev-nps">—</div><div class="kpi-lbl">Avg NPS</div></div>
-    </div>
-    <!-- Events This Week -->
-    <div class="card mb-16" style="padding:16px 20px" id="evt-this-week-card">
-      <div class="section-title mb-4">Events This Week</div>
-      <div class="section-sub mb-12">Sessions scheduled for the current week (Mon–Sun)</div>
-      <div id="evt-this-week"><div class="empty-state">Loading…</div></div>
-    </div>
-    <div class="card table-wrap">
-      <table class="data-table" id="evt-tbl">
-        <thead><tr><th>Event</th><th style="min-width:130px">Date</th><th>Facilitator</th><th>Format</th><th>Participants</th><th>Sat</th><th>NPS</th><th>Obj Met</th></tr></thead>
-        <tbody><tr><td colspan="8" class="empty-state">Loading…</td></tr></tbody>
-      </table>
-    </div>
-  </div>
 
-  <!-- PARTNER FEEDBACK (PL sessions + Partner survey combined) -->
-  <div class="tab-panel" id="tab-feedback">
-    <!-- Subtab toggle -->
-    <div class="flex gap-8 mb-16" id="fb-subtabs">
-      <button class="btn-sm primary" data-fbtab="pl" id="fbt-pl">PL Session Feedback</button>
-      <button class="btn-sm" data-fbtab="survey" id="fbt-survey">Partner Survey</button>
-    </div>
-
-    <!-- PL SESSION FEEDBACK -->
-    <div id="fb-pl-view">
+    <!-- PL Session Feedback sub-view -->
+    <div id="evt-pl-view" style="display:none">
       <div class="grid-2 mb-16">
         <div class="card chart-card">
           <div class="section-title mb-4">Satisfaction Distribution</div>
@@ -645,9 +651,12 @@ button{cursor:pointer;font-family:inherit;}
         </table>
       </div>
     </div>
+  </div>
 
+  <!-- PARTNER FEEDBACK (PL sessions + Partner survey combined) -->
+  <div class="tab-panel" id="tab-feedback">
     <!-- PARTNER SURVEY -->
-    <div id="fb-survey-view" style="display:none">
+    <div id="fb-survey-view">
       <div class="section-hd mb-12">
         <div></div>
         <select class="form-select" id="f-season" style="width:auto"><option value="">All Seasons</option></select>
@@ -679,7 +688,7 @@ button{cursor:pointer;font-family:inherit;}
       </div>
       <div class="card table-wrap">
         <table class="data-table" id="sv-tbl">
-          <thead><tr><th>District</th><th>Season</th><th>Satisfaction</th><th>Communication</th><th>Resources</th><th>Objectives</th><th>AI Confidence</th><th>Recommend</th></tr></thead>
+          <thead><tr><th>Name</th><th>Season</th><th>Satisfaction</th><th>Communication</th><th>Resources</th><th>Objectives</th><th>AI Confidence</th><th>Recommend</th></tr></thead>
           <tbody><tr><td colspan="8" class="empty-state">Loading…</td></tr></tbody>
         </table>
       </div>
@@ -991,6 +1000,7 @@ const FS = {
   npsScore:'fldk16DQMcrqRARRH', // "NPS Score (Calculated) (from NPS by Administration Year)"
   sat:'fld0LRFQ5VR079Ewi',  // "How satisfied are you..." (singleSelect)
   accountName:'fldWgesiHgr3Wp4Sj', // "Name (from Accounts)" lookup
+  partnership:'fld44qa3RhR1ixg3E', // "Partnerships (from Accounts)" lookup
 };
 const FST = {
   name:'fldpmvWNm6cmygmVS', role:'fldtPyBVQFJyK0Pja',
@@ -2418,8 +2428,8 @@ function renderSurveys(f={}) {
   // Group by account/partnership name
   const grouped = {};
   rows.forEach(r=>{
-    const acc = ga(r,FS.accountName).map(v=>typeof v==='object'?v.name:v).join(', ')||gf(r,FS.district)||'Unknown';
-    (grouped[acc]=grouped[acc]||[]).push(r);
+    const pship = ga(r,FS.partnership).map(v=>typeof v==='object'?v.name:v).join(', ')||gf(r,FS.district)||'Unknown';
+    (grouped[pship]=grouped[pship]||[]).push(r);
   });
   tbody.innerHTML = Object.entries(grouped).sort(([a],[b])=>a.localeCompare(b)).map(([grp,grpRows])=>
     `<tr style="background:var(--surface2)"><td colspan="8" style="font-weight:700;font-size:12px;color:var(--ink);padding:8px 12px;letter-spacing:.02em">${grp}</td></tr>`
@@ -3022,19 +3032,29 @@ document.querySelectorAll('[data-ctab]').forEach(btn=>{
   });
 });
 
-// ── Feedback subtabs ──────────────────────────────────────────────────────────
-document.querySelectorAll('[data-fbtab]').forEach(btn=>{
+// ── Partnerships subtabs ──────────────────────────────────────────────────────
+document.querySelectorAll('[data-prttab]').forEach(btn=>{
   btn.addEventListener('click',()=>{
-    const tab=btn.dataset.fbtab;
-    document.getElementById('fb-pl-view').style.display     = tab==='pl'?'':'none';
-    document.getElementById('fb-survey-view').style.display = tab==='survey'?'':'none';
-    document.querySelectorAll('[data-fbtab]').forEach(b=>{
-      b.classList.toggle('primary', b.dataset.fbtab===tab);
-      b.classList.toggle('btn-sm', true);
+    const tab=btn.dataset.prttab;
+    document.getElementById('prt-partners-view').style.display  = tab==='partners'?'':'none';
+    document.getElementById('prt-contracts-view').style.display = tab==='contracts'?'':'none';
+    document.querySelectorAll('[data-prttab]').forEach(b=>{
+      b.classList.toggle('primary', b.dataset.prttab===tab);
     });
-    // Re-render charts when switching to survey (canvas may have been hidden)
-    if(tab==='survey') renderSurveys({season:document.getElementById('f-season').value});
-    if(tab==='pl') renderFeedback();
+    if(tab==='contracts') renderContracts();
+  });
+});
+
+// ── Events subtabs ────────────────────────────────────────────────────────────
+document.querySelectorAll('[data-evttab]').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    const tab=btn.dataset.evttab;
+    document.getElementById('evt-events-view').style.display = tab==='events'?'':'none';
+    document.getElementById('evt-pl-view').style.display     = tab==='pl-feedback'?'':'none';
+    document.querySelectorAll('[data-evttab]').forEach(b=>{
+      b.classList.toggle('primary', b.dataset.evttab===tab);
+    });
+    if(tab==='pl-feedback') renderFeedback();
   });
 });
 
