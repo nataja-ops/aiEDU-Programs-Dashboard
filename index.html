@@ -2909,12 +2909,12 @@ function showLogin(){
   document.getElementById('login-ov').classList.add('open');
 }
 
-// Initialize Google Sign-In once GIS script is ready
-window.addEventListener('load',()=>{
-  if(typeof google!=='undefined'&&google.accounts&&GOOGLE_CLIENT_ID!=='YOUR_GOOGLE_CLIENT_ID'){
-    google.accounts.id.initialize({client_id:GOOGLE_CLIENT_ID,callback:handleGoogleCredential,auto_select:false,cancel_on_tap_outside:true});
-  }
-});
+// Initialize Google Sign-In — fires when GIS library is ready
+function initGoogleSignIn(){
+  if(GOOGLE_CLIENT_ID==='YOUR_GOOGLE_CLIENT_ID') return;
+  google.accounts.id.initialize({client_id:GOOGLE_CLIENT_ID,callback:handleGoogleCredential,auto_select:false,cancel_on_tap_outside:true});
+}
+window.onGoogleLibraryLoad = initGoogleSignIn;
 
 document.getElementById('login-cancel').addEventListener('click',()=>document.getElementById('login-ov').classList.remove('open'));
 
