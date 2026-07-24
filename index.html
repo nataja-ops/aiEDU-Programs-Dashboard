@@ -229,6 +229,16 @@ button{cursor:pointer;font-family:inherit;}
 .btn-sm:hover{border-color:var(--teal);color:var(--teal);}
 .btn-sm.primary{background:var(--teal);color:#fff;border-color:var(--teal);}
 .btn-sm.primary:hover{background:var(--teal-d);}
+/* Data Entry Portal */
+.portal-btn{
+  display:flex;flex-direction:column;align-items:center;gap:8px;
+  padding:20px 16px;border-radius:12px;border:1.5px solid var(--border);
+  background:var(--surface2);cursor:pointer;transition:all .15s;text-align:center;width:100%;
+}
+.portal-btn:hover{border-color:var(--teal);background:var(--teal-l);transform:translateY(-1px);}
+.portal-btn-icon{font-size:26px;line-height:1;}
+.portal-btn-label{font-size:13px;font-weight:700;color:var(--ink);}
+.portal-btn-sub{font-size:11px;color:var(--ink3);}
 /* Enlarged subtab buttons */
 #prt-subtabs .btn-sm,#evt-subtabs .btn-sm,#content-subtabs .btn-sm{
   height:36px;padding:0 18px;font-size:13px;border-radius:20px;font-weight:600;
@@ -380,6 +390,7 @@ button{cursor:pointer;font-family:inherit;}
     <button class="nav-tab" data-tab="catalyst">Community Catalyst</button>
   </nav>
   <div class="topbar-actions">
+    <button class="lead-btn" onclick="openPortal()" style="background:var(--teal);color:#fff;border-color:var(--teal);font-weight:700">+ Add</button>
     <button class="icon-btn" id="refresh-btn" title="Refresh">↻</button>
     <button class="icon-btn" id="theme-btn" title="Toggle theme">◑</button>
     <button class="lead-btn" id="req-btn" onclick="openRequestModal()">✉ Submit Request</button>
@@ -1070,6 +1081,218 @@ button{cursor:pointer;font-family:inherit;}
 
 <div id="toast-wrap"></div>
 
+<!-- ═══ Data Entry Portal ══════════════════════════════════════════════ -->
+<div id="portal-ov" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:600;justify-content:center;align-items:center">
+  <div style="background:var(--surface);border-radius:16px;padding:32px;width:540px;max-width:calc(100vw - 32px);box-shadow:0 24px 64px rgba(0,0,0,.3)">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <div><div class="modal-title">Data Entry Portal</div><div class="modal-sub">Add new records directly to Airtable</div></div>
+      <button class="icon-btn" onclick="closePortal()">✕</button>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+      <button class="portal-btn" onclick="closePortal();openNewOpp()">
+        <div class="portal-btn-icon">🤝</div>
+        <div class="portal-btn-label">New Opportunity</div>
+        <div class="portal-btn-sub">Create a partnership</div>
+      </button>
+      <button class="portal-btn" onclick="closePortal();openNewAcc()">
+        <div class="portal-btn-icon">🏢</div>
+        <div class="portal-btn-label">New Account</div>
+        <div class="portal-btn-sub">Add a partner org</div>
+      </button>
+      <button class="portal-btn" onclick="closePortal();openNewContact()">
+        <div class="portal-btn-icon">👤</div>
+        <div class="portal-btn-label">New Contact</div>
+        <div class="portal-btn-sub">Add a contact person</div>
+      </button>
+      <button class="portal-btn" onclick="closePortal();openNewMou()">
+        <div class="portal-btn-icon">📄</div>
+        <div class="portal-btn-label">New MOU</div>
+        <div class="portal-btn-sub">Log a program contract</div>
+      </button>
+      <button class="portal-btn" onclick="closePortal();document.getElementById('log-evt-ov').style.display='flex'">
+        <div class="portal-btn-icon">📅</div>
+        <div class="portal-btn-label">Log Event</div>
+        <div class="portal-btn-sub">Add event / session</div>
+      </button>
+      <button class="portal-btn" onclick="closePortal();openNewInteraction()">
+        <div class="portal-btn-icon">💬</div>
+        <div class="portal-btn-label">Log Interaction</div>
+        <div class="portal-btn-sub">Record a contact</div>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ New Opportunity ═══════════════════════════════════════════════ -->
+<div id="new-opp-ov" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:600;justify-content:center;align-items:flex-start;padding:40px 16px;overflow-y:auto">
+  <div style="background:var(--surface);border-radius:12px;padding:28px;width:560px;max-width:100%;box-shadow:0 24px 48px rgba(0,0,0,.25);margin-bottom:24px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <div><div class="modal-title">New Opportunity</div><div class="modal-sub">Creates a new partnership record in Airtable</div></div>
+      <button class="icon-btn" onclick="document.getElementById('new-opp-ov').style.display='none'">✕</button>
+    </div>
+    <div class="form-group"><label class="form-label">Partnership Name *</label><input class="form-input" id="no-name" placeholder="e.g. Springfield USD 2025"></div>
+    <div class="form-group"><label class="form-label">Account</label>
+      <select class="form-select" id="no-account"><option value="">— Select account —</option></select>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="form-group" style="margin:0"><label class="form-label">Pipeline Status</label>
+        <select class="form-select" id="no-pipeline">
+          <option value="">— Select —</option>
+          <option>Relationship Building</option><option>Initial Contact</option><option>Early Exploration</option>
+          <option>Proposal/SOW Writing</option><option>SOW sent</option><option>Verbal Agreement</option>
+          <option>Collaboration</option><option>MOU Sent</option><option>MOU Signed</option><option>MOU Complete</option>
+        </select>
+      </div>
+      <div class="form-group" style="margin:0"><label class="form-label">Funding Stage</label>
+        <select class="form-select" id="no-funding"><option value="">— Select —</option></select>
+      </div>
+    </div>
+    <div class="form-group mt-12"><label class="form-label">Service Lines (comma-separated)</label>
+      <input class="form-input" id="no-services" placeholder="e.g. PL, Curriculum, Assessment">
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+      <div class="form-group" style="margin:0"><label class="form-label">Cultivation Start</label><input type="date" class="form-input" id="no-cultstart"></div>
+      <div class="form-group" style="margin:0"><label class="form-label">Work Start</label><input type="date" class="form-input" id="no-start"></div>
+      <div class="form-group" style="margin:0"><label class="form-label">Work End</label><input type="date" class="form-input" id="no-end"></div>
+    </div>
+    <div class="form-group mt-12"><label class="form-label">Notes</label><textarea class="form-textarea" id="no-notes" rows="3"></textarea></div>
+    <div class="flex gap-8 mt-16">
+      <button class="btn-sm primary flex-1" id="no-ok">Save to Airtable</button>
+      <button class="btn-sm" onclick="document.getElementById('new-opp-ov').style.display='none'">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ New Account ═══════════════════════════════════════════════════ -->
+<div id="new-acc-ov" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:600;justify-content:center;align-items:flex-start;padding:40px 16px;overflow-y:auto">
+  <div style="background:var(--surface);border-radius:12px;padding:28px;width:480px;max-width:100%;box-shadow:0 24px 48px rgba(0,0,0,.25);margin-bottom:24px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <div><div class="modal-title">New Account</div><div class="modal-sub">Creates a new partner account in Airtable</div></div>
+      <button class="icon-btn" onclick="document.getElementById('new-acc-ov').style.display='none'">✕</button>
+    </div>
+    <div class="form-group"><label class="form-label">Account Name *</label><input class="form-input" id="na-name" placeholder="Organization name"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="form-group" style="margin:0"><label class="form-label">Partner Type</label>
+        <select class="form-select" id="na-type">
+          <option value="">— Select —</option>
+          <option>K-12</option><option>Higher Ed</option><option>Nonprofit</option>
+          <option>Government</option><option>Corporate</option><option>Other</option>
+        </select>
+      </div>
+      <div class="form-group" style="margin:0"><label class="form-label">Account Status</label>
+        <select class="form-select" id="na-status">
+          <option value="">— Select —</option>
+          <option>Prospect</option><option>Active</option><option>Inactive</option><option>Former</option>
+        </select>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px">
+      <div class="form-group" style="margin:0"><label class="form-label">State</label><input class="form-input" id="na-state" placeholder="e.g. CA"></div>
+      <div class="form-group" style="margin:0"><label class="form-label">Website</label><input class="form-input" id="na-website" placeholder="https://…" type="url"></div>
+    </div>
+    <div class="flex gap-8 mt-16">
+      <button class="btn-sm primary flex-1" id="na-ok">Save to Airtable</button>
+      <button class="btn-sm" onclick="document.getElementById('new-acc-ov').style.display='none'">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ New Contact ═══════════════════════════════════════════════════ -->
+<div id="new-contact-ov" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:600;justify-content:center;align-items:flex-start;padding:40px 16px;overflow-y:auto">
+  <div style="background:var(--surface);border-radius:12px;padding:28px;width:480px;max-width:100%;box-shadow:0 24px 48px rgba(0,0,0,.25);margin-bottom:24px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <div><div class="modal-title">New Contact</div><div class="modal-sub">Creates a new contact person in Airtable</div></div>
+      <button class="icon-btn" onclick="document.getElementById('new-contact-ov').style.display='none'">✕</button>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="form-group" style="margin:0"><label class="form-label">First Name *</label><input class="form-input" id="nc-first" placeholder="First"></div>
+      <div class="form-group" style="margin:0"><label class="form-label">Last Name *</label><input class="form-input" id="nc-last" placeholder="Last"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px">
+      <div class="form-group" style="margin:0"><label class="form-label">Title / Role</label><input class="form-input" id="nc-title" placeholder="e.g. Superintendent"></div>
+      <div class="form-group" style="margin:0"><label class="form-label">Email</label><input class="form-input" id="nc-email" type="email" placeholder="email@org.edu"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px">
+      <div class="form-group" style="margin:0"><label class="form-label">Phone</label><input class="form-input" id="nc-phone" type="tel" placeholder="(555) 000-0000"></div>
+      <div class="form-group" style="margin:0"><label class="form-label">Account</label>
+        <select class="form-select" id="nc-account"><option value="">— Select —</option></select>
+      </div>
+    </div>
+    <div class="form-group mt-12"><label class="form-label">Notes</label><textarea class="form-textarea" id="nc-notes" rows="3"></textarea></div>
+    <div class="flex gap-8 mt-16">
+      <button class="btn-sm primary flex-1" id="nc-ok">Save to Airtable</button>
+      <button class="btn-sm" onclick="document.getElementById('new-contact-ov').style.display='none'">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ New MOU ════════════════════════════════════════════════════════ -->
+<div id="new-mou-ov" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:600;justify-content:center;align-items:flex-start;padding:40px 16px;overflow-y:auto">
+  <div style="background:var(--surface);border-radius:12px;padding:28px;width:540px;max-width:100%;box-shadow:0 24px 48px rgba(0,0,0,.25);margin-bottom:24px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <div><div class="modal-title">New MOU / Contract</div><div class="modal-sub">Creates a new program MOU record in Airtable</div></div>
+      <button class="icon-btn" onclick="document.getElementById('new-mou-ov').style.display='none'">✕</button>
+    </div>
+    <div class="form-group"><label class="form-label">Contract Name *</label><input class="form-input" id="nm-name" placeholder="e.g. Springfield USD MOU 2025"></div>
+    <div class="form-group"><label class="form-label">Partnership</label>
+      <select class="form-select" id="nm-partnership"><option value="">— Select partnership —</option></select>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="form-group" style="margin:0"><label class="form-label">Document Type</label>
+        <select class="form-select" id="nm-doctype">
+          <option value="">— Select —</option>
+          <option>MOU</option><option>SOW</option><option>Contract</option><option>Letter of Intent</option><option>Other</option>
+        </select>
+      </div>
+      <div class="form-group" style="margin:0"><label class="form-label">Date Signed</label><input type="date" class="form-input" id="nm-signed-date"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px">
+      <div class="form-group" style="margin:0"><label class="form-label">Work Begins</label><input type="date" class="form-input" id="nm-begins"></div>
+      <div class="form-group" style="margin:0"><label class="form-label">Work Ends</label><input type="date" class="form-input" id="nm-ends"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px">
+      <div class="form-group" style="margin:0"><label class="form-label">Signer Name</label><input class="form-input" id="nm-signer-name" placeholder="Full name"></div>
+      <div class="form-group" style="margin:0"><label class="form-label">Signer Email</label><input class="form-input" id="nm-signer-email" type="email" placeholder="email@org.edu"></div>
+    </div>
+    <div class="form-group mt-12"><label class="form-label">Document Link</label><input class="form-input" id="nm-link" type="url" placeholder="https://drive.google.com/…"></div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+      <input type="checkbox" id="nm-signed-check" style="width:16px;height:16px;cursor:pointer">
+      <label for="nm-signed-check" style="font-size:13px;cursor:pointer">Document is signed</label>
+    </div>
+    <div class="form-group"><label class="form-label">Notes</label><textarea class="form-textarea" id="nm-notes" rows="3"></textarea></div>
+    <div class="flex gap-8 mt-16">
+      <button class="btn-sm primary flex-1" id="nm-ok">Save to Airtable</button>
+      <button class="btn-sm" onclick="document.getElementById('new-mou-ov').style.display='none'">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ New Interaction ════════════════════════════════════════════════ -->
+<div id="new-int-ov" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:600;justify-content:center;align-items:flex-start;padding:40px 16px;overflow-y:auto">
+  <div style="background:var(--surface);border-radius:12px;padding:28px;width:480px;max-width:100%;box-shadow:0 24px 48px rgba(0,0,0,.25);margin-bottom:24px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <div><div class="modal-title">Log Interaction</div><div class="modal-sub">Records a touchpoint in the Interactions table</div></div>
+      <button class="icon-btn" onclick="document.getElementById('new-int-ov').style.display='none'">✕</button>
+    </div>
+    <div class="form-group"><label class="form-label">Subject *</label><input class="form-input" id="ni-subject" placeholder="e.g. Intro call with Superintendent"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="form-group" style="margin:0"><label class="form-label">Type</label>
+        <select class="form-select" id="ni-type">
+          <option value="">— Select —</option>
+          <option>Email</option><option>Phone Call</option><option>Meeting</option>
+          <option>Conference</option><option>Site Visit</option><option>Other</option>
+        </select>
+      </div>
+      <div class="form-group" style="margin:0"><label class="form-label">Date</label><input type="date" class="form-input" id="ni-date"></div>
+    </div>
+    <div class="form-group mt-12"><label class="form-label">Interaction Details</label><textarea class="form-textarea" id="ni-details" rows="4" placeholder="What happened? Key takeaways…"></textarea></div>
+    <div class="flex gap-8 mt-16">
+      <button class="btn-sm primary flex-1" id="ni-ok">Save to Airtable</button>
+      <button class="btn-sm" onclick="document.getElementById('new-int-ov').style.display='none'">Cancel</button>
+    </div>
+  </div>
+</div>
+
 <!-- Log Event modal -->
 <div id="log-evt-ov" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:500;justify-content:center;align-items:flex-start;padding-top:60px;overflow-y:auto">
   <div style="background:var(--surface);border-radius:12px;padding:28px;width:520px;max-width:calc(100vw - 32px);box-shadow:0 24px 48px rgba(0,0,0,.25);margin-bottom:24px">
@@ -1191,6 +1414,8 @@ const T = {
   plSess:'tblBLCqGBDdz6DiNV', plProd:'tbl4sM0EQWBNQNd51',
   blockers:'tblf7y815B8SzJZrM',
   usage:'tblzPhlFTLhW5JLeB',
+  contact:'tblfVziiqmyIci0r0',
+  interact:'tblNrIYLnxFswHXQO',
 };
 // NPS by Administration Year fields
 const FNPS = {
@@ -4006,6 +4231,184 @@ function switchTab(name) {
   if(name==='catalyst') renderCatalyst();
 }
 document.querySelectorAll('.nav-tab').forEach(b=>b.addEventListener('click',()=>switchTab(b.dataset.tab)));
+
+// ── Data Entry Portal ─────────────────────────────────────────────────────────
+function openPortal(){
+  // Populate funding stage options from live data
+  const fOpts = [...new Set(D.partners.map(r=>gf(r,FP.fundingStage)).filter(Boolean))].sort();
+  const noF = document.getElementById('no-funding');
+  if(noF) noF.innerHTML = '<option value="">— Select —</option>'+fOpts.map(s=>`<option>${esc(s)}</option>`).join('');
+  // Populate account selects
+  const accOpts = '<option value="">— Select —</option>'+
+    D.accounts.slice().sort((a,b)=>(gf(a,FA.name)||'').localeCompare(gf(b,FA.name)||''))
+      .map(a=>`<option value="${a.id}">${esc(gf(a,FA.name)||'')}</option>`).join('');
+  ['no-account','nc-account'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=accOpts;});
+  // Populate partnership select for MOU
+  const prtOpts = '<option value="">— Select partnership —</option>'+
+    D.partners.slice().sort((a,b)=>(gf(a,FP.name)||'').localeCompare(gf(b,FP.name)||''))
+      .map(p=>`<option value="${p.id}">${esc(gf(p,FP.name)||'')}</option>`).join('');
+  const nmP = document.getElementById('nm-partnership');
+  if(nmP) nmP.innerHTML = prtOpts;
+  document.getElementById('portal-ov').style.display='flex';
+}
+function closePortal(){ document.getElementById('portal-ov').style.display='none'; }
+
+function openNewOpp(){
+  const fOpts = [...new Set(D.partners.map(r=>gf(r,FP.fundingStage)).filter(Boolean))].sort();
+  const noF = document.getElementById('no-funding');
+  if(noF) noF.innerHTML = '<option value="">— Select —</option>'+fOpts.map(s=>`<option>${esc(s)}</option>`).join('');
+  const accOpts = '<option value="">— Select account —</option>'+
+    D.accounts.slice().sort((a,b)=>(gf(a,FA.name)||'').localeCompare(gf(b,FA.name)||''))
+      .map(a=>`<option value="${a.id}">${esc(gf(a,FA.name)||'')}</option>`).join('');
+  const el=document.getElementById('no-account'); if(el) el.innerHTML=accOpts;
+  // Reset form
+  ['no-name','no-services','no-cultstart','no-start','no-end','no-notes'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  document.getElementById('new-opp-ov').style.display='flex';
+}
+function openNewAcc(){
+  ['na-name','na-state','na-website'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  document.getElementById('new-acc-ov').style.display='flex';
+}
+function openNewContact(){
+  const accOpts = '<option value="">— Select —</option>'+
+    D.accounts.slice().sort((a,b)=>(gf(a,FA.name)||'').localeCompare(gf(b,FA.name)||''))
+      .map(a=>`<option value="${a.id}">${esc(gf(a,FA.name)||'')}</option>`).join('');
+  const el=document.getElementById('nc-account'); if(el) el.innerHTML=accOpts;
+  ['nc-first','nc-last','nc-title','nc-email','nc-phone','nc-notes'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  document.getElementById('new-contact-ov').style.display='flex';
+}
+function openNewMou(){
+  const prtOpts = '<option value="">— Select partnership —</option>'+
+    D.partners.slice().sort((a,b)=>(gf(a,FP.name)||'').localeCompare(gf(b,FP.name)||''))
+      .map(p=>`<option value="${p.id}">${esc(gf(p,FP.name)||'')}</option>`).join('');
+  const el=document.getElementById('nm-partnership'); if(el) el.innerHTML=prtOpts;
+  ['nm-name','nm-signed-date','nm-begins','nm-ends','nm-signer-name','nm-signer-email','nm-link','nm-notes'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  const sc=document.getElementById('nm-signed-check');if(sc)sc.checked=false;
+  document.getElementById('new-mou-ov').style.display='flex';
+}
+function openNewInteraction(){
+  ['ni-subject','ni-details'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  const nd=document.getElementById('ni-date');if(nd)nd.value=new Date().toISOString().slice(0,10);
+  document.getElementById('new-int-ov').style.display='flex';
+}
+
+// Save: New Opportunity
+document.getElementById('no-ok').addEventListener('click', async()=>{
+  const name=(document.getElementById('no-name').value||'').trim();
+  if(!name){toast('Partnership Name is required','info');return;}
+  const btn=document.getElementById('no-ok'); btn.disabled=true; btn.textContent='Saving…';
+  try{
+    const accId=document.getElementById('no-account').value;
+    const svcs=document.getElementById('no-services').value.split(',').map(s=>s.trim()).filter(Boolean);
+    const fields={};
+    fields[FP.name]=name;
+    if(accId) fields[FP.account]=[accId];
+    const pipe=document.getElementById('no-pipeline').value; if(pipe) fields[FP.pipeline]=pipe;
+    const fund=document.getElementById('no-funding').value; if(fund) fields[FP.fundingStage]=fund;
+    if(svcs.length) fields[FP.services]=svcs;
+    const cs=document.getElementById('no-cultstart').value; if(cs) fields[FP.cultStart]=cs;
+    const ws=document.getElementById('no-start').value; if(ws) fields[FP.start]=ws;
+    const we=document.getElementById('no-end').value; if(we) fields[FP.end]=we;
+    const notes=document.getElementById('no-notes').value; if(notes) fields[FP.notes]=notes;
+    const res=await apiWrite('POST',BASE,T.prt,{fields});
+    const rec=res.records?.[0]; if(rec) D.partners.push({id:rec.id,fields:rec.fields||fields});
+    toast('Opportunity created ✓','success');
+    document.getElementById('new-opp-ov').style.display='none';
+    try{localStorage.removeItem(CACHE_KEY);}catch(e){}
+    renderAll();
+  }catch(err){toast('Save failed: '+err.message,'error');}
+  finally{btn.disabled=false;btn.textContent='Save to Airtable';}
+});
+
+// Save: New Account
+document.getElementById('na-ok').addEventListener('click', async()=>{
+  const name=(document.getElementById('na-name').value||'').trim();
+  if(!name){toast('Account Name is required','info');return;}
+  const btn=document.getElementById('na-ok'); btn.disabled=true; btn.textContent='Saving…';
+  try{
+    const fields={};
+    fields[FA.name]=name;
+    const type=document.getElementById('na-type').value; if(type) fields[FA.type]=type;
+    const status=document.getElementById('na-status').value; if(status) fields[FA.status]=status;
+    const state=document.getElementById('na-state').value.trim(); if(state) fields[FA.state]=state;
+    const web=document.getElementById('na-website').value.trim(); if(web) fields['fld7paoajnUTmkAfb']=web;
+    const res=await apiWrite('POST',BASE,T.acc,{fields});
+    const rec=res.records?.[0]; if(rec) D.accounts.push({id:rec.id,fields:rec.fields||fields});
+    toast('Account created ✓','success');
+    document.getElementById('new-acc-ov').style.display='none';
+    try{localStorage.removeItem(CACHE_KEY);}catch(e){}
+  }catch(err){toast('Save failed: '+err.message,'error');}
+  finally{btn.disabled=false;btn.textContent='Save to Airtable';}
+});
+
+// Save: New Contact
+document.getElementById('nc-ok').addEventListener('click', async()=>{
+  const first=(document.getElementById('nc-first').value||'').trim();
+  const last=(document.getElementById('nc-last').value||'').trim();
+  if(!first||!last){toast('First and Last Name are required','info');return;}
+  const btn=document.getElementById('nc-ok'); btn.disabled=true; btn.textContent='Saving…';
+  try{
+    const fields={};
+    fields['fldQct5vusvxPuQQg']=first;
+    fields['fld65HejekvFbXhVC']=last;
+    fields[FC.name]=first+' '+last;
+    const title=document.getElementById('nc-title').value.trim(); if(title) fields['fldezFd7UR3igL3aD']=title;
+    const email=document.getElementById('nc-email').value.trim(); if(email) fields[FC.email]=email;
+    const phone=document.getElementById('nc-phone').value.trim(); if(phone) fields['fldjGy9JGUs8sWJ4Z']=phone;
+    const accId=document.getElementById('nc-account').value; if(accId) fields['fldQYQcHHnttM7Uws']=[accId];
+    const notes=document.getElementById('nc-notes').value.trim(); if(notes) fields['fldq78FdEoKS4IPYi']=notes;
+    await apiWrite('POST',BASE,T.contact,{fields});
+    toast('Contact created ✓','success');
+    document.getElementById('new-contact-ov').style.display='none';
+    CONTACTS_LOADED=false; // force reload next time contacts tab is opened
+  }catch(err){toast('Save failed: '+err.message,'error');}
+  finally{btn.disabled=false;btn.textContent='Save to Airtable';}
+});
+
+// Save: New MOU
+document.getElementById('nm-ok').addEventListener('click', async()=>{
+  const name=(document.getElementById('nm-name').value||'').trim();
+  if(!name){toast('Contract Name is required','info');return;}
+  const btn=document.getElementById('nm-ok'); btn.disabled=true; btn.textContent='Saving…';
+  try{
+    const fields={};
+    fields[FM.contract]=name;
+    const prtId=document.getElementById('nm-partnership').value; if(prtId) fields[FM.partnerships]=[prtId];
+    const dt=document.getElementById('nm-doctype').value; if(dt) fields['fldJIaIxqbh2Dftxz']=dt;
+    const begins=document.getElementById('nm-begins').value; if(begins) fields[FM.begins]=begins;
+    const ends=document.getElementById('nm-ends').value; if(ends) fields[FM.ends]=ends;
+    const sd=document.getElementById('nm-signed-date').value; if(sd) fields[FM.dateSigned]=sd;
+    if(document.getElementById('nm-signed-check').checked) fields[FM.signed]=true;
+    const link=document.getElementById('nm-link').value.trim(); if(link) fields['fldEzf7YXSPiBsE7P']=link;
+    const sn=document.getElementById('nm-signer-name').value.trim(); if(sn) fields['fldjqFo6MQhoP7ZkC']=sn;
+    const se=document.getElementById('nm-signer-email').value.trim(); if(se) fields['fldazRi8EkdmT6vVY']=se;
+    const notes=document.getElementById('nm-notes').value.trim(); if(notes) fields['fldY3O1WZhJoxh8Oa']=notes;
+    const res=await apiWrite('POST',BASE,T.mou,{fields});
+    const rec=res.records?.[0]; if(rec) D.mous.push({id:rec.id,fields:rec.fields||fields});
+    toast('MOU created ✓','success');
+    document.getElementById('new-mou-ov').style.display='none';
+    try{localStorage.removeItem(CACHE_KEY);}catch(e){}
+    renderAll();
+  }catch(err){toast('Save failed: '+err.message,'error');}
+  finally{btn.disabled=false;btn.textContent='Save to Airtable';}
+});
+
+// Save: New Interaction
+document.getElementById('ni-ok').addEventListener('click', async()=>{
+  const subj=(document.getElementById('ni-subject').value||'').trim();
+  if(!subj){toast('Subject is required','info');return;}
+  const btn=document.getElementById('ni-ok'); btn.disabled=true; btn.textContent='Saving…';
+  try{
+    const fields={};
+    fields['fldwX4XVgJJHcLeOv']=subj;
+    const type=document.getElementById('ni-type').value; if(type) fields['fldaiiH3GcLt55Rey']=type;
+    const det=document.getElementById('ni-details').value.trim(); if(det) fields['fld586ocmGeYk6AkS']=det;
+    await apiWrite('POST',BASE,T.interact,{fields});
+    toast('Interaction logged ✓','success');
+    document.getElementById('new-int-ov').style.display='none';
+  }catch(err){toast('Save failed: '+err.message,'error');}
+  finally{btn.disabled=false;btn.textContent='Save to Airtable';}
+});
 
 // ── Request modal ─────────────────────────────────────────────────────────────
 const REQ_KEY = 'aiedu_requests';
