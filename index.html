@@ -475,7 +475,7 @@ button{cursor:pointer;font-family:inherit;}
     <!-- New in My Portfolio -->
     <div id="ws-new-prt-section" style="display:none;margin-bottom:16px">
       <div class="section-hd mb-8">
-        <div><div class="section-title">New to Your Portfolio</div><div class="section-sub">Partnerships added in the last 90 days</div></div>
+        <div><div class="section-title">New to Your Portfolio</div><div class="section-sub">Partnerships added this month</div></div>
       </div>
       <div id="ws-new-prt" style="display:flex;flex-wrap:wrap;gap:12px"></div>
     </div>
@@ -540,10 +540,10 @@ button{cursor:pointer;font-family:inherit;}
     </div>
     </div><!-- /overview-goals-section -->
 
-    <!-- New This Year spotlight -->
+    <!-- New This Month spotlight -->
     <div class="mb-16" id="overview-new-prt-section" style="display:none">
       <div class="section-hd mb-8">
-        <div><div class="section-title">New This Year</div><div class="section-sub">Partnerships that started in the last 90 days</div></div>
+        <div><div class="section-title">New This Month</div><div class="section-sub">Partnerships that started this calendar month</div></div>
       </div>
       <div id="overview-new-prt" style="display:flex;flex-wrap:wrap;gap:12px"></div>
     </div>
@@ -2915,8 +2915,8 @@ function renderPlSessions(f={}) {
 
 // ── New Partnerships Highlight ────────────────────────────────────────────────
 function renderNewPartnerships(containerId, sectionId, mine){
-  const cutoff = new Date(); cutoff.setDate(cutoff.getDate()-90);
-  const cutoffStr = cutoff.toISOString().slice(0,10);
+  const now = new Date();
+  const cutoffStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-01`;
   const pool = mine || D.partners;
   const recent = pool.filter(p=>{
     const d = gf(p,FP.cultStart)||gf(p,FP.start);
