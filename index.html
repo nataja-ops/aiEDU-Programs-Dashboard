@@ -2950,8 +2950,9 @@ function renderNewPartnerships(containerId, sectionId, mine){
 function renderRecentUpdates(){
   const updates = [];
 
-  // Parse change log entries across all partners (newest first)
+  // Parse change log entries — only partnerships with an account linked
   D.partners.forEach(p=>{
+    if(!ga(p,FP.account).length) return;
     const log = gf(p,FP.changeLog)||'';
     if(!log.trim()) return;
     log.trim().split('\n').filter(Boolean).forEach(line=>{
@@ -2961,8 +2962,9 @@ function renderRecentUpdates(){
     });
   });
 
-  // MOUs recently signed
+  // MOUs recently signed — only include if a partnership is linked
   D.mous.forEach(m=>{
+    if(!ga(m,FM.partner).length) return;
     const ds = gf(m,FM.dateSigned); if(!ds) return;
     const cutoff = new Date(); cutoff.setDate(cutoff.getDate()-180);
     if(ds < cutoff.toISOString().slice(0,10)) return;
