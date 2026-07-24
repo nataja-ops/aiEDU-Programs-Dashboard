@@ -64,7 +64,7 @@ button{cursor:pointer;font-family:inherit;}
 #ws-bar{
   position:sticky;top:var(--topbar-h);z-index:99;
   background:#0a2e2e;border-bottom:1px solid rgba(24,220,220,.15);
-  display:flex;align-items:center;gap:8px;padding:0 20px;height:38px;
+  display:flex;align-items:center;justify-content:center;gap:8px;padding:0 20px;height:38px;
 }
 #ws-bar .nav-tab{font-size:12px;padding:4px 14px;}
 #ws-bar .nav-tab.active{background:linear-gradient(135deg,var(--teal-bright),#00b0b0);color:#0a2e2e;}
@@ -350,7 +350,7 @@ button{cursor:pointer;font-family:inherit;}
 /* Account profile modal */
 #acc-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:400;justify-content:center;align-items:flex-start;padding-top:60px;}
 #acc-overlay.open{display:flex;}
-#acc-modal{background:var(--surface);border-radius:12px;padding:28px;width:560px;max-width:calc(100vw - 32px);max-height:80vh;overflow-y:auto;box-shadow:0 24px 48px rgba(0,0,0,.25);}
+#acc-modal{background:var(--surface);border-radius:12px;padding:28px;width:640px;max-width:calc(100vw - 32px);max-height:88vh;overflow-y:auto;box-shadow:0 24px 48px rgba(0,0,0,.25);}
 .acc-field-row{display:flex;justify-content:space-between;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--border);font-size:13px;}
 .acc-field-row:last-child{border-bottom:none;}
 .acc-field-key{color:var(--ink3);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;width:160px;flex-shrink:0;}
@@ -2355,58 +2355,147 @@ document.addEventListener('DOMContentLoaded',()=>{
 
 function openPartnerProfile(id){
   const p=D.partners.find(r=>r.id===id); if(!p) return;
-  const name=gf(p,FP.name)||'Partnership';
-  const team=ga(p,FP.team).map(v=>typeof v==='object'?v.name:v).join(', ')||'—';
-  const type=ga(p,FP.partType).map(v=>typeof v==='object'?v.name:v).join(', ')||'—';
-  const state=ga(p,FP.state).map(v=>typeof v==='object'?v.name:v).join(', ')||'—';
-  const services=ga(p,FP.services).map(v=>typeof v==='object'?v.name:v).join(', ')||'—';
   const acc=ga(p,FP.account)[0];
   const accName=acc?(D.accounts.find(a=>a.id===acc)||{}).fields?.[FA.name]||'—':'—';
-  const fundingStage = gf(p,FP.fundingStage)||'—';
-  const mouSignedVals = ga(p,FP.mouSigned).map(v=>typeof v==='object'?v.name:v).filter(Boolean);
-  const mouDateVals   = ga(p,FP.mouDate).map(v=>typeof v==='object'?v.name:v).filter(Boolean);
-  const mouSigned = mouSignedVals.some(v=>String(v).toLowerCase()==='true'||v===1||v==='1'||v==='yes');
-  const mouDateStr = mouDateVals.length ? fdt(mouDateVals[0]) : null;
-  const mouStatusHtml = mouSigned
-    ? `<span class="pill pill-good">✓ Signed${mouDateStr?' · '+mouDateStr:''}</span>`
-    : `<span class="pill pill-gray">Not Signed</span>`;
-  const fields=[
-    {k:'Pipeline Stage',        v:stagePill(gf(p,FP.pipeline))},
-    {k:'Funding Stage',         v:fundingStage!=='—'?`<span class="pill pill-teal">${fundingStage}</span>`:'—'},
-    {k:'MOU Status',            v:mouStatusHtml},
-    {k:'Partner Type',          v:type},
-    {k:'Account',               v:`<span class="drill-link" onclick="openAccProfile('${acc||''}');closeAccModal()">${accName}</span>`},
-    {k:'State',                 v:state},
-    {k:'Team',                  v:team},
-    {k:'Start Date',            v:fdt(gf(p,FP.start))},
-    {k:'End Date',              v:fdt(gf(p,FP.end))+' '+daysChip(daysTo(gf(p,FP.end)))},
-    {k:'FY26 Fees (Awarded)',   v:`<strong style="font-variant-numeric:tabular-nums">${f$(gf(p,FP.fy26))}</strong>`},
-    {k:'Proposed Fees',         v:`<span style="font-variant-numeric:tabular-nums">${f$(gf(p,FP.proposed))}</span>`},
-    {k:'Services',              v:services},
-    {k:'Missing Info',          v:gf(p,FP.missing)||'<span style="color:var(--good)">None</span>'},
-  ];
-  const changeLog = gf(p,FP.changeLog)||'';
-  const logEntries = changeLog.trim() ? changeLog.trim().split('\n').filter(Boolean).reverse() : [];
-  const logHtml = logEntries.length
-    ? logEntries.map(l=>`<div style="font-size:11px;color:var(--ink2);padding:4px 0;border-bottom:1px solid var(--border)">${l.replace(/\[([^\]]+)\]/g,'<strong>[$1]</strong>')}</div>`).join('')
-    : `<div style="font-size:11px;color:var(--muted)">No entries yet</div>`;
+  const team=ga(p,FP.team).map(v=>typeof v==='object'?v.name:v).join(', ')||'—';
+  const state=ga(p,FP.state).map(v=>typeof v==='object'?v.name:v).join(', ')||'—';
+  const services=ga(p,FP.services).map(v=>typeof v==='object'?v.name:v).join(', ');
+  const partType=ga(p,FP.partType).map(v=>typeof v==='object'?v.name:v).join(', ');
+  const mouSignedVals=ga(p,FP.mouSigned).map(v=>typeof v==='object'?v.name:v).filter(Boolean);
+  const mouDateVals=ga(p,FP.mouDate).map(v=>typeof v==='object'?v.name:v).filter(Boolean);
+  const mouSigned=mouSignedVals.some(v=>String(v).toLowerCase()==='true'||v===1||v==='1'||v==='yes');
+  const mouDateStr=mouDateVals.length?fdt(mouDateVals[0]):null;
+  const dEnd=daysTo(gf(p,FP.end));
 
-  document.getElementById('acc-modal-title').textContent=name;
-  document.getElementById('acc-modal-body').innerHTML=
-    fields.map(f=>`<div class="acc-field-row"><span class="acc-field-key">${f.k}</span><span class="acc-field-val">${f.v}</span></div>`).join('')
-    +`<div style="margin-top:16px">
-       <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:6px">Change Log</div>
-       <div style="max-height:120px;overflow-y:auto;margin-bottom:8px">${logHtml}</div>
-       <div style="display:flex;gap:6px">
-         <input id="cl-entry" class="form-input" placeholder="Describe the change…" style="flex:1;font-size:12px">
-         <button class="btn-sm primary" onclick="addChangeLogEntry('${id}')">+ Add</button>
-       </div>
-     </div>
-    <div class="flex gap-8 mt-16">
-      <button class="btn-sm primary flex-1" onclick="openPrtDrawer('${id}');closeAccModal()">Edit Partnership</button>
+  // Collect funding stage options from live data
+  const fundingOpts=[...new Set(D.partners.map(r=>gf(r,FP.fundingStage)).filter(Boolean))].sort();
+
+  const changeLog=gf(p,FP.changeLog)||'';
+  const logEntries=changeLog.trim()?changeLog.trim().split('\n').filter(Boolean).reverse():[];
+  const logHtml=logEntries.length
+    ?logEntries.map(l=>`<div style="font-size:11px;color:var(--ink2);padding:4px 0;border-bottom:1px solid var(--border)">${esc(l).replace(/\[([^\]]+)\]/g,'<strong>[$1]</strong>')}</div>`).join('')
+    :`<div style="font-size:11px;color:var(--ink3)">No entries yet</div>`;
+
+  document.getElementById('acc-modal-title').textContent=gf(p,FP.name)||'Partnership';
+  document.getElementById('acc-modal-body').innerHTML=`
+    <div class="form-group" style="margin-bottom:12px">
+      <label class="form-label">Partnership Name</label>
+      <input class="form-input" id="pf-name" value="${esc(gf(p,FP.name)||'')}" placeholder="Partnership name">
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+      <div class="form-group" style="margin:0">
+        <label class="form-label">Pipeline Stage</label>
+        <select class="form-select" id="pf-pipeline">
+          <option value=""></option>
+          ${STAGE_ORDER.map(s=>`<option value="${esc(s)}"${gf(p,FP.pipeline)===s?' selected':''}>${esc(s)}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group" style="margin:0">
+        <label class="form-label">Funding Stage</label>
+        <select class="form-select" id="pf-funding">
+          <option value="">— none —</option>
+          ${fundingOpts.map(s=>`<option value="${esc(s)}"${gf(p,FP.fundingStage)===s?' selected':''}>${esc(s)}</option>`).join('')}
+        </select>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px">
+      <div class="form-group" style="margin:0">
+        <label class="form-label">Work Start</label>
+        <input type="date" class="form-input" id="pf-start" value="${gf(p,FP.start)||''}">
+      </div>
+      <div class="form-group" style="margin:0">
+        <label class="form-label">Work End</label>
+        <input type="date" class="form-input" id="pf-end" value="${gf(p,FP.end)||''}">
+      </div>
+      <div class="form-group" style="margin:0">
+        <label class="form-label">Cultivation Start</label>
+        <input type="date" class="form-input" id="pf-cultstart" value="${gf(p,FP.cultStart)||''}">
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+      <div class="form-group" style="margin:0">
+        <label class="form-label">Services (comma-separated)</label>
+        <input class="form-input" id="pf-services" value="${esc(services)}" placeholder="PL, Curriculum…">
+      </div>
+      <div class="form-group" style="margin:0">
+        <label class="form-label">Partner Type (comma-separated)</label>
+        <input class="form-input" id="pf-parttype" value="${esc(partType)}" placeholder="District, School…">
+      </div>
+    </div>
+    <div class="form-group" style="margin-bottom:12px">
+      <label class="form-label">Proposed Fees ($)</label>
+      <input type="number" class="form-input" id="pf-proposed" value="${gf(p,FP.proposed)||''}" placeholder="0" step="1000" style="max-width:180px">
+    </div>
+    <div class="form-group" style="margin-bottom:14px">
+      <label class="form-label">Notes</label>
+      <textarea class="form-textarea" id="pf-notes" rows="3">${esc(gf(p,FP.notes)||'')}</textarea>
+    </div>
+    <div style="background:var(--surface2);border-radius:8px;padding:12px;margin-bottom:14px">
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink3);margin-bottom:8px">Read-only Info</div>
+      <div class="acc-field-row" style="padding:5px 0"><span class="acc-field-key">Account</span><span class="acc-field-val">${acc?`<span class="drill-link" onclick="openAccProfile('${acc}');closeAccModal()">${esc(accName)}</span>`:'—'}</span></div>
+      <div class="acc-field-row" style="padding:5px 0"><span class="acc-field-key">State</span><span class="acc-field-val">${esc(state)}</span></div>
+      <div class="acc-field-row" style="padding:5px 0"><span class="acc-field-key">Team</span><span class="acc-field-val">${esc(team)}</span></div>
+      <div class="acc-field-row" style="padding:5px 0"><span class="acc-field-key">MOU Status</span><span class="acc-field-val">${mouSigned?`<span class="pill pill-good">✓ Signed${mouDateStr?' · '+mouDateStr:''}</span>`:`<span class="pill pill-gray">Not Signed</span>`}</span></div>
+      <div class="acc-field-row" style="padding:5px 0"><span class="acc-field-key">FY26 Fees</span><span class="acc-field-val"><strong>${f$(gf(p,FP.fy26))}</strong>${dEnd!=null?' '+daysChip(dEnd):''}</span></div>
+      <div class="acc-field-row" style="padding:5px 0;border-bottom:none"><span class="acc-field-key">Missing Info</span><span class="acc-field-val">${gf(p,FP.missing)||'<span style="color:var(--good)">None</span>'}</span></div>
+    </div>
+    <div style="margin-bottom:16px">
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink3);margin-bottom:6px">Change Log</div>
+      <div style="max-height:110px;overflow-y:auto;margin-bottom:8px">${logHtml}</div>
+      <div style="display:flex;gap:6px">
+        <input id="cl-entry" class="form-input" placeholder="Describe the change…" style="flex:1;font-size:12px">
+        <button class="btn-sm primary" onclick="addChangeLogEntry('${id}')">+ Add</button>
+      </div>
+    </div>
+    <div class="flex gap-8">
+      <button class="btn-sm primary flex-1" id="pf-save-btn" onclick="savePrtProfile('${id}')">Save Changes</button>
+      <a href="https://airtable.com/${BASE}/${T.prt}/${id}" target="_blank" class="btn-sm" style="display:flex;align-items:center;gap:4px">↗ Airtable</a>
       <button class="btn-sm" onclick="closeAccModal()">Close</button>
     </div>`;
   document.getElementById('acc-overlay').classList.add('open');
+}
+
+async function savePrtProfile(id){
+  const btn=document.getElementById('pf-save-btn');
+  if(btn){btn.disabled=true;btn.textContent='Saving…';}
+  try{
+    const name=(document.getElementById('pf-name')?.value||'').trim();
+    const pipeline=document.getElementById('pf-pipeline')?.value||'';
+    const funding=document.getElementById('pf-funding')?.value||'';
+    const start=document.getElementById('pf-start')?.value||'';
+    const end=document.getElementById('pf-end')?.value||'';
+    const cultStart=document.getElementById('pf-cultstart')?.value||'';
+    const proposed=document.getElementById('pf-proposed')?.value||'';
+    const notes=document.getElementById('pf-notes')?.value||'';
+    const servicesRaw=document.getElementById('pf-services')?.value||'';
+    const partTypeRaw=document.getElementById('pf-parttype')?.value||'';
+
+    const fields={};
+    if(name) fields[FP.name]=name;
+    if(pipeline) fields[FP.pipeline]=pipeline;
+    fields[FP.fundingStage]=funding||null;
+    fields[FP.start]=start||null;
+    fields[FP.end]=end||null;
+    fields[FP.cultStart]=cultStart||null;
+    fields[FP.notes]=notes||null;
+    if(proposed) fields[FP.proposed]=parseFloat(proposed);
+    const svcs=servicesRaw.split(',').map(s=>s.trim()).filter(Boolean);
+    if(svcs.length) fields[FP.services]=svcs;
+    const pts=partTypeRaw.split(',').map(s=>s.trim()).filter(Boolean);
+    if(pts.length) fields[FP.partType]=pts;
+    // Remove explicit nulls from fields to avoid overwriting with empty strings
+    Object.keys(fields).forEach(k=>{if(fields[k]===null)delete fields[k];});
+
+    await apiWrite('PATCH',BASE,T.prt,{id,fields});
+    const rec=D.partners.find(r=>r.id===id);
+    if(rec) Object.assign(rec.fields,fields);
+    toast('Saved ✓','success');
+    openPartnerProfile(id);
+    renderAll();
+  } catch(err){
+    toast('Save failed: '+err.message,'error');
+    if(btn){btn.disabled=false;btn.textContent='Save Changes';}
+  }
 }
 
 async function addChangeLogEntry(partnerId){
