@@ -366,7 +366,6 @@ button{cursor:pointer;font-family:inherit;}
     <button class="nav-tab" data-tab="overview">Overview</button>
     <button class="nav-tab" data-tab="partnerships">Partnerships</button>
     <button class="nav-tab" data-tab="events">Events</button>
-    <button class="nav-tab" data-tab="feedback">Partner Feedback</button>
     <button class="nav-tab" data-tab="content">Products</button>
     <button class="nav-tab" data-tab="catalyst">Community Catalyst</button>
     <button class="nav-tab" data-tab="workspace" id="ws-nav-tab">My Workspace</button>
@@ -410,7 +409,7 @@ button{cursor:pointer;font-family:inherit;}
           <div class="lc-icon">📅</div><div class="lc-title">Events</div>
           <div class="lc-sub">Sessions, participants, and feedback</div>
         </div>
-        <div class="landing-card" onclick="switchTab('feedback');logUsage('tab:feedback','landing_card')">
+        <div class="landing-card" onclick="switchTab('partnerships');document.querySelector('[data-prttab=feedback]').click();logUsage('tab:feedback','landing_card')">
           <div class="lc-icon">📋</div><div class="lc-title">Partner Feedback</div>
           <div class="lc-sub">NPS and survey results</div>
         </div>
@@ -609,6 +608,7 @@ button{cursor:pointer;font-family:inherit;}
       <button class="btn-sm" data-prttab="accounts">Accounts</button>
       <button class="btn-sm" data-prttab="contacts">Contacts</button>
       <button class="btn-sm" data-prttab="contracts">Contracts</button>
+      <button class="btn-sm" data-prttab="feedback">Partner Feedback</button>
     </div>
 
     <!-- Partnerships sub-view -->
@@ -642,6 +642,45 @@ button{cursor:pointer;font-family:inherit;}
           <thead><tr><th>Partner</th><th>Stage</th><th>State</th><th>FY26 Fees</th><th>Contract End</th><th>Team</th><th>Missing</th><th></th></tr></thead>
           <tbody><tr><td colspan="8" class="empty-state">Loading…</td></tr></tbody>
         </table>
+      </div>
+    </div>
+
+    <!-- Partner Feedback sub-view -->
+    <div id="prt-feedback-view" style="display:none">
+      <div id="fb-survey-view">
+        <div class="section-hd mb-12">
+          <div></div>
+          <select class="form-select" id="f-season" style="width:auto"><option value="">All Seasons</option></select>
+        </div>
+        <div class="grid-4 mb-16">
+          <div class="card kpi-tile"><div class="kpi-val" id="sv-sat">—</div><div class="kpi-lbl">Avg Satisfaction</div></div>
+          <div class="card kpi-tile"><div class="kpi-val" id="sv-comm">—</div><div class="kpi-lbl">Communication</div></div>
+          <div class="card kpi-tile"><div class="kpi-val" id="sv-res">—</div><div class="kpi-lbl">Resources</div></div>
+          <div class="card kpi-tile"><div class="kpi-val" id="sv-rec">—</div><div class="kpi-lbl">Recommend Rating</div></div>
+        </div>
+        <div class="card chart-card mb-16">
+          <div class="section-title mb-4">NPS Trend by Year</div>
+          <div class="section-sub mb-12">Net Promoter Score by administration year from partner surveys</div>
+          <div><canvas id="ch-nps-yr"></canvas></div>
+        </div>
+        <div class="grid-2 mb-16">
+          <div class="card chart-card">
+            <div class="section-title mb-4">Scores by Dimension</div>
+            <div class="section-sub mb-12">Average partner satisfaction across five survey dimensions: satisfaction, communication, resources, objectives met, and AI readiness capacity</div>
+            <div><canvas id="ch-sv-dims"></canvas></div>
+          </div>
+          <div class="card chart-card">
+            <div class="section-title mb-4">Satisfaction by Partnership</div>
+            <div class="section-sub mb-12">Overall satisfaction scores by partnership — highlights which partnerships may need additional support</div>
+            <div><canvas id="ch-sv-dist"></canvas></div>
+          </div>
+        </div>
+        <div class="card table-wrap">
+          <table class="data-table" id="sv-tbl">
+            <thead><tr><th>Name</th><th>Season</th><th>Satisfaction</th><th>Communication</th><th>Resources</th><th>Objectives</th><th>AI Confidence</th><th>Recommend</th></tr></thead>
+            <tbody><tr><td colspan="8" class="empty-state">Loading…</td></tr></tbody>
+          </table>
+        </div>
       </div>
     </div>
 
@@ -822,47 +861,8 @@ button{cursor:pointer;font-family:inherit;}
     </div>
   </div>
 
-  <!-- PARTNER FEEDBACK (PL sessions + Partner survey combined) -->
-  <div class="tab-panel" id="tab-feedback">
-    <!-- PARTNER SURVEY -->
-    <div id="fb-survey-view">
-      <div class="section-hd mb-12">
-        <div></div>
-        <select class="form-select" id="f-season" style="width:auto"><option value="">All Seasons</option></select>
-      </div>
-      <div class="grid-4 mb-16">
-        <div class="card kpi-tile"><div class="kpi-val" id="sv-sat">—</div><div class="kpi-lbl">Avg Satisfaction</div></div>
-        <div class="card kpi-tile"><div class="kpi-val" id="sv-comm">—</div><div class="kpi-lbl">Communication</div></div>
-        <div class="card kpi-tile"><div class="kpi-val" id="sv-res">—</div><div class="kpi-lbl">Resources</div></div>
-        <div class="card kpi-tile"><div class="kpi-val" id="sv-rec">—</div><div class="kpi-lbl">Recommend Rating</div></div>
-      </div>
-      <!-- NPS Trend by Year — full width -->
-      <div class="card chart-card mb-16">
-        <div class="section-title mb-4">NPS Trend by Year</div>
-        <div class="section-sub mb-12">Net Promoter Score by administration year from partner surveys</div>
-        <div><canvas id="ch-nps-yr"></canvas></div>
-      </div>
-
-      <div class="grid-2 mb-16">
-        <div class="card chart-card">
-          <div class="section-title mb-4">Scores by Dimension</div>
-          <div class="section-sub mb-12">Average partner satisfaction across five survey dimensions: satisfaction, communication, resources, objectives met, and AI readiness capacity</div>
-          <div><canvas id="ch-sv-dims"></canvas></div>
-        </div>
-        <div class="card chart-card">
-          <div class="section-title mb-4">Satisfaction by District</div>
-          <div class="section-sub mb-12">Overall satisfaction scores by partner district — highlights which partnerships may need additional support</div>
-          <div><canvas id="ch-sv-dist"></canvas></div>
-        </div>
-      </div>
-      <div class="card table-wrap">
-        <table class="data-table" id="sv-tbl">
-          <thead><tr><th>Name</th><th>Season</th><th>Satisfaction</th><th>Communication</th><th>Resources</th><th>Objectives</th><th>AI Confidence</th><th>Recommend</th></tr></thead>
-          <tbody><tr><td colspan="8" class="empty-state">Loading…</td></tr></tbody>
-        </table>
-      </div>
-    </div>
-  </div>
+  <!-- PARTNER FEEDBACK — now lives as a subtab inside Partnerships -->
+  <div class="tab-panel" id="tab-feedback" style="display:none"></div>
 
   <!-- CONTENT -->
   <div class="tab-panel" id="tab-content">
@@ -3977,6 +3977,7 @@ document.querySelectorAll('[data-prttab]').forEach(btn=>{
   btn.addEventListener('click',()=>{
     const tab=btn.dataset.prttab;
     document.getElementById('prt-partners-view').style.display  = tab==='partners'?'':'none';
+    document.getElementById('prt-feedback-view').style.display  = tab==='feedback'?'':'none';
     document.getElementById('prt-accounts-view').style.display  = tab==='accounts'?'':'none';
     document.getElementById('prt-contacts-view').style.display  = tab==='contacts'?'':'none';
     document.getElementById('prt-contracts-view').style.display = tab==='contracts'?'':'none';
@@ -3986,6 +3987,7 @@ document.querySelectorAll('[data-prttab]').forEach(btn=>{
     if(tab==='contracts') renderContracts();
     if(tab==='accounts')  renderAccountsTab();
     if(tab==='contacts')  loadAndRenderContacts();
+    if(tab==='feedback')  renderSurveys();
   });
 });
 
