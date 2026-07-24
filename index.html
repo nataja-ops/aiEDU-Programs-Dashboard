@@ -113,6 +113,21 @@ button{cursor:pointer;font-family:inherit;}
 .kpi-tile{padding:16px 20px;}
 .kpi-val{font-size:30px;font-weight:700;line-height:1.1;font-variant-numeric:tabular-nums;color:var(--ink);}
 .kpi-lbl{font-size:12px;color:var(--ink3);margin-top:4px;}
+/* New partnership highlight cards */
+.new-prt-card{background:var(--surface);border:1px solid var(--teal);border-radius:10px;padding:14px 16px;min-width:220px;max-width:260px;cursor:pointer;position:relative;overflow:hidden;}
+.new-prt-card::before{content:'NEW';position:absolute;top:8px;right:10px;font-size:9px;font-weight:700;letter-spacing:.06em;color:var(--teal);opacity:.7;}
+.new-prt-card:hover{box-shadow:0 4px 16px rgba(0,0,0,.1);}
+/* Calendar */
+.cal-header-cell{text-align:center;font-size:11px;font-weight:600;color:var(--muted);padding:4px 0;}
+.cal-day-cell{min-height:72px;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:4px 6px;font-size:11px;overflow:hidden;}
+.cal-day-cell.today{border-color:var(--teal);background:rgba(0,160,160,.05);}
+.cal-day-cell.other-month{opacity:.4;}
+.cal-day-num{font-size:11px;font-weight:600;color:var(--muted);margin-bottom:3px;}
+.cal-evt-dot{background:var(--teal);color:#fff;border-radius:3px;padding:1px 4px;margin-bottom:2px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:10px;line-height:1.4;}
+.cal-evt-dot:hover{opacity:.8;}
+/* Recent updates timeline */
+.update-item{display:flex;gap:10px;align-items:flex-start;padding:8px 12px;border-radius:8px;background:var(--surface);border:1px solid var(--border);}
+.update-icon{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;}
 /* OKR progress tiles */
 .okr-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:20px;}
 @media(max-width:1100px){.okr-grid{grid-template-columns:repeat(3,1fr);}}
@@ -457,6 +472,14 @@ button{cursor:pointer;font-family:inherit;}
       </div>
     </div>
 
+    <!-- New in My Portfolio -->
+    <div id="ws-new-prt-section" style="display:none;margin-bottom:16px">
+      <div class="section-hd mb-8">
+        <div><div class="section-title">New to Your Portfolio</div><div class="section-sub">Partnerships added in the last 90 days</div></div>
+      </div>
+      <div id="ws-new-prt" style="display:flex;flex-wrap:wrap;gap:12px"></div>
+    </div>
+
     <!-- My Pipeline -->
     <div class="section-hd mb-8">
       <div><div class="section-title">My Pipeline</div><div class="section-sub">Your partnerships by stage — click a row to expand</div></div>
@@ -517,6 +540,14 @@ button{cursor:pointer;font-family:inherit;}
     </div>
     </div><!-- /overview-goals-section -->
 
+    <!-- New This Year spotlight -->
+    <div class="mb-16" id="overview-new-prt-section" style="display:none">
+      <div class="section-hd mb-8">
+        <div><div class="section-title">New This Year</div><div class="section-sub">Partnerships that started in the last 90 days</div></div>
+      </div>
+      <div id="overview-new-prt" style="display:flex;flex-wrap:wrap;gap:12px"></div>
+    </div>
+
     <!-- Program Partnership Pipeline -->
     <div class="mb-16">
       <div class="section-hd mb-8">
@@ -575,11 +606,21 @@ button{cursor:pointer;font-family:inherit;}
   <div class="tab-panel" id="tab-partnerships">
     <div class="flex gap-8 mb-16" id="prt-subtabs">
       <button class="btn-sm primary" data-prttab="partners">Partnerships</button>
+      <button class="btn-sm" data-prttab="accounts">Accounts</button>
+      <button class="btn-sm" data-prttab="contacts">Contacts</button>
       <button class="btn-sm" data-prttab="contracts">Contracts</button>
     </div>
 
     <!-- Partnerships sub-view -->
     <div id="prt-partners-view">
+      <!-- Recent Updates strip -->
+      <div id="prt-recent-wrap" style="margin-bottom:20px;display:none">
+        <div class="section-hd mb-8">
+          <div><div class="section-title">Recent Updates</div><div class="section-sub">Latest changes, contract signings, and stage movements</div></div>
+        </div>
+        <div id="prt-recent" style="display:flex;flex-direction:column;gap:6px"></div>
+      </div>
+
       <!-- Full Opportunities View -->
       <div class="section-hd mb-12">
         <div><div class="section-title">Opportunities &amp; Accounts</div><div class="section-sub">All partner accounts and their associated partnerships — search by name and click any row to open the record</div></div>
@@ -601,6 +642,42 @@ button{cursor:pointer;font-family:inherit;}
           <thead><tr><th>Partner</th><th>Stage</th><th>State</th><th>FY26 Fees</th><th>Contract End</th><th>Team</th><th>Missing</th><th></th></tr></thead>
           <tbody><tr><td colspan="8" class="empty-state">Loading…</td></tr></tbody>
         </table>
+      </div>
+    </div>
+
+    <!-- Accounts sub-view -->
+    <div id="prt-accounts-view" style="display:none">
+      <div class="section-hd mb-12">
+        <div><div class="section-title">Partner Accounts</div><div class="section-sub">All program accounts — active, prospects, and former. Click any row to open the account profile.</div></div>
+        <input class="form-input" id="f-acc-search" placeholder="Search accounts…" style="width:200px" oninput="renderAccountsTab()">
+      </div>
+      <div class="grid-3 mb-16" id="acc-kpi-row">
+        <div class="card kpi-tile"><div class="kpi-val" id="acc-k-active">—</div><div class="kpi-lbl">Active</div></div>
+        <div class="card kpi-tile"><div class="kpi-val" id="acc-k-prospect">—</div><div class="kpi-lbl">Prospects</div></div>
+        <div class="card kpi-tile"><div class="kpi-val" id="acc-k-total">—</div><div class="kpi-lbl">Total Accounts</div></div>
+      </div>
+      <div class="card table-wrap">
+        <table class="data-table" id="acc-tbl">
+          <thead><tr><th>Account</th><th>Status</th><th>Type</th><th>State</th><th>Team</th><th>Partnerships</th></tr></thead>
+          <tbody id="acc-tbody"><tr><td colspan="6" class="empty-state">Loading…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Contacts sub-view -->
+    <div id="prt-contacts-view" style="display:none">
+      <div class="section-hd mb-12">
+        <div><div class="section-title">Partner Contacts</div><div class="section-sub">Contacts linked to partner accounts — click a row to open their record in Airtable</div></div>
+        <input class="form-input" id="f-con-search" placeholder="Search contacts…" style="width:200px" oninput="renderContactsTab()">
+      </div>
+      <div id="contacts-loading" class="empty-state" style="padding:24px">Loading contacts…</div>
+      <div id="contacts-table-wrap" style="display:none">
+        <div class="card table-wrap">
+          <table class="data-table" id="con-tbl">
+            <thead><tr><th>Name</th><th>Title</th><th>Account</th><th>Email</th><th>Last Contact</th><th>Interactions</th></tr></thead>
+            <tbody id="con-tbody"></tbody>
+          </table>
+        </div>
       </div>
     </div>
 
@@ -658,7 +735,13 @@ button{cursor:pointer;font-family:inherit;}
           <div class="section-title">Events</div>
           <div class="section-sub">All professional learning and partner events — filter by type or search by name</div>
         </div>
-        <button class="btn-sm primary" onclick="openLogEventModal()">+ Log Event</button>
+        <div class="flex gap-8">
+          <div class="toggle-group">
+            <button class="toggle-btn active" id="evt-v-list" onclick="setEvtView('list')">List</button>
+            <button class="toggle-btn" id="evt-v-cal" onclick="setEvtView('calendar')">Calendar</button>
+          </div>
+          <button class="btn-sm primary" onclick="openLogEventModal()">+ Log Event</button>
+        </div>
       </div>
       <div class="section-hd mb-12">
         <div class="flex gap-8 items-center flex-wrap">
@@ -681,6 +764,22 @@ button{cursor:pointer;font-family:inherit;}
         <div class="card kpi-tile"><div class="kpi-val" id="ev-sat">—</div><div class="kpi-lbl">Avg Satisfaction</div></div>
         <div class="card kpi-tile"><div class="kpi-val" id="ev-nps">—</div><div class="kpi-lbl">Avg NPS</div></div>
       </div>
+      <!-- Calendar view -->
+      <div id="evt-calendar-wrap" style="display:none;margin-bottom:16px">
+        <div class="card" style="padding:16px 20px">
+          <div class="section-hd mb-12">
+            <div style="font-size:15px;font-weight:700" id="cal-month-label">—</div>
+            <div class="flex gap-8">
+              <button class="btn-sm" onclick="calNav(-1)">← Prev</button>
+              <button class="btn-sm" onclick="calNav(0)">Today</button>
+              <button class="btn-sm" onclick="calNav(1)">Next →</button>
+            </div>
+          </div>
+          <div id="cal-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px"></div>
+        </div>
+        <div id="cal-day-panel" style="margin-top:12px;display:none"></div>
+      </div>
+
       <!-- Events This Week -->
       <div class="card mb-16" style="padding:16px 20px" id="evt-this-week-card">
         <div class="section-title mb-4">Events This Week</div>
@@ -1812,6 +1911,8 @@ function renderAll() {
   renderSuccessTracker();
   renderFeesChart();
   renderOpportunities(document.getElementById('opp-search')?.value||'', false, 'opp-list');
+  renderNewPartnerships('overview-new-prt','overview-new-prt-section');
+  renderRecentUpdates();
   renderPartnerships();
   renderContracts();
   renderEventsThisWeek();
@@ -2812,6 +2913,273 @@ function renderPlSessions(f={}) {
     }).join('');
 }
 
+// ── New Partnerships Highlight ────────────────────────────────────────────────
+function renderNewPartnerships(containerId, sectionId, mine){
+  const cutoff = new Date(); cutoff.setDate(cutoff.getDate()-90);
+  const cutoffStr = cutoff.toISOString().slice(0,10);
+  const pool = mine || D.partners;
+  const recent = pool.filter(p=>{
+    const d = gf(p,FP.cultStart)||gf(p,FP.start);
+    return d && d >= cutoffStr;
+  }).sort((a,b)=>{
+    const da=gf(a,FP.cultStart)||gf(a,FP.start)||'', db=gf(b,FP.cultStart)||gf(b,FP.start)||'';
+    return db.localeCompare(da);
+  });
+  const section = document.getElementById(sectionId);
+  const container = document.getElementById(containerId);
+  if(!section||!container) return;
+  if(!recent.length){ section.style.display='none'; return; }
+  section.style.display='';
+  container.innerHTML = recent.map(p=>{
+    const stage = gf(p,FP.pipeline)||'—';
+    const team  = ga(p,FP.team).map(v=>typeof v==='object'?v.name:v).join(', ')||'—';
+    const d     = gf(p,FP.cultStart)||gf(p,FP.start)||'';
+    const color = STAGE_COLORS[stage]||'var(--teal)';
+    return `<div class="new-prt-card" onclick="openPartnerProfile('${p.id}')">
+      <div style="font-size:13px;font-weight:700;margin-bottom:6px;margin-right:36px">${esc(gf(p,FP.name)||'—')}</div>
+      <div style="display:flex;gap:6px;align-items:center;margin-bottom:4px">
+        <span class="pill" style="background:${color}22;color:${color}">${esc(stage)}</span>
+      </div>
+      <div style="font-size:11px;color:var(--muted)">${esc(team)}</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:2px">Started ${d?fdt(d):'—'}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── Recent Partnerships Updates ────────────────────────────────────────────────
+function renderRecentUpdates(){
+  const updates = [];
+
+  // Parse change log entries across all partners (newest first)
+  D.partners.forEach(p=>{
+    const log = gf(p,FP.changeLog)||'';
+    if(!log.trim()) return;
+    log.trim().split('\n').filter(Boolean).forEach(line=>{
+      const dateM = line.match(/^\[(\d{4}-\d{2}-\d{2})/);
+      if(!dateM) return;
+      updates.push({ date:dateM[1], text:line.replace(/^\[\d{4}-\d{2}-\d{2}\]\s*/,''), partner:gf(p,FP.name)||'—', pid:p.id, type:'log' });
+    });
+  });
+
+  // MOUs recently signed
+  D.mous.forEach(m=>{
+    const ds = gf(m,FM.dateSigned); if(!ds) return;
+    const cutoff = new Date(); cutoff.setDate(cutoff.getDate()-180);
+    if(ds < cutoff.toISOString().slice(0,10)) return;
+    const pNames = ga(m,FM.partner).map(v=>typeof v==='object'?v.name:v).join(', ')||'—';
+    updates.push({ date:ds.slice(0,10), text:`MOU signed — ${pNames}`, partner:pNames, pid:null, type:'mou' });
+  });
+
+  // Sort newest first, cap at 15
+  updates.sort((a,b)=>b.date.localeCompare(a.date));
+  const top = updates.slice(0,15);
+
+  const wrap = document.getElementById('prt-recent-wrap');
+  const container = document.getElementById('prt-recent');
+  if(!wrap||!container) return;
+  if(!top.length){ wrap.style.display='none'; return; }
+  wrap.style.display='';
+
+  const icons = { log:'✏️', mou:'📄' };
+  const colors = { log:'rgba(0,160,160,.15)', mou:'rgba(26,122,74,.15)' };
+  container.innerHTML = top.map(u=>`
+    <div class="update-item">
+      <div class="update-icon" style="background:${colors[u.type]}">${icons[u.type]}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:12px;font-weight:600;color:var(--ink)">${u.pid?`<span class="drill-link" onclick="openPartnerProfile('${u.pid}')">${esc(u.partner)}</span>`:esc(u.partner)}</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(u.text)}</div>
+      </div>
+      <div style="font-size:11px;color:var(--muted);flex-shrink:0">${fdt(u.date)}</div>
+    </div>`).join('');
+}
+
+// ── Accounts Tab ───────────────────────────────────────────────────────────────
+function renderAccountsTab(){
+  const q = (document.getElementById('f-acc-search')||{}).value?.toLowerCase()||'';
+  let accs = D.accounts.slice().sort((a,b)=>(gf(a,FA.name)||'').localeCompare(gf(b,FA.name)||''));
+  if(q) accs = accs.filter(a=>(gf(a,FA.name)||'').toLowerCase().includes(q));
+
+  const active   = D.accounts.filter(a=>(gf(a,FA.status)||'').toLowerCase()==='active').length;
+  const prospect = D.accounts.filter(a=>(gf(a,FA.status)||'').toLowerCase()==='prospect').length;
+  const k = id => document.getElementById(id);
+  if(k('acc-k-active'))   k('acc-k-active').textContent   = active;
+  if(k('acc-k-prospect')) k('acc-k-prospect').textContent = prospect;
+  if(k('acc-k-total'))    k('acc-k-total').textContent    = D.accounts.length;
+
+  const tbody = document.getElementById('acc-tbody'); if(!tbody) return;
+  if(!accs.length){ tbody.innerHTML='<tr><td colspan="6" class="empty-state">No accounts found</td></tr>'; return; }
+
+  tbody.innerHTML = accs.map(a=>{
+    const name   = gf(a,FA.name)||'—';
+    const status = gf(a,FA.status)||'—';
+    const types  = ga(a,FA.type).map(v=>typeof v==='object'?v.name:v).join(', ')||'—';
+    const state  = gf(a,FA.state)||'—';
+    const team   = ga(a,FA.team).map(v=>typeof v==='object'?v.name:v).join(', ')||'—';
+    const prtCount = D.partners.filter(p=>ga(p,FP.account).includes(a.id)).length;
+    const sc = status==='Active'?'pill-good':status==='Prospect'?'pill-warn':'pill-gray';
+    return `<tr style="cursor:pointer" onclick="openAccProfile('${a.id}')">
+      <td><strong>${esc(name)}</strong></td>
+      <td><span class="pill ${sc}">${esc(status)}</span></td>
+      <td>${esc(types)}</td><td>${esc(state)}</td><td>${esc(team)}</td>
+      <td>${prtCount||'—'}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ── Contacts Tab (lazy-loaded) ─────────────────────────────────────────────────
+const FC = {
+  name:    'fldTfnCLTSd1SXgAW', // Full Name
+  title:   'fldTay6hD9g4dKn7a', // Title (Enriched)
+  email:   'fldehqeqhMY8KFIgB', // Email
+  account: 'fldxEEvEIPmXjdrG1', // Name from Accounts (lookup)
+  lastContact:'fldpVapE4FDWGC4KE', // Date of Last Contact
+  interactions:'fldhTvJXRcBDnxTiB', // Number of Interactions
+};
+let CONTACTS_LOADED = false;
+let D_CONTACTS = [];
+
+async function loadAndRenderContacts(){
+  if(!CONTACTS_LOADED){
+    document.getElementById('contacts-loading').style.display='';
+    document.getElementById('contacts-table-wrap').style.display='none';
+    try {
+      D_CONTACTS = await atFetch(BASE,'tblfVziiqmyIci0r0',Object.values(FC));
+      CONTACTS_LOADED = true;
+    } catch(e){
+      document.getElementById('contacts-loading').textContent='Failed to load contacts.';
+      return;
+    }
+  }
+  renderContactsTab();
+}
+
+function renderContactsTab(){
+  const q = (document.getElementById('f-con-search')||{}).value?.toLowerCase()||'';
+  let rows = D_CONTACTS.filter(c=>(gf(c,FC.name)||'').trim());
+  if(q) rows = rows.filter(c=>{
+    const name = (gf(c,FC.name)||'').toLowerCase();
+    const acc  = ga(c,FC.account).join(' ').toLowerCase();
+    return name.includes(q)||acc.includes(q);
+  });
+  rows.sort((a,b)=>(gf(a,FC.name)||'').localeCompare(gf(b,FC.name)||''));
+
+  document.getElementById('contacts-loading').style.display='none';
+  const wrap = document.getElementById('contacts-table-wrap');
+  wrap.style.display='';
+  const tbody = document.getElementById('con-tbody'); if(!tbody) return;
+
+  if(!rows.length){ tbody.innerHTML='<tr><td colspan="6" class="empty-state">No contacts found</td></tr>'; return; }
+  tbody.innerHTML = rows.slice(0,200).map(c=>{
+    const name    = gf(c,FC.name)||'—';
+    const title   = gf(c,FC.title)||'—';
+    const email   = gf(c,FC.email)||'';
+    const acc     = ga(c,FC.account).join(', ')||'—';
+    const lastCon = gf(c,FC.lastContact)||'';
+    const intCt   = +gf(c,FC.interactions)||0;
+    return `<tr>
+      <td><strong>${esc(name)}</strong></td>
+      <td>${esc(title)}</td><td>${esc(acc)}</td>
+      <td>${email?`<a href="mailto:${esc(email)}" style="color:var(--teal)">${esc(email)}</a>`:'—'}</td>
+      <td>${lastCon?fdt(lastCon):'—'}</td>
+      <td>${intCt||'—'}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ── Events Calendar ───────────────────────────────────────────────────────────
+let CAL_YEAR  = new Date().getFullYear();
+let CAL_MONTH = new Date().getMonth(); // 0-indexed
+let EVT_VIEW  = 'list';
+
+function setEvtView(v){
+  EVT_VIEW = v;
+  document.getElementById('evt-v-list').classList.toggle('active', v==='list');
+  document.getElementById('evt-v-cal').classList.toggle('active', v==='calendar');
+  document.getElementById('evt-calendar-wrap').style.display = v==='calendar'?'':'none';
+  document.getElementById('evt-this-week-card').style.display = v==='list'?'':'none';
+  // hide/show the events table card (it's the .card.table-wrap containing #evt-tbl)
+  const evtTbl = document.getElementById('evt-tbl');
+  if(evtTbl) evtTbl.closest('.card').style.display = v==='list'?'':'none';
+  if(v==='calendar') renderCalendar();
+}
+
+function calNav(dir){ // dir: -1 prev, 0 today, 1 next
+  if(dir===0){ CAL_YEAR=new Date().getFullYear(); CAL_MONTH=new Date().getMonth(); }
+  else { CAL_MONTH+=dir; if(CAL_MONTH<0){CAL_MONTH=11;CAL_YEAR--;} if(CAL_MONTH>11){CAL_MONTH=0;CAL_YEAR++;} }
+  renderCalendar();
+}
+
+function renderCalendar(){
+  const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  document.getElementById('cal-month-label').textContent = `${MONTHS[CAL_MONTH]} ${CAL_YEAR}`;
+
+  const firstDay = new Date(CAL_YEAR, CAL_MONTH, 1).getDay();
+  const daysInMonth = new Date(CAL_YEAR, CAL_MONTH+1, 0).getDate();
+  const daysInPrev  = new Date(CAL_YEAR, CAL_MONTH, 0).getDate();
+  const todayStr = new Date().toISOString().slice(0,10);
+
+  // Map events to date strings
+  const evtByDate = {};
+  D.events.forEach(e=>{
+    const d = gf(e,FE.date); if(!d) return;
+    const ds = d.slice(0,10);
+    (evtByDate[ds]=evtByDate[ds]||[]).push(e);
+  });
+
+  let cells = '';
+  // Header
+  cells += DAYS.map(d=>`<div class="cal-header-cell">${d}</div>`).join('');
+
+  // Leading blanks (prev month days)
+  for(let i=0;i<firstDay;i++){
+    const day = daysInPrev - firstDay + 1 + i;
+    const ds = `${CAL_YEAR}-${String(CAL_MONTH===0?12:CAL_MONTH).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    cells += `<div class="cal-day-cell other-month"><div class="cal-day-num">${day}</div></div>`;
+  }
+
+  // Days of this month
+  for(let d=1;d<=daysInMonth;d++){
+    const ds = `${CAL_YEAR}-${String(CAL_MONTH+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const evts = evtByDate[ds]||[];
+    const isToday = ds===todayStr;
+    const dots = evts.slice(0,3).map(e=>`<div class="cal-evt-dot" onclick="openEventModal('${e.id}');event.stopPropagation()" title="${esc(gf(e,FE.nameT)||gf(e,FE.name)||'Event')}">${esc(gf(e,FE.nameT)||gf(e,FE.name)||'Event')}</div>`).join('');
+    const more = evts.length>3?`<div style="font-size:9px;color:var(--muted)">+${evts.length-3} more</div>`:'';
+    cells += `<div class="cal-day-cell${isToday?' today':''}" onclick="showCalDay('${ds}')">
+      <div class="cal-day-num">${d}</div>${dots}${more}
+    </div>`;
+  }
+
+  // Trailing blanks
+  const total = firstDay + daysInMonth;
+  const trailing = (7-total%7)%7;
+  for(let i=1;i<=trailing;i++){
+    cells += `<div class="cal-day-cell other-month"><div class="cal-day-num">${i}</div></div>`;
+  }
+
+  document.getElementById('cal-grid').innerHTML = cells;
+  document.getElementById('cal-day-panel').style.display='none';
+}
+
+function showCalDay(ds){
+  const evts = D.events.filter(e=>(gf(e,FE.date)||'').slice(0,10)===ds);
+  const panel = document.getElementById('cal-day-panel');
+  if(!evts.length){ panel.style.display='none'; return; }
+  const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const dt = new Date(ds+'T00:00:00');
+  panel.style.display='';
+  panel.innerHTML = `<div class="card" style="padding:16px 20px">
+    <div style="font-size:14px;font-weight:700;margin-bottom:12px">${MONTHS[dt.getMonth()]} ${dt.getDate()}, ${dt.getFullYear()}</div>
+    ${evts.map(e=>`<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);cursor:pointer" onclick="openEventModal('${e.id}')">
+      <div>
+        <div style="font-size:13px;font-weight:600">${esc(gf(e,FE.nameT)||gf(e,FE.name)||'—')}</div>
+        <div style="font-size:11px;color:var(--muted)">${ga(e,FE.facDisp).join(', ')||'—'} · ${ga(e,FE.type).map(v=>typeof v==='object'?v.name:v).join(', ')||'—'}</div>
+      </div>
+      <div style="text-align:right;font-size:12px;color:var(--muted)">${+gf(e,FE.parts)||0} participants</div>
+    </div>`).join('')}
+  </div>`;
+}
+
 // ── Community Catalyst ────────────────────────────────────────────────────────
 let CAT_VIEW = 'cards';
 function setCatView(v){
@@ -3036,6 +3404,9 @@ function renderWorkspacePipeline() {
   const el = document.getElementById('ws-pipeline'); if(!el) return;
   const teamNames = p => ga(p,FP.team).map(v=>typeof v==='object'?v.name:v);
   const mine = D.partners.filter(p=>teamNames(p).some(x=>x.trim().toLowerCase()===LEAD.name.trim().toLowerCase()));
+
+  // New partnerships in user's portfolio
+  renderNewPartnerships('ws-new-prt','ws-new-prt-section', mine);
 
   const cats = [
     { label:'Cultivation',       sub:'Relationship Building · Initial Contact · Early Exploration', stages:['Relationship Building','Initial Contact','Early Exploration'], color:'#3a6baf' },
@@ -3604,11 +3975,15 @@ document.querySelectorAll('[data-prttab]').forEach(btn=>{
   btn.addEventListener('click',()=>{
     const tab=btn.dataset.prttab;
     document.getElementById('prt-partners-view').style.display  = tab==='partners'?'':'none';
+    document.getElementById('prt-accounts-view').style.display  = tab==='accounts'?'':'none';
+    document.getElementById('prt-contacts-view').style.display  = tab==='contacts'?'':'none';
     document.getElementById('prt-contracts-view').style.display = tab==='contracts'?'':'none';
     document.querySelectorAll('[data-prttab]').forEach(b=>{
       b.classList.toggle('primary', b.dataset.prttab===tab);
     });
     if(tab==='contracts') renderContracts();
+    if(tab==='accounts')  renderAccountsTab();
+    if(tab==='contacts')  loadAndRenderContacts();
   });
 });
 
