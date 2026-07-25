@@ -114,9 +114,13 @@ button{cursor:pointer;font-family:inherit;}
 @media(max-width:900px){.grid-4{grid-template-columns:repeat(2,1fr);}.grid-3{grid-template-columns:1fr 1fr;}.grid-2{grid-template-columns:1fr;}}
 @media(max-width:600px){.grid-4,.grid-3,.grid-2{grid-template-columns:1fr;}}
 /* Section header */
-.section-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
-.section-title{font-size:15px;font-weight:600;color:var(--ink);}
-.section-sub{font-size:12px;color:var(--ink3);margin-top:2px;}
+.section-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.section-title{font-size:18px;font-weight:700;color:var(--ink);letter-spacing:-.01em;}
+.section-sub{font-size:12px;color:var(--ink3);margin-top:3px;font-weight:400;}
+/* Card-level section headers get a teal left accent */
+.card .section-title,.card .section-hd .section-title{
+  font-size:16px;
+}
 /* KPI tile */
 .kpi-tile{padding:16px 20px;}
 .kpi-val{font-size:30px;font-weight:700;line-height:1.1;font-variant-numeric:tabular-nums;color:var(--ink);}
