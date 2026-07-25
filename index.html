@@ -1125,37 +1125,84 @@ button{cursor:pointer;font-family:inherit;}
 
 <!-- ═══ New Opportunity ═══════════════════════════════════════════════ -->
 <div id="new-opp-ov" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:600;justify-content:center;align-items:flex-start;padding:40px 16px;overflow-y:auto">
-  <div style="background:var(--surface);border-radius:12px;padding:28px;width:560px;max-width:100%;box-shadow:0 24px 48px rgba(0,0,0,.25);margin-bottom:24px">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
-      <div><div class="modal-title">New Opportunity</div><div class="modal-sub">Creates a new partnership record in Airtable</div></div>
+  <div style="background:var(--surface);border-radius:12px;padding:28px;width:600px;max-width:100%;box-shadow:0 24px 48px rgba(0,0,0,.25);margin-bottom:24px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+      <div class="modal-title">Add New Opportunity</div>
       <button class="icon-btn" onclick="document.getElementById('new-opp-ov').style.display='none'">✕</button>
     </div>
-    <div class="form-group"><label class="form-label">Partnership Name *</label><input class="form-input" id="no-name" placeholder="e.g. Springfield USD 2025"></div>
-    <div class="form-group"><label class="form-label">Account</label>
+    <div class="modal-sub" style="margin-bottom:20px">Creates a new partnership record in Airtable</div>
+
+    <div class="form-group">
+      <label class="form-label">Partnership Start Year &amp; Name <span style="color:var(--crit)">*</span></label>
+      <input class="form-input" id="no-name" placeholder="Fiscal Year | Partner(s) Name (i.e.:2026 | NYC Public Schools)">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Associate Partner Account(s)</label>
       <select class="form-select" id="no-account"><option value="">— Select account —</option></select>
     </div>
+
+    <div class="form-group">
+      <label class="form-label">Service Lines</label>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:10px;background:var(--surface2);border-radius:8px;border:1px solid var(--border)">
+        <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" class="no-svc-cb" value="Teacher Professional Learning"> Teacher Professional Learning</label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" class="no-svc-cb" value="District Strategic Advising"> District Strategic Advising</label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" class="no-svc-cb" value="Community of Practice"> Community of Practice</label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" class="no-svc-cb" value="Leader Professional Learning"> Leader Professional Learning</label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" class="no-svc-cb" value="State Level Support"> State Level Support</label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" class="no-svc-cb" value="Conference Presentation"> Conference Presentation</label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" class="no-svc-cb" value="Train the Trainer"> Train the Trainer</label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" class="no-svc-cb" value="Trailblazers"> Trailblazers</label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" class="no-svc-cb" value="Spark the Future"> Spark the Future</label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" class="no-svc-cb" value="Webinar series"> Webinar series</label>
+      </div>
+    </div>
+
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-      <div class="form-group" style="margin:0"><label class="form-label">Pipeline Status</label>
+      <div class="form-group" style="margin:0">
+        <label class="form-label">Pipeline Status</label>
         <select class="form-select" id="no-pipeline">
           <option value="">— Select —</option>
           <option>Relationship Building</option><option>Initial Contact</option><option>Early Exploration</option>
           <option>Proposal/SOW Writing</option><option>SOW sent</option><option>Verbal Agreement</option>
-          <option>Collaboration</option><option>MOU Sent</option><option>MOU Signed</option><option>MOU Complete</option>
+          <option>Collaboration</option><option>MOU Sent</option><option>MOU Signed</option>
+          <option>MOU Complete</option><option>On Ice</option><option>Rejected</option>
         </select>
       </div>
-      <div class="form-group" style="margin:0"><label class="form-label">Funding Stage</label>
-        <select class="form-select" id="no-funding"><option value="">— Select —</option></select>
+      <div class="form-group" style="margin:0">
+        <label class="form-label">Opportunity Status</label>
+        <select class="form-select" id="no-opp-status">
+          <option value="">— Select —</option>
+          <option selected>Potential Partner</option>
+          <option>Active</option><option>Inactive</option>
+          <option>Complete</option><option>Missing</option><option>Expiring Soon</option>
+        </select>
       </div>
     </div>
-    <div class="form-group mt-12"><label class="form-label">Service Lines (comma-separated)</label>
-      <input class="form-input" id="no-services" placeholder="e.g. PL, Curriculum, Assessment">
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px">
+      <div class="form-group" style="margin:0">
+        <label class="form-label">Potential Duration (Fiscal Year)</label>
+        <select class="form-select" id="no-fiscal">
+          <option value="">— Select —</option>
+          <option>FY25</option><option>FY26</option><option>FY27</option>
+          <option>FY28</option><option>Multi-Year</option>
+        </select>
+      </div>
+      <div class="form-group" style="margin:0">
+        <label class="form-label">Funding Stage</label>
+        <select class="form-select" id="no-funding">
+          <option value="">— Select —</option>
+          <option selected>Proposed</option><option>Awarded</option><option>Not Funded</option>
+        </select>
+      </div>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
-      <div class="form-group" style="margin:0"><label class="form-label">Cultivation Start</label><input type="date" class="form-input" id="no-cultstart"></div>
-      <div class="form-group" style="margin:0"><label class="form-label">Work Start</label><input type="date" class="form-input" id="no-start"></div>
-      <div class="form-group" style="margin:0"><label class="form-label">Work End</label><input type="date" class="form-input" id="no-end"></div>
+
+    <div class="form-group mt-12">
+      <label class="form-label">Notes</label>
+      <textarea class="form-textarea" id="no-notes" rows="4"></textarea>
     </div>
-    <div class="form-group mt-12"><label class="form-label">Notes</label><textarea class="form-textarea" id="no-notes" rows="3"></textarea></div>
+
     <div class="flex gap-8 mt-16">
       <button class="btn-sm primary flex-1" id="no-ok">Save to Airtable</button>
       <button class="btn-sm" onclick="document.getElementById('new-opp-ov').style.display='none'">Cancel</button>
@@ -1165,31 +1212,73 @@ button{cursor:pointer;font-family:inherit;}
 
 <!-- ═══ New Account ═══════════════════════════════════════════════════ -->
 <div id="new-acc-ov" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:600;justify-content:center;align-items:flex-start;padding:40px 16px;overflow-y:auto">
-  <div style="background:var(--surface);border-radius:12px;padding:28px;width:480px;max-width:100%;box-shadow:0 24px 48px rgba(0,0,0,.25);margin-bottom:24px">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
-      <div><div class="modal-title">New Account</div><div class="modal-sub">Creates a new partner account in Airtable</div></div>
+  <div style="background:var(--surface);border-radius:12px;padding:28px;width:560px;max-width:100%;box-shadow:0 24px 48px rgba(0,0,0,.25);margin-bottom:24px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+      <div class="modal-title">Create Partner Account</div>
       <button class="icon-btn" onclick="document.getElementById('new-acc-ov').style.display='none'">✕</button>
     </div>
-    <div class="form-group"><label class="form-label">Account Name *</label><input class="form-input" id="na-name" placeholder="Organization name"></div>
+    <div class="modal-sub" style="margin-bottom:20px">This form creates an account only. Create a new opportunity separately using the Add New Opportunity form.</div>
+
+    <div style="display:flex;gap:24px;margin-bottom:16px;padding:12px;background:var(--surface2);border-radius:8px;border:1px solid var(--border)">
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;font-weight:600">
+        <input type="checkbox" id="na-program" style="width:16px;height:16px" checked> Program
+      </label>
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer">
+        <input type="checkbox" id="na-peer" style="width:16px;height:16px"> Peer Org Tag
+      </label>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Name <span style="color:var(--crit)">*</span></label>
+      <input class="form-input" id="na-name" placeholder="Organization name">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Website</label>
+      <input class="form-input" id="na-website" type="url" placeholder="https://…">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">State(s)</label>
+      <select class="form-select" id="na-states" multiple size="5" style="height:auto">
+        <option>AL</option><option>AK</option><option>AZ</option><option>AR</option><option>CA</option>
+        <option>CO</option><option>CT</option><option>DE</option><option>DC</option><option>FL</option>
+        <option>GA</option><option>HI</option><option>ID</option><option>IL</option><option>IN</option>
+        <option>IA</option><option>KS</option><option>KY</option><option>LA</option><option>ME</option>
+        <option>MD</option><option>MA</option><option>MI</option><option>MN</option><option>MS</option>
+        <option>MO</option><option>MT</option><option>NE</option><option>NV</option><option>NH</option>
+        <option>NJ</option><option>NM</option><option>NY</option><option>NC</option><option>ND</option>
+        <option>OH</option><option>OK</option><option>OR</option><option>PA</option><option>RI</option>
+        <option>SC</option><option>SD</option><option>TN</option><option>TX</option><option>UT</option>
+        <option>VT</option><option>VA</option><option>WA</option><option>WV</option><option>WI</option>
+        <option>WY</option><option>National</option>
+      </select>
+      <div style="font-size:11px;color:var(--ink3);margin-top:4px">Hold Cmd/Ctrl to select multiple</div>
+    </div>
+
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-      <div class="form-group" style="margin:0"><label class="form-label">Partner Type</label>
-        <select class="form-select" id="na-type">
-          <option value="">— Select —</option>
-          <option>K-12</option><option>Higher Ed</option><option>Nonprofit</option>
-          <option>Government</option><option>Corporate</option><option>Other</option>
-        </select>
+      <div class="form-group" style="margin:0">
+        <label class="form-label">Partner Type</label>
+        <div style="display:flex;flex-direction:column;gap:4px;padding:8px;background:var(--surface2);border-radius:8px;border:1px solid var(--border)">
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer"><input type="checkbox" class="na-type-cb" value="School Partnership"> School Partnership</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer"><input type="checkbox" class="na-type-cb" value="Non Profit Org"> Non Profit Org</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer"><input type="checkbox" class="na-type-cb" value="District Partnership"> District Partnership</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer"><input type="checkbox" class="na-type-cb" value="State Partnership"> State Partnership</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer"><input type="checkbox" class="na-type-cb" value="County Office"> County Office</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer"><input type="checkbox" class="na-type-cb" value="ESC"> ESC</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer"><input type="checkbox" class="na-type-cb" value="Higher Ed"> Higher Ed</label>
+        </div>
       </div>
-      <div class="form-group" style="margin:0"><label class="form-label">Account Status</label>
+      <div class="form-group" style="margin:0">
+        <label class="form-label">Account Status</label>
         <select class="form-select" id="na-status">
           <option value="">— Select —</option>
-          <option>Prospect</option><option>Active</option><option>Inactive</option><option>Former</option>
+          <option>Prospect</option><option>Active</option><option>Inactive</option>
+          <option>On Ice</option><option>Complete</option><option>Expiring Soon</option>
         </select>
       </div>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px">
-      <div class="form-group" style="margin:0"><label class="form-label">State</label><input class="form-input" id="na-state" placeholder="e.g. CA"></div>
-      <div class="form-group" style="margin:0"><label class="form-label">Website</label><input class="form-input" id="na-website" placeholder="https://…" type="url"></div>
-    </div>
+
     <div class="flex gap-8 mt-16">
       <button class="btn-sm primary flex-1" id="na-ok">Save to Airtable</button>
       <button class="btn-sm" onclick="document.getElementById('new-acc-ov').style.display='none'">Cancel</button>
@@ -4262,11 +4351,18 @@ function openNewOpp(){
       .map(a=>`<option value="${a.id}">${esc(gf(a,FA.name)||'')}</option>`).join('');
   const el=document.getElementById('no-account'); if(el) el.innerHTML=accOpts;
   // Reset form
-  ['no-name','no-services','no-cultstart','no-start','no-end','no-notes'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  ['no-name','no-notes'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  document.querySelectorAll('.no-svc-cb').forEach(c=>c.checked=false);
+  document.getElementById('no-opp-status').value='Potential Partner';
+  document.getElementById('no-funding').value='Proposed';
   document.getElementById('new-opp-ov').style.display='flex';
 }
 function openNewAcc(){
-  ['na-name','na-state','na-website'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  ['na-name','na-website'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  document.getElementById('na-program').checked=true;
+  document.getElementById('na-peer').checked=false;
+  document.querySelectorAll('.na-type-cb').forEach(c=>c.checked=false);
+  const st=document.getElementById('na-states'); if(st) [...st.options].forEach(o=>o.selected=false);
   document.getElementById('new-acc-ov').style.display='flex';
 }
 function openNewContact(){
@@ -4299,16 +4395,15 @@ document.getElementById('no-ok').addEventListener('click', async()=>{
   const btn=document.getElementById('no-ok'); btn.disabled=true; btn.textContent='Saving…';
   try{
     const accId=document.getElementById('no-account').value;
-    const svcs=document.getElementById('no-services').value.split(',').map(s=>s.trim()).filter(Boolean);
+    const svcs=[...document.querySelectorAll('.no-svc-cb:checked')].map(c=>c.value);
     const fields={};
     fields[FP.name]=name;
     if(accId) fields[FP.account]=[accId];
     const pipe=document.getElementById('no-pipeline').value; if(pipe) fields[FP.pipeline]=pipe;
+    const oppStatus=document.getElementById('no-opp-status').value; if(oppStatus) fields['fld8L2ZXvoyLXqqpN']=oppStatus;
+    const fiscal=document.getElementById('no-fiscal').value; if(fiscal) fields['fldkzQRgTHdGNZKz0']=fiscal;
     const fund=document.getElementById('no-funding').value; if(fund) fields[FP.fundingStage]=fund;
     if(svcs.length) fields[FP.services]=svcs;
-    const cs=document.getElementById('no-cultstart').value; if(cs) fields[FP.cultStart]=cs;
-    const ws=document.getElementById('no-start').value; if(ws) fields[FP.start]=ws;
-    const we=document.getElementById('no-end').value; if(we) fields[FP.end]=we;
     const notes=document.getElementById('no-notes').value; if(notes) fields[FP.notes]=notes;
     const res=await apiWrite('POST',BASE,T.prt,{fields});
     const rec=res.records?.[0]; if(rec) D.partners.push({id:rec.id,fields:rec.fields||fields});
@@ -4328,9 +4423,13 @@ document.getElementById('na-ok').addEventListener('click', async()=>{
   try{
     const fields={};
     fields[FA.name]=name;
-    const type=document.getElementById('na-type').value; if(type) fields[FA.type]=type;
+    fields['fldhR3ZbUZ2LRm8Kq']=document.getElementById('na-program').checked;
+    fields['fldk4bfo5CHdkvepL']=document.getElementById('na-peer').checked;
+    const states=[...document.getElementById('na-states').selectedOptions].map(o=>o.value);
+    if(states.length) fields['fldCYiwbonMuhIxwf']=states;
+    const types=[...document.querySelectorAll('.na-type-cb:checked')].map(c=>c.value);
+    if(types.length) fields[FA.type]=types;
     const status=document.getElementById('na-status').value; if(status) fields[FA.status]=status;
-    const state=document.getElementById('na-state').value.trim(); if(state) fields[FA.state]=state;
     const web=document.getElementById('na-website').value.trim(); if(web) fields['fld7paoajnUTmkAfb']=web;
     const res=await apiWrite('POST',BASE,T.acc,{fields});
     const rec=res.records?.[0]; if(rec) D.accounts.push({id:rec.id,fields:rec.fields||fields});
