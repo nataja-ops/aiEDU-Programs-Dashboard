@@ -59,7 +59,9 @@ button{cursor:pointer;font-family:inherit;}
 }
 .logo{display:flex;align-items:center;gap:8px;font-weight:700;font-size:15px;color:#fff;white-space:nowrap;flex-shrink:0;}
 .logo-mark{width:28px;height:28px;background:var(--teal-bright);border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--navy);font-weight:700;font-size:13px;flex-shrink:0;}
-#nav{display:flex;gap:2px;flex:1;justify-content:center;overflow-x:auto;}
+#nav{display:flex;gap:2px;justify-content:center;overflow-x:auto;flex:1;}
+.logo{flex:0 1 160px;}
+.topbar-actions{flex:0 1 160px;display:flex;justify-content:flex-end;align-items:center;gap:8px;}
 /* Workspace bar */
 #ws-bar{
   position:sticky;top:var(--topbar-h);z-index:99;
@@ -393,9 +395,9 @@ button{cursor:pointer;font-family:inherit;}
     <button class="nav-tab" data-tab="partnerships">Partnerships</button>
     <button class="nav-tab" data-tab="events">Events</button>
     <button class="nav-tab" data-tab="catalyst">Community Catalyst</button>
+    <button class="nav-tab" data-tab="data-entry">Data Entry</button>
   </nav>
   <div class="topbar-actions">
-    <button class="lead-btn" onclick="openPortal()" style="background:var(--teal);color:#fff;border-color:var(--teal);font-weight:700">+ Add</button>
     <button class="icon-btn" id="refresh-btn" title="Refresh">↻</button>
     <button class="icon-btn" id="theme-btn" title="Toggle theme">◑</button>
     <button class="lead-btn" id="req-btn" onclick="openRequestModal()">✉ Submit Request</button>
@@ -454,6 +456,10 @@ button{cursor:pointer;font-family:inherit;}
         <div class="landing-card" onclick="switchTab('workspace');logUsage('tab:workspace','landing_card')">
           <div class="lc-icon">🗂</div><div class="lc-title">My Workspace</div>
           <div class="lc-sub">Your pipeline and ops report</div>
+        </div>
+        <div class="landing-card" onclick="switchTab('data-entry');logUsage('tab:data-entry','landing_card')">
+          <div class="lc-icon">✏️</div><div class="lc-title">Data Entry</div>
+          <div class="lc-sub">Add opportunities, accounts, and more</div>
         </div>
       </div>
 
@@ -1086,7 +1092,47 @@ button{cursor:pointer;font-family:inherit;}
 
 <div id="toast-wrap"></div>
 
-<!-- ═══ Data Entry Portal ══════════════════════════════════════════════ -->
+<!-- ═══ Data Entry Tab ════════════════════════════════════════════════ -->
+<div class="tab-panel" id="tab-data-entry">
+  <div style="max-width:600px;margin:0 auto;padding:32px 16px">
+    <div class="section-title" style="margin-bottom:4px">Data Entry</div>
+    <div class="section-sub" style="margin-bottom:28px">Add new records directly to Airtable</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px">
+      <button class="portal-btn" onclick="openNewOpp()">
+        <div class="portal-btn-icon">🤝</div>
+        <div class="portal-btn-label">New Opportunity</div>
+        <div class="portal-btn-sub">Create a partnership</div>
+      </button>
+      <button class="portal-btn" onclick="openNewAcc()">
+        <div class="portal-btn-icon">🏢</div>
+        <div class="portal-btn-label">New Account</div>
+        <div class="portal-btn-sub">Add a partner org</div>
+      </button>
+      <button class="portal-btn" onclick="openNewContact()">
+        <div class="portal-btn-icon">👤</div>
+        <div class="portal-btn-label">New Contact</div>
+        <div class="portal-btn-sub">Add a contact person</div>
+      </button>
+      <button class="portal-btn" onclick="openNewMou()">
+        <div class="portal-btn-icon">📄</div>
+        <div class="portal-btn-label">New MOU</div>
+        <div class="portal-btn-sub">Log a program contract</div>
+      </button>
+      <button class="portal-btn" onclick="document.getElementById('log-evt-ov').style.display='flex'">
+        <div class="portal-btn-icon">📅</div>
+        <div class="portal-btn-label">Log Event</div>
+        <div class="portal-btn-sub">Add event / session</div>
+      </button>
+      <button class="portal-btn" onclick="openNewInteraction()">
+        <div class="portal-btn-icon">💬</div>
+        <div class="portal-btn-label">Log Interaction</div>
+        <div class="portal-btn-sub">Record a contact</div>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ Data Entry Portal (modal, kept for legacy) ══════════════════════════ -->
 <div id="portal-ov" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:600;justify-content:center;align-items:center">
   <div style="background:var(--surface);border-radius:16px;padding:32px;width:540px;max-width:calc(100vw - 32px);box-shadow:0 24px 64px rgba(0,0,0,.3)">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
@@ -2276,7 +2322,7 @@ function renderStats() {
   // Participants — all events with standard exclusions (Government, Private Dinner)
   const plParts = D.events.filter(isPLEvent).reduce((s,e)=>s+(+gf(e,FE.parts)||0),0);
   // NPS — average of all non-empty NPS Score (Calculated) rows from NPS by Administration Year
-  const npsYrForStat = D.npsYears.filter(r=>{ const v=+gf(r,FNPS.score); return !isNaN(v)&&gf(r,FNPS.score)!=null; });
+  const npsYrForStat = D.npsYears.filter(r=>{ const raw=gf(r,FNPS.score); if(raw==null||raw==='') return false; const v=+raw; return !isNaN(v)&&isFinite(v); });
   const npsScore = npsYrForStat.length ? Math.round(npsYrForStat.reduce((a,b)=>a+(+gf(b,FNPS.score)||0),0)/npsYrForStat.length) : null;
   // Avg Sat from event feedback (1-5 scale)
   const satArr  = Object.values(EVT_SCORES).map(s=>s.sat).filter(v=>v!=null);
@@ -2287,7 +2333,7 @@ function renderStats() {
   document.getElementById('s-fees').textContent     = f$(awarded);
   document.getElementById('s-events').textContent   = plEvts.length;
   document.getElementById('s-parts').textContent    = plParts.toLocaleString();
-  document.getElementById('s-nps').textContent      = npsScore!=null ? npsScore : '—';
+  document.getElementById('s-nps').textContent      = npsScore!=null ? npsScore+'%' : '—';
   document.getElementById('s-sat').textContent      = avgSat!=null ? avgSat.toFixed(1) : '—';
 }
 
@@ -4345,7 +4391,7 @@ function openPortal(){
       .map(p=>`<option value="${p.id}">${esc(gf(p,FP.name)||'')}</option>`).join('');
   const nmP = document.getElementById('nm-partnership');
   if(nmP) nmP.innerHTML = prtOpts;
-  document.getElementById('portal-ov').style.display='flex';
+  switchTab('data-entry');
 }
 function closePortal(){ document.getElementById('portal-ov').style.display='none'; }
 
