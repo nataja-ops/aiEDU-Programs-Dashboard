@@ -343,6 +343,16 @@ button{cursor:pointer;font-family:inherit;}
 .tracker-bar-wrap{flex:1;height:7px;background:var(--border);border-radius:4px;overflow:hidden;}
 .tracker-bar-fill{height:100%;border-radius:4px;transition:width .5s ease;}
 .tracker-val{width:80px;text-align:right;font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink);}
+/* Partnership timeline */
+.tl-row{display:flex;overflow-x:auto;padding-bottom:8px;gap:0;align-items:flex-start;scrollbar-width:thin;}
+.tl-col{display:flex;flex-direction:column;align-items:center;min-width:88px;flex:1;}
+.tl-dot-wrap{display:flex;align-items:center;width:100%;}
+.tl-line-l,.tl-line-r{flex:1;height:2px;background:var(--border);}
+.tl-dot{width:13px;height:13px;border-radius:50%;border:2.5px solid;flex-shrink:0;z-index:1;box-shadow:0 0 0 3px var(--surface);}
+.tl-label{font-size:10px;font-weight:600;text-align:center;margin-top:7px;margin-bottom:8px;line-height:1.35;white-space:pre-line;letter-spacing:.01em;}
+.tl-cards{display:flex;flex-direction:column;gap:5px;width:100%;padding:0 5px;}
+.tl-card{font-size:11px;font-weight:500;color:var(--ink);cursor:pointer;border:1px solid;border-radius:6px;padding:5px 8px;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;transition:filter .15s;}
+.tl-card:hover{filter:brightness(.92);}
 /* FY26 Goals section */
 .overview-goals-section{background:linear-gradient(135deg,var(--navy) 0%,var(--navy-light) 100%);border-radius:var(--radius);padding:20px;margin-bottom:16px;}
 .overview-goals-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.10em;color:var(--teal-bright);margin-bottom:12px;}
@@ -505,6 +515,15 @@ button{cursor:pointer;font-family:inherit;}
         <div class="section-sub mb-12">Missing fields on your partnerships — click any item to open and update</div>
         <div id="ws-missing"><div class="empty-state">Loading…</div></div>
       </div>
+    </div>
+
+    <!-- Partnership Timeline -->
+    <div class="card mb-16" style="padding:20px 20px 16px">
+      <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:4px">
+        <div class="section-title">Partnership Workflow</div>
+      </div>
+      <div class="section-sub" style="margin-bottom:20px">Where each partnership stands in the workflow — click any card to open</div>
+      <div id="ws-timeline"><div class="empty-state">Loading…</div></div>
     </div>
 
     <!-- New in My Portfolio -->
@@ -2389,7 +2408,7 @@ function renderAll() {
   renderSurveys();
   renderContent();
   renderCatalyst();
-  if(LEAD){ renderWorkspacePipeline(); renderWorkspaceOps(); }
+  if(LEAD){ renderWorkspacePipeline(); renderWorkspaceTimeline(); renderWorkspaceOps(); }
   addExpandButtons();
 }
 
@@ -2896,6 +2915,24 @@ function openPartnerProfile(id){
       <div class="acc-field-row" style="padding:5px 0"><span class="acc-field-key">MOU Status</span><span class="acc-field-val">${mouSigned?`<span class="pill pill-good">✓ Signed${mouDateStr?' · '+mouDateStr:''}</span>`:`<span class="pill pill-gray">Not Signed</span>`}</span></div>
       <div class="acc-field-row" style="padding:5px 0"><span class="acc-field-key">FY26 Fees</span><span class="acc-field-val"><strong>${f$(gf(p,FP.fy26))}</strong>${dEnd!=null?' '+daysChip(dEnd):''}</span></div>
       <div class="acc-field-row" style="padding:5px 0;border-bottom:none"><span class="acc-field-key">Missing Info</span><span class="acc-field-val">${gf(p,FP.missing)||'<span style="color:var(--good)">None</span>'}</span></div>
+    </div>
+    <div style="margin-bottom:16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink3)">Fee for Service</div>
+        <button class="btn-sm" style="font-size:11px;padding:3px 10px" onclick="closeAccModal();openNewFee('${id}')">+ Add Fee</button>
+      </div>
+      ${(()=>{
+        const pName = gf(p,FP.name)||'';
+        const pFees = D.fees.filter(f=>ga(f,FF.name).map(v=>typeof v==='object'?v.name:v).some(n=>n===pName))
+          .sort((a,b)=>(gf(a,FF.fy)||'').localeCompare(gf(b,FF.fy)||''));
+        if(!pFees.length) return '<div style="font-size:11px;color:var(--ink3)">No fee records on file</div>';
+        return pFees.map(f=>`<div style="display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid var(--border);font-size:12px">
+          <span style="font-weight:600;color:var(--ink);min-width:48px">${esc(gf(f,FF.fy)||'—')}</span>
+          <span style="color:var(--ink);font-weight:500">${f$(gf(f,FF.amount))}</span>
+          <span style="flex:1;font-size:11px;color:var(--ink3)">${esc(gf(f,FF.funding)||'')}</span>
+          <a href="https://airtable.com/${BASE}/${T.fee}/${f.id}" target="_blank" style="font-size:10px;color:var(--teal);text-decoration:none">↗</a>
+        </div>`).join('');
+      })()}
     </div>
     <div style="margin-bottom:16px">
       <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink3);margin-bottom:8px">Assessments</div>
@@ -4142,6 +4179,54 @@ function renderWorkspacePipeline() {
   }).join('');
 }
 
+// ── Partnership Workflow Timeline ─────────────────────────────────────────────
+function renderWorkspaceTimeline() {
+  if(!LEAD) return;
+  const el = document.getElementById('ws-timeline'); if(!el) return;
+  const viewName = (WS_VIEWING || LEAD.name).trim().toLowerCase();
+  const teamNames = p => ga(p,FP.team).map(v=>typeof v==='object'?v.name:v);
+
+  const WORKFLOW = ['Relationship Building','Initial Contact','Early Exploration','Proposal/SOW Writing','SOW sent','Verbal Agreement','Collaboration','MOU Sent','MOU Signed','MOU Complete'];
+  const ABBREV = {
+    'Relationship Building':'Relationship\nBuilding','Initial Contact':'Initial\nContact',
+    'Early Exploration':'Early\nExploration','Proposal/SOW Writing':'Proposal /\nSOW Writing',
+    'SOW sent':'SOW Sent','Verbal Agreement':'Verbal\nAgreement','Collaboration':'Collaboration',
+    'MOU Sent':'MOU Sent','MOU Signed':'MOU Signed','MOU Complete':'MOU\nComplete'
+  };
+
+  const mine = D.partners.filter(p=>teamNames(p).some(x=>x.trim().toLowerCase()===viewName)&&WORKFLOW.includes(gf(p,FP.pipeline)));
+
+  if(!mine.length){
+    el.innerHTML='<div class="empty-state">No active partnerships in the workflow</div>';
+    return;
+  }
+
+  const byStage = {};
+  WORKFLOW.forEach(s=>byStage[s]=[]);
+  mine.forEach(p=>{ const s=gf(p,FP.pipeline); if(s) byStage[s].push(p); });
+
+  const cols = WORKFLOW.map((stage,idx)=>{
+    const color = STAGE_COLORS[stage]||'#64748b';
+    const partners = byStage[stage];
+    const active = partners.length > 0;
+    const cards = partners.map(p=>
+      `<div class="tl-card" style="border-color:${color}55;background:${color}14" onclick="openPartnerProfile('${p.id}')" title="${esc(gf(p,FP.name)||'')}">${esc(gf(p,FP.name)||'—')}</div>`
+    ).join('');
+    const isFirst = idx===0, isLast = idx===WORKFLOW.length-1;
+    return `<div class="tl-col">
+      <div class="tl-dot-wrap">
+        ${!isFirst?`<div class="tl-line-l"></div>`:'<div style="flex:1"></div>'}
+        <div class="tl-dot" style="background:${active?color:'var(--border)'};border-color:${active?color:'var(--border)'}"></div>
+        ${!isLast?`<div class="tl-line-r"></div>`:'<div style="flex:1"></div>'}
+      </div>
+      <div class="tl-label" style="color:${active?'var(--ink)':'var(--ink3)'}">${ABBREV[stage]||stage}</div>
+      <div class="tl-cards">${cards}</div>
+    </div>`;
+  });
+
+  el.innerHTML = `<div class="tl-row">${cols.join('')}</div>`;
+}
+
 // ── Workspace Ops Dashboard ───────────────────────────────────────────────────
 function renderWorkspaceOps() {
   if(!LEAD) return;
@@ -4567,6 +4652,7 @@ function handleGoogleCredential(response){
       WS_VIEWING = wsSel.value;
       document.getElementById('lead-name-disp').textContent = WS_VIEWING;
       renderWorkspacePipeline();
+      renderWorkspaceTimeline();
       renderWorkspaceOps();
     };
   }
@@ -4575,7 +4661,7 @@ function handleGoogleCredential(response){
   document.getElementById('dashboard-wrap').classList.add('visible');
   document.getElementById('lead-name-disp').textContent = LEAD.name;
   switchTab('landing');
-  if(D.partners.length){ renderLanding(); if(hasWorkspace){ renderWorkspacePipeline(); renderWorkspaceOps(); } }
+  if(D.partners.length){ renderLanding(); if(hasWorkspace){ renderWorkspacePipeline(); renderWorkspaceTimeline(); renderWorkspaceOps(); } }
   logUsage('login','Landing');
   toast('Welcome, '+LEAD.name+'!','success');
 }
@@ -4677,13 +4763,13 @@ function openNewInteraction(){
   document.getElementById('new-int-ov').style.display='flex';
 }
 let _nfPrtOpts='';
-function addFeeRow(){
+function addFeeRow(preselectedPrtId){
   const tbody=document.getElementById('nf-rows'); if(!tbody) return;
-  const idx=tbody.children.length;
+  const opts=_nfPrtOpts.replace(`value="${preselectedPrtId||'__none__'}"`,`value="${preselectedPrtId||'__none__'}" selected`);
   const tr=document.createElement('tr');
   tr.innerHTML=`
     <td style="padding:3px 6px 3px 0">
-      <select class="form-select nf-prt" style="width:100%;font-size:12px">${_nfPrtOpts}</select>
+      <select class="form-select nf-prt" style="width:100%;font-size:12px">${opts}</select>
     </td>
     <td style="padding:3px 6px">
       <select class="form-select nf-fy" style="width:100%;font-size:12px">
@@ -4699,13 +4785,13 @@ function addFeeRow(){
     </td>`;
   tbody.appendChild(tr);
 }
-function openNewFee(){
+function openNewFee(preselectedPrtId){
   _nfPrtOpts='<option value="">— Partnership —</option>'+
     D.partners.slice().sort((a,b)=>(gf(a,FP.name)||'').localeCompare(gf(b,FP.name)||''))
       .map(p=>`<option value="${p.id}">${esc(gf(p,FP.name)||'')}</option>`).join('');
   const tbody=document.getElementById('nf-rows');
   if(tbody){ tbody.innerHTML=''; }
-  addFeeRow();
+  addFeeRow(preselectedPrtId||null);
   document.getElementById('new-fee-ov').style.display='flex';
 }
 async function saveNewFee(){
