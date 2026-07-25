@@ -645,6 +645,7 @@ button{cursor:pointer;font-family:inherit;}
       <button class="btn-sm" data-prttab="contacts">Contacts</button>
       <button class="btn-sm" data-prttab="contracts">Contracts</button>
       <button class="btn-sm" data-prttab="feedback">Partner Feedback</button>
+      <button class="btn-sm" data-prttab="assessments">Assessments</button>
     </div>
 
     <!-- Partnerships sub-view -->
@@ -793,6 +794,29 @@ button{cursor:pointer;font-family:inherit;}
           <tbody><tr><td colspan="8" class="empty-state">Loading…</td></tr></tbody>
         </table>
       </div>
+    <div id="prt-assessments-view" style="display:none">
+      <div class="section-hd mb-16">
+        <div><div class="section-title">Internal Partner Assessments</div><div class="section-sub">AI Readiness Rubric results by partnership — Pre-Assessment, Goals, Check-In, and Final</div></div>
+        <div class="flex gap-8 items-center">
+          <select class="form-select" id="f-asmt-type" style="width:auto">
+            <option value="">All Types</option>
+            <option>Pre-Assessment</option>
+            <option>Goals</option>
+            <option>Check-In</option>
+            <option>Final Assessment</option>
+            <option>Not Applicable</option>
+          </select>
+          <input class="form-input" id="f-asmt-search" placeholder="Search partner…" style="width:160px">
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin-bottom:20px" id="asmt-kpis"></div>
+      <div class="card table-wrap">
+        <table class="data-table" id="asmt-tbl">
+          <thead><tr><th>Partnership</th><th>Type</th><th>Date</th><th>Vision</th><th>Strategy</th><th>Stakeholders</th><th>Policy</th><th>Notes</th><th></th></tr></thead>
+          <tbody><tr><td colspan="9" class="empty-state">Loading…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
     </div>
   </div>
 
@@ -1556,6 +1580,7 @@ const T = {
   usage:'tblzPhlFTLhW5JLeB',
   contact:'tblfVziiqmyIci0r0',
   interact:'tblNrIYLnxFswHXQO',
+  asmt:'tblC8Zfw2iJrDKjw4',
 };
 // NPS by Administration Year fields
 const FNPS = {
@@ -1598,6 +1623,24 @@ const FF = {
   name:'fldm0J2jZ5FNoeij4', amount:'fld74B4jxPOYfABSr', fy:'fldueOo2EOiAGsWev',
   pipeline:'fldEz8N4Ct9efAPcl', team:'fld0orJul8RatY2gf',
   funding:'fld8htK5AFFWuroAW',  // "Funding Stage (from Associated Partnership)"
+};
+const FASMT = {
+  name:      'fldStUxcFNwZ0rI4K', // Assessment Name
+  prtText:   'fldEyeCm7xgXgpJuX', // Partnership (text lookup)
+  type:      'fldkoYCEA1wUZZc59', // Assessment Type (singleSelect)
+  date:      'fldELmzUfPB6V1tRH', // Date
+  opportunity:'fldqTzDaUUe3lbev1', // Opportunity (linked records)
+  notes:     'fldpyaIZIZwpM62Ud', // Notes
+  // Domain scores
+  visionStudents:    'fldzlgd9wR15A8p9H',
+  visionSystem:      'fldlWe8I2RaIprTz1',
+  visionInstruction: 'fldBFj8cHEqQ2FoGO',
+  strategySet:       'fldPhOIWICNrWPZmn',
+  strategyChange:    'fldzOALjkWSqqePdU',
+  stakeCon:          'fldVdMU7dfVG5LPs1',
+  stakeEngage:       'fldx7fT7FDCN65a89',
+  stakeComm:         'fldWuWVlH7HW9Zy6o',
+  policyGuard:       'fldDsQkVKf81z5F0p',
 };
 const FM = {
   contract:'fldwdDFVJ51CcOqxv', begins:'fldxzUbvz1RYElzjG', ends:'fldEANQWfvf7PTYEV',
@@ -1707,7 +1750,7 @@ const STAGE_ORDER = [
 ];
 
 // ── State ────────────────────────────────────────────────────────────────────
-let D = { partners:[], fees:[], mous:[], events:[], feedback:[], surveys:[], staff:[], catalyst:[], accounts:[], npsYears:[], plSessions:[], plProducts:[] };
+let D = { partners:[], fees:[], mous:[], events:[], feedback:[], surveys:[], staff:[], catalyst:[], accounts:[], npsYears:[], plSessions:[], plProducts:[], assessments:[] };
 let EVT_SCORES = {}; // eventId → { sat, facEff, objMet, before, after, nps }
 let LEAD = null;
 let CHARTS = {};
@@ -2197,7 +2240,7 @@ function buildEventScores() {
 // ── Load ──────────────────────────────────────────────────────────────────────
 const FY26_START = '2025-12-31';
 const FY26_END   = '2027-01-01';
-const CACHE_KEY  = 'aiedu_dash_v29';
+const CACHE_KEY  = 'aiedu_dash_v30';
 const CACHE_TTL  = 3 * 60 * 1000; // 3 minutes
 
 function loadProgress(pct) {
@@ -2230,7 +2273,7 @@ async function fetchFresh() {
   const fPLS = Object.values(FPLS);
   const fPLP = Object.values(FPLP);
 
-  const [partners, fees, mous, staff, surveys, events, feedback, catalyst, accounts, npsYears, plSessions, plProducts] = await Promise.all([
+  const [partners, fees, mous, staff, surveys, events, feedback, catalyst, accounts, npsYears, plSessions, plProducts, assessments] = await Promise.all([
     atFetch(BASE, T.prt, fPrt),
     atFetch(BASE, T.fee, fFee, feeFilter),
     atFetch(BASE, T.mou, fMou),
@@ -2243,8 +2286,9 @@ async function fetchFresh() {
     atFetch(BASE, T.npsYr, Object.values(FNPS)),
     atFetch(BASE, T.plSess, fPLS),
     atFetch(BASE, T.plProd, fPLP),
+    atFetch(BASE, T.asmt, Object.values(FASMT)),
   ]);
-  return { partners, fees, mous, events, feedback, surveys, staff, catalyst, accounts, npsYears, plSessions, plProducts };
+  return { partners, fees, mous, events, feedback, surveys, staff, catalyst, accounts, npsYears, plSessions, plProducts, assessments };
 }
 
 async function loadAll() {
@@ -3152,6 +3196,82 @@ function renderFeedback() {
 
 }
 
+// ── Assessments ───────────────────────────────────────────────────────────────
+const ASMT_TYPE_COLOR = {
+  'Pre-Assessment':'#3b82f6','Goals':'#f59e0b','Check-In':'#8b5cf6',
+  'Final Assessment':'#10b981','Not Applicable':'#94a3b8'
+};
+function asmtAvg(r, fields){ const vals=fields.map(f=>+gf(r,f)).filter(v=>v>0); return vals.length?vals.reduce((a,b)=>a+b)/vals.length:null; }
+
+function renderAssessments(){
+  const typeFilter = (document.getElementById('f-asmt-type')||{}).value||'';
+  const search = ((document.getElementById('f-asmt-search')||{}).value||'').toLowerCase();
+
+  let rows = [...D.assessments].sort((a,b)=>(gf(b,FASMT.date)||'').localeCompare(gf(a,FASMT.date)||''));
+  if(typeFilter) rows = rows.filter(r=>(gf(r,FASMT.type)||'')===typeFilter);
+  if(search) rows = rows.filter(r=>(gf(r,FASMT.prtText)||'').toLowerCase().includes(search));
+
+  // KPIs
+  const allByPrt = new Set(D.assessments.map(r=>gf(r,FASMT.prtText)).filter(Boolean));
+  const naSet = new Set(D.assessments.filter(r=>(gf(r,FASMT.type)||'')==='Not Applicable').map(r=>gf(r,FASMT.prtText)));
+  const withAssmt = new Set(D.assessments.filter(r=>(gf(r,FASMT.type)||'')!=='Not Applicable').map(r=>gf(r,FASMT.prtText)));
+  const activePrt = D.partners.filter(p=>['MOU Signed','MOU Sent','MOU Complete','Collaboration','Verbal Agreement'].includes(gf(p,FP.pipeline)));
+  const missingCount = activePrt.filter(p=>{ const n=gf(p,FP.name); return n && !allByPrt.has(n) && !naSet.has(n); }).length;
+  const byType = {};
+  D.assessments.forEach(r=>{ const t=gf(r,FASMT.type)||'Other'; byType[t]=(byType[t]||0)+1; });
+
+  const kpiEl = document.getElementById('asmt-kpis');
+  if(kpiEl) kpiEl.innerHTML = [
+    {l:'Assessed Partners', v:withAssmt.size, c:'var(--teal)'},
+    {l:'Missing Assessment', v:missingCount, c:'#e07b1e'},
+    {l:'N/A', v:naSet.size, c:'#94a3b8'},
+    {l:'Pre-Assessment', v:byType['Pre-Assessment']||0, c:'#3b82f6'},
+    {l:'Goals', v:byType['Goals']||0, c:'#f59e0b'},
+    {l:'Check-In', v:byType['Check-In']||0, c:'#8b5cf6'},
+    {l:'Final Assessment', v:byType['Final Assessment']||0, c:'#10b981'},
+  ].map(k=>`<div class="card" style="padding:12px 14px;text-align:center">
+    <div style="font-size:22px;font-weight:700;color:${k.c}">${k.v}</div>
+    <div style="font-size:11px;color:var(--ink3);margin-top:2px">${k.l}</div>
+  </div>`).join('');
+
+  // Table
+  const VISION_FIELDS = [FASMT.visionStudents, FASMT.visionSystem, FASMT.visionInstruction];
+  const STRAT_FIELDS  = [FASMT.strategySet, FASMT.strategyChange];
+  const STAKE_FIELDS  = [FASMT.stakeCon, FASMT.stakeEngage, FASMT.stakeComm];
+  const POLICY_FIELDS = [FASMT.policyGuard];
+
+  const tbody = rows.map(r=>{
+    const type = gf(r,FASMT.type)||'—';
+    const color = ASMT_TYPE_COLOR[type]||'#64748b';
+    const vision = asmtAvg(r,VISION_FIELDS); const strat = asmtAvg(r,STRAT_FIELDS);
+    const stake = asmtAvg(r,STAKE_FIELDS);   const policy = asmtAvg(r,POLICY_FIELDS);
+    const score = v => v!=null ? `<span style="font-weight:600">${v.toFixed(1)}</span>/4` : '—';
+    const prt = gf(r,FASMT.prtText)||'—';
+    const p = D.partners.find(x=>(gf(x,FP.name)||'')===(gf(r,FASMT.prtText)||''));
+    const prtLink = p ? `<span class="drill-link" onclick="openPartnerProfile('${p.id}')">${esc(prt)}</span>` : esc(prt);
+    const notes = esc(gf(r,FASMT.notes)||'');
+    return `<tr>
+      <td>${prtLink}</td>
+      <td><span style="background:${color}22;color:${color};padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600">${esc(type)}</span></td>
+      <td>${fdt(gf(r,FASMT.date))}</td>
+      <td>${score(vision)}</td>
+      <td>${score(strat)}</td>
+      <td>${score(stake)}</td>
+      <td>${score(policy)}</td>
+      <td style="max-width:180px;white-space:normal;font-size:11px;color:var(--ink2)">${notes}</td>
+      <td><a href="https://airtable.com/appgdtYPttWwiBZzA/tblC8Zfw2iJrDKjw4/${r.id}" target="_blank" class="drill-link" style="font-size:11px">Open ↗</a></td>
+    </tr>`;
+  }).join('') || `<tr><td colspan="9" class="empty-state">No assessments found</td></tr>`;
+
+  const tbl = document.getElementById('asmt-tbl');
+  if(tbl) tbl.querySelector('tbody').innerHTML = tbody;
+
+  // Wire filters
+  ['f-asmt-type','f-asmt-search'].forEach(id=>{
+    const el=document.getElementById(id); if(el&&!el._asmtBound){ el._asmtBound=true; el.addEventListener('input',renderAssessments); }
+  });
+}
+
 // ── Partner Surveys ───────────────────────────────────────────────────────────
 function renderSurveys(f={}) {
   const seasons = [...new Set(D.surveys.map(s=>gf(s,FS.season)).filter(Boolean))].sort();
@@ -3985,6 +4105,30 @@ function renderWorkspaceOps() {
       <span class="ops-item-action">Open →</span>
     </div>`).join('');
   }
+
+  // Assessment reminders — active partnerships missing Pre-Assessment or Goals
+  const asmtedNames = new Set(D.assessments.map(r=>gf(r,FASMT.prtText)).filter(Boolean));
+  const naNames = new Set(D.assessments.filter(r=>(gf(r,FASMT.type)||'')==='Not Applicable').map(r=>gf(r,FASMT.prtText)));
+  const goalsNames = new Set(D.assessments.filter(r=>(gf(r,FASMT.type)||'')==='Goals').map(r=>gf(r,FASMT.prtText)));
+  const ACTIVE_STAGES = new Set(['MOU Sent','MOU Signed','MOU Complete','Collaboration','Verbal Agreement']);
+  const needsAsmt = mine.filter(p=>{
+    const n=gf(p,FP.name); if(!n) return false;
+    if(naNames.has(n)) return false;
+    if(!ACTIVE_STAGES.has(gf(p,FP.pipeline)||'')) return false;
+    return !asmtedNames.has(n);
+  });
+  const needsGoals = mine.filter(p=>{
+    const n=gf(p,FP.name); if(!n) return false;
+    if(naNames.has(n)||goalsNames.has(n)) return false;
+    if(!ACTIVE_STAGES.has(gf(p,FP.pipeline)||'')) return false;
+    return asmtedNames.has(n);
+  });
+  if(needsAsmt.length||needsGoals.length){
+    remHtml += `<div class="ops-section-lbl">Assessment Reminders</div>`;
+    needsAsmt.forEach(p=>{ remHtml+=`<div class="ops-item" onclick="openPartnerProfile('${p.id}')"><div class="ops-dot" style="background:#3b82f6"></div><div class="ops-item-body"><div class="ops-item-name">${esc(gf(p,FP.name)||'—')}</div><div class="ops-item-meta">No assessment on file</div></div><span class="ops-item-action">Open →</span></div>`; });
+    needsGoals.forEach(p=>{ remHtml+=`<div class="ops-item" onclick="openPartnerProfile('${p.id}')"><div class="ops-dot" style="background:#f59e0b"></div><div class="ops-item-body"><div class="ops-item-name">${esc(gf(p,FP.name)||'—')}</div><div class="ops-item-meta">Goals assessment needed</div></div><span class="ops-item-action">Open →</span></div>`; });
+  }
+
   remEl.innerHTML = remHtml || '<div class="empty-state">Nothing due this week</div>';
 
   // ── Data quality ──────────────────────────────────────────────────────
@@ -4691,18 +4835,20 @@ document.querySelectorAll('[data-ctab]').forEach(btn=>{
 document.querySelectorAll('[data-prttab]').forEach(btn=>{
   btn.addEventListener('click',()=>{
     const tab=btn.dataset.prttab;
-    document.getElementById('prt-partners-view').style.display  = tab==='partners'?'':'none';
-    document.getElementById('prt-feedback-view').style.display  = tab==='feedback'?'':'none';
-    document.getElementById('prt-accounts-view').style.display  = tab==='accounts'?'':'none';
-    document.getElementById('prt-contacts-view').style.display  = tab==='contacts'?'':'none';
-    document.getElementById('prt-contracts-view').style.display = tab==='contracts'?'':'none';
+    document.getElementById('prt-partners-view').style.display    = tab==='partners'?'':'none';
+    document.getElementById('prt-feedback-view').style.display    = tab==='feedback'?'':'none';
+    document.getElementById('prt-accounts-view').style.display    = tab==='accounts'?'':'none';
+    document.getElementById('prt-contacts-view').style.display    = tab==='contacts'?'':'none';
+    document.getElementById('prt-contracts-view').style.display   = tab==='contracts'?'':'none';
+    document.getElementById('prt-assessments-view').style.display = tab==='assessments'?'':'none';
     document.querySelectorAll('[data-prttab]').forEach(b=>{
       b.classList.toggle('primary', b.dataset.prttab===tab);
     });
-    if(tab==='contracts') renderContracts();
-    if(tab==='accounts')  renderAccountsTab();
-    if(tab==='contacts')  loadAndRenderContacts();
-    if(tab==='feedback')  renderSurveys();
+    if(tab==='contracts')   renderContracts();
+    if(tab==='accounts')    renderAccountsTab();
+    if(tab==='contacts')    loadAndRenderContacts();
+    if(tab==='feedback')    renderSurveys();
+    if(tab==='assessments') renderAssessments();
   });
 });
 
