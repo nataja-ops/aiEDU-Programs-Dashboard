@@ -1214,30 +1214,31 @@ button{cursor:pointer;font-family:inherit;}
 </div>
 
 <!-- ═══ New Fee for Service ══════════════════════════════════════════ -->
-<div id="new-fee-ov" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:620;justify-content:center;align-items:center">
-  <div style="background:var(--surface);border-radius:12px;padding:28px;width:480px;max-width:calc(100vw - 32px);box-shadow:0 24px 48px rgba(0,0,0,.25)">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-      <div><div class="modal-title">Add Fee for Service</div><div class="modal-sub">Log contracted fees to Airtable</div></div>
+<div id="new-fee-ov" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:620;justify-content:center;align-items:flex-start;padding:40px 16px;overflow-y:auto">
+  <div style="background:var(--surface);border-radius:12px;padding:28px;width:680px;max-width:100%;box-shadow:0 24px 48px rgba(0,0,0,.25)">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+      <div class="modal-title">Add Fees for Service</div>
       <button class="icon-btn" onclick="document.getElementById('new-fee-ov').style.display='none'">✕</button>
     </div>
-    <div class="form-group">
-      <label class="form-label">Partnership *</label>
-      <select class="form-select" id="nf-partnership"></select>
-    </div>
-    <div class="form-group">
-      <label class="form-label">Fiscal Year *</label>
-      <select class="form-select" id="nf-fy">
-        <option value="">— Select —</option>
-        <option>FY25</option><option>FY26</option><option>FY27</option><option>FY28</option>
-      </select>
-    </div>
-    <div class="form-group">
-      <label class="form-label">Amount ($) *</label>
-      <input class="form-input" type="number" id="nf-amount" placeholder="e.g. 25000" min="0">
-    </div>
-    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:20px">
+    <div class="modal-sub" style="margin-bottom:20px">Add multiple fee entries at once — each row saves as a separate record</div>
+
+    <table style="width:100%;border-collapse:collapse;margin-bottom:4px">
+      <thead>
+        <tr>
+          <th style="text-align:left;font-size:11px;font-weight:600;color:var(--ink3);padding:0 6px 6px 0;width:45%">Partnership *</th>
+          <th style="text-align:left;font-size:11px;font-weight:600;color:var(--ink3);padding:0 6px 6px;width:18%">Fiscal Year *</th>
+          <th style="text-align:left;font-size:11px;font-weight:600;color:var(--ink3);padding:0 6px 6px;width:25%">Amount ($) *</th>
+          <th style="width:32px"></th>
+        </tr>
+      </thead>
+      <tbody id="nf-rows"></tbody>
+    </table>
+
+    <button class="btn-sm" style="margin-bottom:20px" onclick="addFeeRow()">+ Add Row</button>
+
+    <div style="display:flex;gap:8px;justify-content:flex-end">
       <button class="btn-sm" onclick="document.getElementById('new-fee-ov').style.display='none'">Cancel</button>
-      <button class="btn-sm primary" onclick="saveNewFee()">Save to Airtable</button>
+      <button class="btn-sm primary" id="nf-save-btn" onclick="saveNewFee()">Save All to Airtable</button>
     </div>
   </div>
 </div>
@@ -4675,31 +4676,62 @@ function openNewInteraction(){
   const nd=document.getElementById('ni-date');if(nd)nd.value=new Date().toISOString().slice(0,10);
   document.getElementById('new-int-ov').style.display='flex';
 }
+let _nfPrtOpts='';
+function addFeeRow(){
+  const tbody=document.getElementById('nf-rows'); if(!tbody) return;
+  const idx=tbody.children.length;
+  const tr=document.createElement('tr');
+  tr.innerHTML=`
+    <td style="padding:3px 6px 3px 0">
+      <select class="form-select nf-prt" style="width:100%;font-size:12px">${_nfPrtOpts}</select>
+    </td>
+    <td style="padding:3px 6px">
+      <select class="form-select nf-fy" style="width:100%;font-size:12px">
+        <option value="">— FY —</option>
+        <option>FY25</option><option>FY26</option><option>FY27</option><option>FY28</option>
+      </select>
+    </td>
+    <td style="padding:3px 6px">
+      <input class="form-input nf-amt" type="number" placeholder="0" min="0" style="width:100%;font-size:12px">
+    </td>
+    <td style="padding:3px 0 3px 4px">
+      <button class="icon-btn" style="font-size:14px;color:var(--ink3)" onclick="this.closest('tr').remove()" title="Remove row">✕</button>
+    </td>`;
+  tbody.appendChild(tr);
+}
 function openNewFee(){
-  const prtOpts='<option value="">— Select partnership —</option>'+
+  _nfPrtOpts='<option value="">— Partnership —</option>'+
     D.partners.slice().sort((a,b)=>(gf(a,FP.name)||'').localeCompare(gf(b,FP.name)||''))
       .map(p=>`<option value="${p.id}">${esc(gf(p,FP.name)||'')}</option>`).join('');
-  const sel=document.getElementById('nf-partnership'); if(sel) sel.innerHTML=prtOpts;
-  ['nf-fy','nf-amount'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  const tbody=document.getElementById('nf-rows');
+  if(tbody){ tbody.innerHTML=''; }
+  addFeeRow();
   document.getElementById('new-fee-ov').style.display='flex';
 }
 async function saveNewFee(){
-  const prtId=document.getElementById('nf-partnership').value;
-  const fy=(document.getElementById('nf-fy').value||'').trim();
-  const amount=parseFloat(document.getElementById('nf-amount').value);
-  if(!prtId){toast('Select a partnership','info');return;}
-  if(!fy){toast('Select a fiscal year','info');return;}
-  if(!amount||amount<=0){toast('Enter a valid amount','info');return;}
-  const btn=document.querySelector('#new-fee-ov .primary'); btn.disabled=true; btn.textContent='Saving…';
+  const rows=[...document.querySelectorAll('#nf-rows tr')];
+  if(!rows.length){toast('Add at least one row','info');return;}
+  const records=[];
+  for(const tr of rows){
+    const prtId=tr.querySelector('.nf-prt')?.value||'';
+    const fy=tr.querySelector('.nf-fy')?.value||'';
+    const amt=parseFloat(tr.querySelector('.nf-amt')?.value||'');
+    if(!prtId||!fy||!amt||amt<=0){toast('Fill in all fields for each row','info');return;}
+    records.push({fields:{'fldr0O655WNWgy0qK':[prtId],'fldueOo2EOiAGsWev':fy,'fld74B4jxPOYfABSr':amt}});
+  }
+  const btn=document.getElementById('nf-save-btn'); btn.disabled=true; btn.textContent='Saving…';
   try{
-    const fields={'fldr0O655WNWgy0qK':[prtId],'fldueOo2EOiAGsWev':fy,'fld74B4jxPOYfABSr':amount};
-    const res=await apiWrite('POST',BASE,T.fee,{records:[{fields}]});
-    if(res.records?.[0]?.id){
-      toast('Fee saved!','success');
-      document.getElementById('new-fee-ov').style.display='none';
-    } else { toast('Save failed','error'); }
+    // Airtable allows max 10 records per batch POST
+    const chunks=[]; for(let i=0;i<records.length;i+=10) chunks.push(records.slice(i,i+10));
+    let saved=0;
+    for(const chunk of chunks){
+      const res=await apiWrite('POST',BASE,T.fee,{records:chunk});
+      saved+=(res.records||[]).length;
+    }
+    toast(`${saved} fee${saved!==1?'s':''} saved!`,'success');
+    document.getElementById('new-fee-ov').style.display='none';
   } catch(e){ toast('Error: '+e.message,'error'); }
-  finally{ btn.disabled=false; btn.textContent='Save to Airtable'; }
+  finally{ btn.disabled=false; btn.textContent='Save All to Airtable'; }
 }
 
 // Save: New Opportunity
