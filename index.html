@@ -2897,6 +2897,27 @@ function openPartnerProfile(id){
       <div class="acc-field-row" style="padding:5px 0;border-bottom:none"><span class="acc-field-key">Missing Info</span><span class="acc-field-val">${gf(p,FP.missing)||'<span style="color:var(--good)">None</span>'}</span></div>
     </div>
     <div style="margin-bottom:16px">
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink3);margin-bottom:8px">Assessments</div>
+      ${(()=>{
+        const pName = gf(p,FP.name)||'';
+        const asmts = D.assessments.filter(r=>gf(r,FASMT.prtText)===pName).sort((a,b)=>(gf(a,FASMT.date)||'').localeCompare(gf(b,FASMT.date)||''));
+        if(!asmts.length) return '<div style="font-size:11px;color:var(--ink3)">No assessments on file</div>';
+        return asmts.map(a=>{
+          const type=gf(a,FASMT.type)||'—';
+          const color=ASMT_TYPE_COLOR[type]||'#64748b';
+          const scores=[FASMT.visionStudents,FASMT.visionSystem,FASMT.visionInstruction,FASMT.strategySet,FASMT.strategyChange,FASMT.stakeCon,FASMT.stakeEngage,FASMT.stakeComm,FASMT.policyGuard]
+            .map(f=>+gf(a,f)).filter(v=>v>0);
+          const avg=scores.length?(scores.reduce((a,b)=>a+b)/scores.length).toFixed(1):'—';
+          return `<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border)">
+            <span style="background:${color}22;color:${color};padding:1px 8px;border-radius:10px;font-size:11px;font-weight:600;white-space:nowrap">${esc(type)}</span>
+            <span style="font-size:11px;color:var(--ink2);flex:1">${fdt(gf(a,FASMT.date))}</span>
+            ${avg!=='—'?`<span style="font-size:12px;font-weight:600;color:var(--ink)">${avg}/4</span>`:''}
+            <a href="https://airtable.com/appgdtYPttWwiBZzA/tblC8Zfw2iJrDKjw4/${a.id}" target="_blank" style="font-size:10px;color:var(--teal)">↗</a>
+          </div>`;
+        }).join('');
+      })()}
+    </div>
+    <div style="margin-bottom:16px">
       <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink3);margin-bottom:6px">Change Log</div>
       <div style="max-height:110px;overflow-y:auto;margin-bottom:8px">${logHtml}</div>
       <div style="display:flex;gap:6px">
@@ -3074,13 +3095,27 @@ function renderContracts(f={}) {
         </div>`).join('');
 
   // Fee pipeline chart
-  const fByStage = {};
   const feesFY = (document.querySelector('[data-feesfy].active')||{}).dataset?.feesfy || 'FY26';
   document.getElementById('fees-pipe-fy-lbl').textContent = feesFY;
-  D.fees.filter(f=>gf(f,FF.fy)===feesFY).forEach(f=>{ const s=gf(f,FF.pipeline)||'Other'; fByStage[s]=(fByStage[s]||0)+(+gf(f,FF.amount)||0); });
-  const fsL = STAGE_ORDER.filter(s=>fByStage[s]);
-  mkChart('ch-fees-pipe','bar',fsL,fsL.map(s=>fByStage[s]),fsL.map(s=>STAGE_COLORS[s]||'#999'),feesFY+' Fees ($)',
-    i=>{ const stage=fsL[i]; const rows=D.fees.filter(f=>gf(f,FF.fy)===feesFY&&(gf(f,FF.pipeline)||'Other')===stage).sort((a,b)=>(+gf(b,FF.amount)||0)-(+gf(a,FF.amount)||0)); showDrill(feesFY+' Fees — '+stage,rows.length+' records',rows,COL_FEES); });
+  const fyFees = D.fees.filter(f=>gf(f,FF.fy)===feesFY);
+  const fAward={}, fProp={}, fOther={};
+  fyFees.forEach(f=>{
+    const s=gf(f,FF.pipeline)||'Other', amt=+gf(f,FF.amount)||0;
+    const fund=(ga(f,FF.funding).map(v=>typeof v==='object'?v.name:v).join('')||'').toLowerCase();
+    if(fund.includes('award')) fAward[s]=(fAward[s]||0)+amt;
+    else if(fund.includes('propose')) fProp[s]=(fProp[s]||0)+amt;
+    else fOther[s]=(fOther[s]||0)+amt;
+  });
+  const fsL = STAGE_ORDER.filter(s=>fAward[s]||fProp[s]||fOther[s]);
+  mkChartMulti('ch-fees-pipe','bar',fsL,[
+    {label:'Awarded',  data:fsL.map(s=>fAward[s]||0), color:'#10b981'},
+    {label:'Proposed', data:fsL.map(s=>fProp[s]||0),  color:'#3b82f6'},
+    {label:'Projected',data:fsL.map(s=>fOther[s]||0), color:'rgba(148,163,184,0.5)'},
+  ], i=>{
+    const stage=fsL[i];
+    const rows=fyFees.filter(f=>(gf(f,FF.pipeline)||'Other')===stage).sort((a,b)=>(+gf(b,FF.amount)||0)-(+gf(a,FF.amount)||0));
+    showDrill(feesFY+' Fees — '+stage,rows.length+' records',rows,COL_FEES);
+  });
 
   // Table
   let rows = D.mous.filter(m=>pname(m)!=='—');
