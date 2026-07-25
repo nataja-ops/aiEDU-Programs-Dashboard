@@ -689,7 +689,10 @@ button{cursor:pointer;font-family:inherit;}
         <div class="section-title">All Partnerships</div>
         <div class="flex gap-8 items-center" style="flex-wrap:wrap">
           <select class="form-select" id="f-stage" style="width:auto"><option value="">All Stages</option></select>
+          <select class="form-select" id="f-team" style="width:auto"><option value="">All Team</option></select>
+          <select class="form-select" id="f-type" style="width:auto"><option value="">All Types</option></select>
           <select class="form-select" id="f-state" style="width:auto"><option value="">All States</option></select>
+          <select class="form-select" id="f-funding" style="width:auto"><option value="">All Funding</option></select>
           <input class="form-input" id="f-search" placeholder="Search…" style="width:160px">
         </div>
       </div>
@@ -3063,24 +3066,44 @@ function openEventModal(id){
 
 // ── Partnerships ──────────────────────────────────────────────────────────────
 function renderPartnerships(f={}) {
+  const teamOf = r => ga(r,FP.team).map(v=>typeof v==='object'?v.name:v);
+  const typeOf = r => ga(r,FP.partType).map(v=>typeof v==='object'?v.name:v);
+  const stateOf = r => ga(r,FP.state).map(v=>typeof v==='object'?v.name:v).join(', ');
+
   // Populate stage filter
   const stages = [...new Set(D.partners.map(p=>gf(p,FP.pipeline)).filter(Boolean))];
   const stagesSorted = STAGE_ORDER.filter(s=>stages.includes(s));
   const stageEl = document.getElementById('f-stage'), curSt=stageEl.value;
   stageEl.innerHTML = '<option value="">All Stages</option>'+stagesSorted.map(s=>`<option${s===curSt?' selected':''}>${s}</option>`).join('');
 
-  let rows = D.partners.filter(p=>gf(p,FP.name));
-  // FP.state is multipleLookupValues → returns array through REST API
-  const stateOf = r => ga(r, FP.state).map(v => typeof v==='object'?v.name:v).join(', ');
-  if(f.stage)  rows=rows.filter(r=>gf(r,FP.pipeline)===f.stage);
-  if(f.state)  rows=rows.filter(r=>stateOf(r).includes(f.state));
-  if(f.search){ const q=f.search.toLowerCase(); rows=rows.filter(r=>(gf(r,FP.name)||'').toLowerCase().includes(q)); }
-  rows.sort((a,b)=>(gf(a,FP.name)||'').localeCompare(gf(b,FP.name)||''));
+  // Populate team filter
+  const teamEl = document.getElementById('f-team'), curTm=teamEl.value;
+  const allTeams = [...new Set(D.partners.flatMap(p=>teamOf(p)).filter(Boolean))].sort();
+  teamEl.innerHTML = '<option value="">All Team</option>'+allTeams.map(t=>`<option${t===curTm?' selected':''}>${esc(t)}</option>`).join('');
 
-  // Populate state filter from actual data
+  // Populate type filter
+  const typeEl = document.getElementById('f-type'), curTy=typeEl.value;
+  const allTypes = [...new Set(D.partners.flatMap(p=>typeOf(p)).filter(Boolean))].sort();
+  typeEl.innerHTML = '<option value="">All Types</option>'+allTypes.map(t=>`<option${t===curTy?' selected':''}>${esc(t)}</option>`).join('');
+
+  // Populate state filter
   const stateEl = document.getElementById('f-state'), curSta=stateEl.value;
   const allStates = [...new Set(D.partners.flatMap(p=>ga(p,FP.state).map(v=>typeof v==='object'?v.name:v)).filter(Boolean))].sort();
   stateEl.innerHTML = '<option value="">All States</option>'+allStates.map(s=>`<option${s===curSta?' selected':''}>${s}</option>`).join('');
+
+  // Populate funding filter
+  const fundEl = document.getElementById('f-funding'), curFu=fundEl.value;
+  const allFunding = [...new Set(D.partners.map(p=>gf(p,FP.fundingStage)).filter(Boolean))].sort();
+  fundEl.innerHTML = '<option value="">All Funding</option>'+allFunding.map(f2=>`<option${f2===curFu?' selected':''}>${esc(f2)}</option>`).join('');
+
+  let rows = D.partners.filter(p=>gf(p,FP.name));
+  if(f.stage)   rows=rows.filter(r=>gf(r,FP.pipeline)===f.stage);
+  if(f.team)    rows=rows.filter(r=>teamOf(r).includes(f.team));
+  if(f.type)    rows=rows.filter(r=>typeOf(r).includes(f.type));
+  if(f.state)   rows=rows.filter(r=>stateOf(r).includes(f.state));
+  if(f.funding) rows=rows.filter(r=>gf(r,FP.fundingStage)===f.funding);
+  if(f.search){ const q=f.search.toLowerCase(); rows=rows.filter(r=>(gf(r,FP.name)||'').toLowerCase().includes(q)||(teamOf(r).join(' ').toLowerCase().includes(q))); }
+  rows.sort((a,b)=>(gf(a,FP.name)||'').localeCompare(gf(b,FP.name)||''));
 
   const tbody = document.querySelector('#prt-tbl tbody');
   tbody.innerHTML = rows.length===0 ? '<tr><td colspan="8" class="empty-state">No partnerships match</td></tr>' :
@@ -4995,9 +5018,12 @@ const wire=(ids,fn,getF)=>ids.forEach(id=>{
   if(el) el.addEventListener('change',()=>fn(getF()));
   if(el) el.addEventListener('input',()=>fn(getF()));
 });
-wire(['f-stage','f-state','f-search'],renderPartnerships,()=>({
+wire(['f-stage','f-team','f-type','f-state','f-funding','f-search'],renderPartnerships,()=>({
   stage:document.getElementById('f-stage').value,
+  team:document.getElementById('f-team').value,
+  type:document.getElementById('f-type').value,
   state:document.getElementById('f-state').value,
+  funding:document.getElementById('f-funding').value,
   search:document.getElementById('f-search').value,
 }));
 const getMouFilters=()=>({
