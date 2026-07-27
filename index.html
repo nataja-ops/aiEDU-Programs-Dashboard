@@ -391,6 +391,18 @@ button{cursor:pointer;font-family:inherit;}
 .acc-prt-sub{margin-top:16px;}
 .acc-prt-item{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;}
 .acc-prt-item:last-child{border-bottom:none;}
+/* Partner panel */
+#partner-panel{position:fixed;top:var(--topbar-h);right:0;bottom:0;width:380px;max-width:100vw;background:var(--surface);border-left:1px solid var(--border);z-index:250;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .22s cubic-bezier(.4,0,.2,1);box-shadow:-4px 0 24px rgba(0,0,0,.12);}
+#partner-panel.open{transform:translateX(0);}
+#pp-search-wrap{padding:12px 14px;border-bottom:1px solid var(--border);flex-shrink:0;}
+#pp-search{width:100%;box-sizing:border-box;}
+#pp-results{overflow-y:auto;flex:1;padding:8px 0;}
+.pp-result-item{padding:9px 16px;cursor:pointer;font-size:13px;font-weight:500;color:var(--ink);border-bottom:1px solid var(--border);transition:background .1s;}
+.pp-result-item:last-child{border-bottom:none;}
+.pp-result-item:hover,.pp-result-item.active{background:var(--surface2);}
+.pp-result-meta{font-size:11px;color:var(--ink3);margin-top:2px;}
+#pp-profile{flex-shrink:0;max-height:60vh;overflow-y:auto;border-top:2px solid var(--teal);background:var(--surface2);padding:14px 16px;display:none;}
+#pp-profile.show{display:block;}
 /* Section jump nav */
 .section-jumpnav{display:flex;gap:4px;flex-wrap:wrap;padding:8px 0 12px;margin-bottom:4px;border-bottom:1px solid var(--border);}
 .jumpnav-link{padding:4px 12px;border-radius:20px;font-size:11px;font-weight:600;color:var(--ink3);text-decoration:none;background:var(--surface2);border:1px solid var(--border);cursor:pointer;transition:all .12s;}
@@ -432,6 +444,7 @@ button{cursor:pointer;font-family:inherit;}
   <div class="topbar-actions">
     <button class="icon-btn" id="refresh-btn" title="Refresh">↻</button>
     <button class="icon-btn" id="theme-btn" title="Toggle theme">◑</button>
+    <button class="icon-btn" title="Partner search" onclick="togglePartnerPanel()" style="font-size:15px">🔍</button>
     <button class="lead-btn" id="req-btn" onclick="openRequestModal()">✉ Submit Request</button>
   </div>
 </header>
@@ -948,7 +961,9 @@ button{cursor:pointer;font-family:inherit;}
             <button class="toggle-btn" data-evtdate="month">This Month</button>
             <button class="toggle-btn" data-evtdate="future">Upcoming</button>
           </div>
-          <select class="form-select" id="f-evt-type" style="width:auto"><option value="">All Types</option></select>
+          <select class="form-select" id="f-evt-type" style="width:auto"><option value="">All PL Types</option></select>
+          <select class="form-select" id="f-evt-evttype" style="width:auto"><option value="">All Event Types</option></select>
+          <select class="form-select" id="f-evt-fac" style="width:auto"><option value="">All Facilitators</option></select>
           <select class="form-select" id="f-evt-partner" style="width:auto"><option value="">All Partners</option></select>
           <input class="form-input" id="f-evt-search" placeholder="Search…" style="width:160px">
         </div>
@@ -973,6 +988,22 @@ button{cursor:pointer;font-family:inherit;}
           <div id="cal-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px"></div>
         </div>
         <div id="cal-day-panel" style="margin-top:12px;display:none"></div>
+      </div>
+
+      <!-- Events charts row -->
+      <div class="grid-3 mb-16" id="evt-charts-row">
+        <div class="card chart-card">
+          <div class="section-hd"><div><div class="section-title">Events by Type</div><div class="section-sub">Count by event type</div></div></div>
+          <div><canvas id="ch-evt-type"></canvas></div>
+        </div>
+        <div class="card chart-card">
+          <div class="section-hd"><div><div class="section-title">Events Timeline</div><div class="section-sub">Monthly event count over the last 12 months</div></div></div>
+          <div><canvas id="ch-evt-timeline"></canvas></div>
+        </div>
+        <div class="card chart-card">
+          <div class="section-hd"><div><div class="section-title">PL Sessions Used</div><div class="section-sub">Sessions delivered at events (top 10)</div></div></div>
+          <div><canvas id="ch-evt-sessions"></canvas></div>
+        </div>
       </div>
 
       <!-- Events This Week -->
@@ -1271,6 +1302,19 @@ button{cursor:pointer;font-family:inherit;}
     <button class="btn-sm" id="drawer-cancel">Cancel</button>
   </div>
 </aside>
+
+<!-- Partner panel -->
+<div id="partner-panel">
+  <div id="pp-search-wrap">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+      <span style="font-size:12px;font-weight:700;color:var(--ink2);text-transform:uppercase;letter-spacing:.06em">Partner Search</span>
+      <button class="icon-btn" onclick="togglePartnerPanel()" style="font-size:12px">✕</button>
+    </div>
+    <input class="form-input" id="pp-search" placeholder="Search partners…" oninput="renderPartnerPanel(this.value)" autocomplete="off">
+  </div>
+  <div id="pp-results"></div>
+  <div id="pp-profile"></div>
+</div>
 
 <div id="toast-wrap"></div>
 <button id="back-to-top" title="Back to top" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
@@ -2621,6 +2665,7 @@ function renderAll() {
   renderContracts();
   renderEventsThisWeek();
   renderEvents();
+  renderEventsCharts();
   renderFeedback();
   renderSurveys();
   renderContent();
@@ -3629,6 +3674,18 @@ function renderEvents(f={}) {
   const typeEl = document.getElementById('f-evt-type'), cur=typeEl.value;
   typeEl.innerHTML = '<option value="">All Types</option>'+types.map(t=>`<option${t===cur?' selected':''}>${t}</option>`).join('');
 
+  // Populate event type dropdown
+  const evtTypeEl=document.getElementById('f-evt-evttype');
+  const curEvtType=f.evttype||evtTypeEl.value;
+  const allEvtTypes=[...new Set(D.events.flatMap(e=>ga(e,FE.type).map(v=>typeof v==='object'?v.name:v)).filter(Boolean))].sort();
+  evtTypeEl.innerHTML='<option value="">All Event Types</option>'+allEvtTypes.map(t=>`<option${t===curEvtType?' selected':''}>${t}</option>`).join('');
+
+  // Populate facilitator dropdown
+  const facEl=document.getElementById('f-evt-fac');
+  const curFac=f.fac||facEl.value;
+  const allFacs=[...new Set(D.events.flatMap(e=>ga(e,FE.facDisp)).filter(Boolean))].sort();
+  facEl.innerHTML='<option value="">All Facilitators</option>'+allFacs.map(f2=>`<option${f2===curFac?' selected':''}>${esc(f2)}</option>`).join('');
+
   // Populate partner dropdown
   const prtEl = document.getElementById('f-evt-partner');
   const curPrt = f.partner||prtEl.value;
@@ -3646,7 +3703,9 @@ function renderEvents(f={}) {
   const moStr = todayStr.slice(0,7);
 
   let rows = D.events.filter(e=>gf(e,FE.nameT)||gf(e,FE.name));
-  if(f.type) rows=rows.filter(r=>gf(r,FE.plType)===f.type);
+  if(f.type)    rows=rows.filter(r=>gf(r,FE.plType)===f.type);
+  if(f.evttype) rows=rows.filter(r=>ga(r,FE.type).map(v=>typeof v==='object'?v.name:v).includes(f.evttype));
+  if(f.fac)     rows=rows.filter(r=>ga(r,FE.facDisp).includes(f.fac));
   if(f.partner){ const pq=f.partner; rows=rows.filter(r=>ga(r,FE.partner).map(v=>typeof v==='object'?v.name:v).includes(pq)); }
   if(f.search){ const q=f.search.toLowerCase(); rows=rows.filter(r=>(gf(r,FE.nameT)||gf(r,FE.name)||'').toLowerCase().includes(q)); }
   if(f.dateFilter==='past')  rows=rows.filter(r=>(gf(r,FE.date)||'').slice(0,10)<todayStr);
@@ -3682,6 +3741,36 @@ function renderEvents(f={}) {
         <td>${sc.objMet!=null?fpct(sc.objMet*20):'—'}</td>
       </tr>`;
     }).join('');
+}
+
+function renderEventsCharts() {
+  if(!document.getElementById('ch-evt-type')) return;
+
+  // Chart 1: Events by Type (multipleSelects, all events)
+  const typeCounts={};
+  D.events.forEach(e=>{ const ts=ga(e,FE.type).map(v=>typeof v==='object'?v.name:v).filter(Boolean); (ts.length?ts:['Uncategorized']).forEach(t=>(typeCounts[t]=(typeCounts[t]||0)+1)); });
+  const typeLabels=Object.keys(typeCounts).sort((a,b)=>typeCounts[b]-typeCounts[a]).slice(0,8);
+  const typePalette=['#0d9488','#3b82f6','#8b5cf6','#f59e0b','#10b981','#ef4444','#64748b','#ec4899'];
+  mkChart('ch-evt-type','bar',typeLabels,typeLabels.map(t=>typeCounts[t]),typeLabels.map((_,i)=>typePalette[i%typePalette.length]),'Events',
+    i=>{ const t=typeLabels[i]; const rows=D.events.filter(e=>ga(e,FE.type).map(v=>typeof v==='object'?v.name:v).includes(t)).sort((a,b)=>(gf(b,FE.date)||'').localeCompare(gf(a,FE.date)||'')); showDrill('Events — '+t,rows.length+' events',rows,COL_EVTS); });
+
+  // Chart 2: Events Timeline (last 14 months)
+  const months=[]; const now=new Date();
+  for(let i=13;i>=0;i--){ const d=new Date(now.getFullYear(),now.getMonth()-i,1); months.push(d.toISOString().slice(0,7)); }
+  const byMo={}; months.forEach(m=>(byMo[m]=0));
+  D.events.forEach(e=>{ const d=gf(e,FE.date); if(d) { const m=d.slice(0,7); if(byMo[m]!=null) byMo[m]++; } });
+  const moLabels=months.map(m=>{ const [y,mo]=m.split('-'); return new Date(+y,+mo-1,1).toLocaleDateString('en-US',{month:'short',year:'2-digit'}); });
+  mkChart('ch-evt-timeline','bar',moLabels,months.map(m=>byMo[m]),months.map(()=>cssVar('--teal')),'Events',
+    i=>{ const mo=months[i]; const rows=D.events.filter(e=>(gf(e,FE.date)||'').slice(0,7)===mo).sort((a,b)=>(gf(b,FE.date)||'').localeCompare(gf(a,FE.date)||'')); showDrill('Events — '+moLabels[i],rows.length+' events',rows,COL_EVTS); });
+
+  // Chart 3: Top PL Sessions used at events (by cntEvents count)
+  const sessRows=D.plSessions.filter(s=>(+gf(s,FPLS.cntEvents)||0)>0)
+    .sort((a,b)=>(+gf(b,FPLS.cntEvents)||0)-(+gf(a,FPLS.cntEvents)||0)).slice(0,10);
+  if(sessRows.length){
+    const sLabels=sessRows.map(s=>gf(s,FPLS.name)||gf(s,FPLS.indiv)||'—');
+    const sTrunc=sLabels.map(l=>l.length>28?l.slice(0,27)+'…':l);
+    mkChart('ch-evt-sessions','bar',sTrunc,sessRows.map(s=>+gf(s,FPLS.cntEvents)||0),sessRows.map(()=>cssVar('--teal')),'Events Used At',null,{indexAxis:'y'});
+  }
 }
 
 // ── PL Feedback ───────────────────────────────────────────────────────────────
@@ -4890,6 +4979,31 @@ function renderWorkspacePipeline() {
 }
 
 // ── Partnership Workflow Timeline ─────────────────────────────────────────────
+const WORKFLOW_TASKS = {
+  'Relationship Building':  ['Research the organization and key stakeholders','Identify primary contact','Reach out via warm intro or cold outreach','Log initial contact in Airtable'],
+  'Initial Contact':        ['Send introduction email / make intro call','Share aiEDU overview deck or one-pager','Follow up within 5 business days','Log all interactions in Airtable change log'],
+  'Early Exploration':      ['Schedule discovery / needs assessment meeting','Align on partner goals and pain points','Identify service lines that fit','Share relevant case studies or outcomes data'],
+  'Proposal/SOW Writing':   ['Draft Scope of Work based on discovery notes','Confirm budget range and timeline','Internal review of SOW draft','Send draft to partner for feedback'],
+  'SOW sent':               ['Confirm partner received the SOW','Schedule review call if needed','Incorporate any feedback and resend','Set follow-up reminder for 7 days'],
+  'Verbal Agreement':       ['Record verbal commitment in Airtable','Prepare MOU from template','Share MOU draft with partner','Agree on start date and kick-off timeline'],
+  'Collaboration':          ['Schedule kick-off meeting','Confirm session schedule and format','Assign facilitator(s)','Set goals and success metrics'],
+  'MOU Sent':               ['Confirm MOU received by partner','Follow up on signature status (weekly)','Address any questions or change requests','Update Airtable with signed date when received'],
+  'MOU Signed':             ['Log signed date in Airtable','Schedule partnership kick-off','Assign team member as Sr. Lead','Set up regular check-in cadence'],
+  'MOU Complete':           ['Conduct final debrief with partner','Administer final survey / NPS','Complete Final Assessment rubric','Discuss renewal or expansion opportunities'],
+};
+
+function showWorkflowTasks(stage) {
+  const tasks = WORKFLOW_TASKS[stage];
+  if (!tasks) return;
+  const body = `<div style="margin-bottom:14px"><div style="font-size:13px;font-weight:600;color:var(--teal);margin-bottom:10px">${esc(stage)}</div>`+
+    `<ol style="margin:0;padding-left:20px;font-size:13px;color:var(--ink);line-height:1.7">`+
+    tasks.map(t=>`<li>${esc(t)}</li>`).join('')+
+    `</ol></div><div class="flex gap-8"><button class="btn-sm" onclick="closeAccModal()">Close</button></div>`;
+  document.getElementById('acc-modal-title').textContent = 'Workflow Tasks';
+  document.getElementById('acc-modal-body').innerHTML = body;
+  document.getElementById('acc-overlay').classList.add('open');
+}
+
 function renderWorkspaceTimeline() {
   if(!LEAD) return;
   const el = document.getElementById('ws-timeline'); if(!el) return;
@@ -4931,6 +5045,7 @@ function renderWorkspaceTimeline() {
       </div>
       <div class="tl-label" style="color:${active?'var(--ink)':'var(--ink3)'}">${ABBREV[stage]||stage}</div>
       <div class="tl-cards">${cards}</div>
+      <button class="btn-sm" style="font-size:10px;margin-top:6px;width:100%;justify-content:center" onclick="showWorkflowTasks('${esc(stage)}')">View Workflow Tasks</button>
     </div>`;
   });
 
@@ -5733,28 +5848,23 @@ document.querySelectorAll('[data-feesfy]').forEach(btn=>{
   });
 });
 let evtDateFilter = '';
-wire(['f-evt-type','f-evt-search'],renderEvents,()=>({
+const getEvtFilters=()=>({
   type:document.getElementById('f-evt-type').value,
+  evttype:document.getElementById('f-evt-evttype').value,
+  fac:document.getElementById('f-evt-fac').value,
   search:document.getElementById('f-evt-search').value,
   partner:document.getElementById('f-evt-partner').value,
   dateFilter:evtDateFilter,
-}));
-document.getElementById('f-evt-partner').addEventListener('change',()=>renderEvents({
-  type:document.getElementById('f-evt-type').value,
-  search:document.getElementById('f-evt-search').value,
-  partner:document.getElementById('f-evt-partner').value,
-  dateFilter:evtDateFilter,
-}));
+});
+wire(['f-evt-type','f-evt-evttype','f-evt-search'],renderEvents,getEvtFilters);
+['f-evt-partner','f-evt-fac'].forEach(id=>{
+  document.getElementById(id)?.addEventListener('change',()=>renderEvents(getEvtFilters()));
+});
 document.querySelectorAll('#evt-date-filter [data-evtdate]').forEach(btn=>{
   btn.addEventListener('click',()=>{
-    evtDateFilter = btn.dataset.evtdate;
+    evtDateFilter=btn.dataset.evtdate;
     document.querySelectorAll('#evt-date-filter [data-evtdate]').forEach(b=>b.classList.toggle('active',b===btn));
-    renderEvents({
-      type:document.getElementById('f-evt-type').value,
-      search:document.getElementById('f-evt-search').value,
-      partner:document.getElementById('f-evt-partner').value,
-      dateFilter:evtDateFilter,
-    });
+    renderEvents(getEvtFilters());
   });
 });
 wire(['f-season'],f=>renderSurveys(f),()=>({season:document.getElementById('f-season').value}));
@@ -5894,6 +6004,80 @@ async function updatePartnerStage(recId, newStage){
     toast('Stage updated to '+newStage,'success');
     try{ localStorage.removeItem(CACHE_KEY); }catch(e){}
   } catch(err){ toast('Update failed: '+err.message,'error'); }
+}
+
+// ── Partner Panel ─────────────────────────────────────────────────────────────
+function togglePartnerPanel(){
+  const panel=document.getElementById('partner-panel');
+  const isOpen=panel.classList.toggle('open');
+  if(isOpen){
+    renderPartnerPanel('');
+    setTimeout(()=>document.getElementById('pp-search')?.focus(),80);
+  } else {
+    document.getElementById('pp-profile').classList.remove('show');
+  }
+}
+
+function renderPartnerPanel(q){
+  const lc=(q||'').toLowerCase();
+  let prts=[...D.partners].sort((a,b)=>(gf(a,FP.name)||'').localeCompare(gf(b,FP.name)||''));
+  if(lc) prts=prts.filter(p=>(gf(p,FP.name)||'').toLowerCase().includes(lc)||(ga(p,FP.state).map(v=>typeof v==='object'?v.name:v).join(' ').toLowerCase().includes(lc)));
+  const el=document.getElementById('pp-results');
+  if(!el) return;
+  if(!prts.length){ el.innerHTML='<div class="empty-state" style="padding:20px">No partners found</div>'; return; }
+  el.innerHTML=prts.slice(0,40).map(p=>{
+    const stage=gf(p,FP.pipeline)||'—';
+    const state=ga(p,FP.state).map(v=>typeof v==='object'?v.name:v).join(', ')||'—';
+    return `<div class="pp-result-item" onclick="showPartnerPanelProfile('${p.id}')">
+      <div>${esc(gf(p,FP.name)||'—')}</div>
+      <div class="pp-result-meta">${esc(stage)} · ${esc(state)}</div>
+    </div>`;
+  }).join('');
+}
+
+function showPartnerPanelProfile(id){
+  const p=D.partners.find(r=>r.id===id); if(!p) return;
+  // Highlight active item
+  document.querySelectorAll('.pp-result-item').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.pp-result-item').forEach(el=>{if(el.onclick?.toString().includes(id)) el.classList.add('active');});
+
+  const pName=gf(p,FP.name)||'—';
+  const pipeline=gf(p,FP.pipeline)||'—';
+  const team=ga(p,FP.team).map(v=>typeof v==='object'?v.name:v).join(', ')||'—';
+  const state=ga(p,FP.state).map(v=>typeof v==='object'?v.name:v).join(', ')||'—';
+  const services=ga(p,FP.services).join(', ')||'—';
+  const notes=gf(p,FP.notes)||'';
+  const end=gf(p,FP.end); const days=daysTo(end);
+  const asmts=D.assessments.filter(r=>(gf(r,FASMT.prtText)||'')===pName).sort((a,b)=>(gf(b,FASMT.date)||'').localeCompare(gf(a,FASMT.date)||'')).slice(0,3);
+  const prtEvts=D.events.filter(e=>{const accIds=new Set(ga(p,FP.account));return ga(e,FE.partner).some(id=>accIds.has(id));}).sort((a,b)=>(gf(b,FE.date)||'').localeCompare(gf(a,FE.date)||'')).slice(0,3);
+
+  const row=(k,v)=>`<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);font-size:12px"><span style="color:var(--ink3);font-size:11px;font-weight:600">${k}</span><span style="color:var(--ink);text-align:right;max-width:60%;word-break:break-word">${v}</span></div>`;
+
+  const profileEl=document.getElementById('pp-profile');
+  profileEl.innerHTML=`
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px;gap:8px">
+      <div style="font-size:14px;font-weight:700;color:var(--ink);line-height:1.3">${esc(pName)}</div>
+      <button class="btn-sm primary" onclick="openPartnerProfile('${id}')" style="flex-shrink:0;font-size:11px">Full Profile</button>
+    </div>
+    ${row('Stage', stagePill(pipeline))}
+    ${row('State', esc(state))}
+    ${row('Team', esc(team))}
+    ${row('Services', esc(services))}
+    ${row('FY26 Fees', f$(gf(p,FP.fy26)))}
+    ${end?row('Ends', fdt(end)+(days!=null?' '+daysChip(days):'')):''}
+    ${notes?`<div style="font-size:11px;color:var(--ink2);margin-top:8px;padding:8px;background:var(--surface3);border-radius:6px;line-height:1.5">${esc(notes)}</div>`:''}
+    ${asmts.length?`<div style="margin-top:10px"><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink3);margin-bottom:4px">Assessments</div>`+
+      asmts.map(a=>`<div style="font-size:11px;padding:4px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between"><span>${esc(gf(a,FASMT.type)||'—')}</span><span style="color:var(--ink3)">${fdt(gf(a,FASMT.date))}</span></div>`).join('')+
+    `</div>`:''}
+    ${prtEvts.length?`<div style="margin-top:10px"><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink3);margin-bottom:4px">Recent Events</div>`+
+      prtEvts.map(e=>`<div style="font-size:11px;padding:4px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;gap:8px"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(gf(e,FE.nameT)||gf(e,FE.name)||'—')}</span><span style="color:var(--ink3);flex-shrink:0">${fdt(gf(e,FE.date))}</span></div>`).join('')+
+    `</div>`:''}
+    <div style="margin-top:12px;display:flex;gap:6px">
+      <button class="btn-sm" onclick="openAsmtForm('${id}')" style="font-size:11px">+ Assessment</button>
+      <button class="btn-sm" onclick="openPrtDrawer('${id}')" style="font-size:11px">Edit</button>
+    </div>
+  `;
+  profileEl.classList.add('show');
 }
 
 function scrollToSec(id){
