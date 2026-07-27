@@ -742,24 +742,6 @@ button{cursor:pointer;font-family:inherit;}
       </div>
       <div id="opp-list" style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px"><div class="empty-state" style="grid-column:1/-1">Loading…</div></div>
 
-      <!-- Partnerships Table -->
-      <div class="section-hd mt-24 mb-12">
-        <div class="section-title">All Partnerships</div>
-        <div class="flex gap-8 items-center" style="flex-wrap:wrap">
-          <select class="form-select" id="f-stage" style="width:auto"><option value="">All Stages</option></select>
-          <select class="form-select" id="f-team" style="width:auto"><option value="">All Team</option></select>
-          <select class="form-select" id="f-type" style="width:auto"><option value="">All Types</option></select>
-          <select class="form-select" id="f-state" style="width:auto"><option value="">All States</option></select>
-          <select class="form-select" id="f-funding" style="width:auto"><option value="">All Funding</option></select>
-          <input class="form-input" id="f-search" placeholder="Search…" style="width:160px">
-        </div>
-      </div>
-      <div class="card table-wrap">
-        <table class="data-table" id="prt-tbl">
-          <thead><tr><th>Partner</th><th>Stage</th><th>State</th><th>FY26 Fees</th><th>Contract End</th><th>Team</th><th>Missing</th><th></th></tr></thead>
-          <tbody><tr><td colspan="8" class="empty-state">Loading…</td></tr></tbody>
-        </table>
-      </div>
     </div>
 
     <!-- Partner Feedback sub-view -->
@@ -3513,6 +3495,7 @@ function openEventModal(id){
 
 // ── Partnerships ──────────────────────────────────────────────────────────────
 function renderPartnerships(f={}) {
+  if(!document.getElementById('prt-tbl')) return;
   const teamOf = r => ga(r,FP.team).map(v=>typeof v==='object'?v.name:v);
   const typeOf = r => ga(r,FP.partType).map(v=>typeof v==='object'?v.name:v);
   const stateOf = r => ga(r,FP.state).map(v=>typeof v==='object'?v.name:v).join(', ');
@@ -5834,14 +5817,6 @@ const wire=(ids,fn,getF)=>ids.forEach(id=>{
   if(el) el.addEventListener('change',()=>fn(getF()));
   if(el) el.addEventListener('input',()=>fn(getF()));
 });
-wire(['f-stage','f-team','f-type','f-state','f-funding','f-search'],renderPartnerships,()=>({
-  stage:document.getElementById('f-stage').value,
-  team:document.getElementById('f-team').value,
-  type:document.getElementById('f-type').value,
-  state:document.getElementById('f-state').value,
-  funding:document.getElementById('f-funding').value,
-  search:document.getElementById('f-search').value,
-}));
 const getMouFilters=()=>({
   stage:document.getElementById('f-mou-stage').value,
   team:document.getElementById('f-mou-team').value,
