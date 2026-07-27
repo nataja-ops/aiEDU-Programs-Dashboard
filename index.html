@@ -141,7 +141,7 @@ button{cursor:pointer;font-family:inherit;}
 .cal-evt-dot{background:var(--teal);color:#fff;border-radius:3px;padding:1px 4px;margin-bottom:2px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:10px;line-height:1.4;}
 .cal-evt-dot:hover{opacity:.8;}
 /* Recent updates timeline */
-.update-item{display:flex;gap:10px;align-items:flex-start;padding:8px 12px;border-radius:8px;background:var(--surface);border:1px solid var(--border);}
+.update-item{display:flex;gap:8px;align-items:flex-start;padding:8px 10px;border-radius:8px;background:var(--surface);border:1px solid var(--border);min-width:0;}
 .update-icon{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;}
 /* OKR progress tiles */
 .okr-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:20px;}
@@ -316,7 +316,7 @@ button{cursor:pointer;font-family:inherit;}
 @keyframes sk{0%{background-position:200% 0}100%{background-position:-200% 0}}
 @media(max-width:700px){#nav{justify-content:flex-start;}.logo span{display:none;}}
 /* Opportunities view */
-.opp-account{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:8px;overflow:hidden;}
+.opp-account{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;height:fit-content;}
 .opp-account-hd{display:flex;align-items:center;gap:10px;padding:12px 16px;cursor:pointer;user-select:none;transition:background .15s;}
 .opp-account-hd:hover{background:var(--surface2);}
 .opp-toggle{font-size:10px;color:var(--ink3);width:14px;flex-shrink:0;transition:transform .2s;}
@@ -325,10 +325,10 @@ button{cursor:pointer;font-family:inherit;}
 .opp-acc-meta{display:flex;align-items:center;gap:12px;font-size:12px;color:var(--ink3);flex-wrap:wrap;}
 .opp-prt-list{display:none;border-top:1px solid var(--border);background:var(--surface2);}
 .opp-account.open .opp-prt-list{display:block;}
-.opp-prt-row{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr;align-items:center;gap:8px;padding:9px 16px 9px 42px;border-bottom:1px solid var(--border);font-size:12px;}
+.opp-prt-row{display:grid;grid-template-columns:2fr 1fr 1fr;align-items:center;gap:6px;padding:8px 12px 8px 36px;border-bottom:1px solid var(--border);font-size:11px;}
 .opp-prt-row:last-child{border-bottom:none;}
 .opp-prt-row:hover{background:var(--surface3);}
-.opp-prt-hd{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--ink3);padding:6px 16px 6px 42px;display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr;gap:8px;border-bottom:1px solid var(--border);}
+.opp-prt-hd{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--ink3);padding:5px 12px 5px 36px;display:grid;grid-template-columns:2fr 1fr 1fr;gap:6px;border-bottom:1px solid var(--border);}
 /* Success tracker */
 .tracker-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s;border-radius:6px;}
 .tracker-row:hover{background:var(--surface2);}
@@ -391,6 +391,26 @@ button{cursor:pointer;font-family:inherit;}
 .acc-prt-sub{margin-top:16px;}
 .acc-prt-item{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;}
 .acc-prt-item:last-child{border-bottom:none;}
+/* Section jump nav */
+.section-jumpnav{display:flex;gap:4px;flex-wrap:wrap;padding:8px 0 12px;margin-bottom:4px;border-bottom:1px solid var(--border);}
+.jumpnav-link{padding:4px 12px;border-radius:20px;font-size:11px;font-weight:600;color:var(--ink3);text-decoration:none;background:var(--surface2);border:1px solid var(--border);cursor:pointer;transition:all .12s;}
+.jumpnav-link:hover{background:var(--teal);color:#fff;border-color:var(--teal);}
+/* Floating back-to-top */
+#back-to-top{position:fixed;bottom:24px;right:24px;z-index:300;width:36px;height:36px;border-radius:50%;background:var(--navy-mid);color:#fff;font-size:16px;border:1px solid rgba(255,255,255,.2);display:none;align-items:center;justify-content:center;cursor:pointer;opacity:.85;transition:opacity .15s;}
+#back-to-top:hover{opacity:1;}
+#back-to-top.show{display:flex;}
+/* Assessment form modal */
+#asmt-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:400;justify-content:center;align-items:flex-start;padding-top:40px;}
+#asmt-overlay.open{display:flex;}
+#asmt-modal{background:var(--surface);border-radius:12px;padding:24px 28px;width:680px;max-width:calc(100vw - 32px);max-height:90vh;overflow-y:auto;box-shadow:0 24px 48px rgba(0,0,0,.25);}
+.asmt-cat-hd{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--teal);padding:10px 0 4px;border-top:1px solid var(--border);margin-top:4px;}
+.asmt-cat-hd:first-child{border-top:none;margin-top:0;}
+.asmt-domain-row{display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);}
+.asmt-domain-lbl{font-size:12px;color:var(--ink2);flex:1;}
+.asmt-score-group{display:flex;gap:3px;}
+.asmt-score-btn{width:30px;height:26px;border-radius:5px;border:1px solid var(--border);background:var(--surface2);color:var(--ink3);font-size:12px;font-weight:700;cursor:pointer;transition:all .12s;}
+.asmt-score-btn.sel{background:var(--teal);border-color:var(--teal);color:#fff;}
+.asmt-score-btn:hover:not(.sel){border-color:var(--teal);color:var(--teal);}
 </style>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
@@ -548,9 +568,16 @@ button{cursor:pointer;font-family:inherit;}
 
   <!-- OVERVIEW -->
   <div class="tab-panel active" id="tab-overview">
+    <div class="section-jumpnav" id="overview-jumpnav">
+      <a href="#sec-goals" class="jumpnav-link" onclick="scrollToSec('sec-goals')">Goals</a>
+      <a href="#sec-pipeline" class="jumpnav-link" onclick="scrollToSec('sec-pipeline')">Pipeline</a>
+      <a href="#sec-charts" class="jumpnav-link" onclick="scrollToSec('sec-charts')">Charts</a>
+      <a href="#sec-state" class="jumpnav-link" onclick="scrollToSec('sec-state')">By State</a>
+      <a href="#sec-events" class="jumpnav-link" onclick="scrollToSec('sec-events')">Events</a>
+    </div>
 
     <!-- FY26 Goals section -->
-    <div class="overview-goals-section mb-16">
+    <div class="overview-goals-section mb-16" id="sec-goals">
       <div class="overview-goals-label">FY26 Goals</div>
       <div class="okr-grid" id="okr-row">
       <div class="okr-tile">
@@ -605,6 +632,7 @@ button{cursor:pointer;font-family:inherit;}
       <div id="overview-new-prt" style="display:flex;flex-wrap:wrap;gap:12px"></div>
     </div>
 
+    <div id="sec-pipeline"></div>
     <!-- Program Partnership Pipeline -->
     <div class="mb-16">
       <div class="section-hd mb-8">
@@ -615,6 +643,7 @@ button{cursor:pointer;font-family:inherit;}
       </div>
     </div>
 
+    <div id="sec-charts"></div>
     <!-- Charts row 1: Pipeline by Stage -->
     <div class="mb-16">
       <div class="card chart-card">
@@ -655,6 +684,7 @@ button{cursor:pointer;font-family:inherit;}
       </div>
     </div>
 
+    <div id="sec-state"></div>
     <!-- Charts row 3: Partners by State — full width -->
     <div class="card chart-card mb-16">
       <div class="section-hd">
@@ -667,6 +697,7 @@ button{cursor:pointer;font-family:inherit;}
       <div><canvas id="ch-states"></canvas></div>
     </div>
 
+    <div id="sec-events"></div>
     <!-- Events by Month — full width -->
     <div class="card chart-card">
       <div class="section-hd"><div class="section-title">Events by Month</div><div class="section-sub">Professional learning sessions delivered over the past 12 months — click a month to see its events</div></div>
@@ -692,7 +723,7 @@ button{cursor:pointer;font-family:inherit;}
         <div class="section-hd mb-8">
           <div><div class="section-title">Recent Updates</div><div class="section-sub">Latest changes, contract signings, and stage movements</div></div>
         </div>
-        <div id="prt-recent" style="display:flex;flex-direction:column;gap:6px"></div>
+        <div id="prt-recent" style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px"></div>
       </div>
 
       <!-- Full Opportunities View -->
@@ -700,7 +731,7 @@ button{cursor:pointer;font-family:inherit;}
         <div><div class="section-title">Opportunities &amp; Accounts</div><div class="section-sub">All partner accounts and their associated partnerships — search by name and click any row to open the record</div></div>
         <input class="form-input" id="opp-search" placeholder="Search accounts…" style="width:200px">
       </div>
-      <div id="opp-list"><div class="empty-state">Loading…</div></div>
+      <div id="opp-list" style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px"><div class="empty-state" style="grid-column:1/-1">Loading…</div></div>
 
       <!-- Partnerships Table -->
       <div class="section-hd mt-24 mb-12">
@@ -842,7 +873,7 @@ button{cursor:pointer;font-family:inherit;}
     <div id="prt-assessments-view" style="display:none">
       <div class="section-hd mb-16">
         <div><div class="section-title">Internal Partner Assessments</div><div class="section-sub">AI Readiness Rubric — completion tracking and level growth per partnership</div></div>
-        <a href="https://partner-assessment.vercel.app" target="_blank" class="btn-sm primary" style="text-decoration:none;white-space:nowrap">+ Start Assessment</a>
+        <button class="btn-sm primary" onclick="openAsmtForm(null)" style="white-space:nowrap">+ Start Assessment</button>
       </div>
 
       <!-- Subtabs -->
@@ -1198,6 +1229,17 @@ button{cursor:pointer;font-family:inherit;}
   </div>
 </div>
 
+<!-- Assessment form modal -->
+<div id="asmt-overlay" onclick="if(event.target.id==='asmt-overlay')closeAsmtModal()">
+  <div id="asmt-modal">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <div class="section-title" id="asmt-modal-title">New Assessment</div>
+      <button class="icon-btn" onclick="closeAsmtModal()">✕</button>
+    </div>
+    <div id="asmt-modal-body"></div>
+  </div>
+</div>
+
 <!-- Drawer -->
 <div id="drawer-overlay"></div>
 <aside id="drawer">
@@ -1231,6 +1273,7 @@ button{cursor:pointer;font-family:inherit;}
 </aside>
 
 <div id="toast-wrap"></div>
+<button id="back-to-top" title="Back to top" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
 
 <!-- ═══ Data Entry Tab ════════════════════════════════════════════════ -->
 <div class="tab-panel" id="tab-data-entry">
@@ -2953,18 +2996,14 @@ function renderOpportunities(q='', overviewMode=false, elId='opp-list') {
     const activeCount=prts.filter(p=>ACTIVE_STAGES.has(gf(p,FP.pipeline)||'')).length;
 
     const prtsHtml = prts.length===0
-      ? '<div style="padding:10px 16px 10px 42px;font-size:12px;color:var(--ink3)">No active partnerships</div>'
-      : `<div class="opp-prt-hd"><span>Partnership</span><span>Stage</span><span>FY26 Fees</span><span>Ends</span><span>Team</span></div>`
+      ? '<div style="padding:10px 12px 10px 36px;font-size:11px;color:var(--ink3)">No active partnerships</div>'
+      : `<div class="opp-prt-hd"><span>Partnership</span><span>Stage</span><span>FY26 Fees</span></div>`
         + prts.map(p=>{
-            const team=ga(p,FP.team).map(v=>typeof v==='object'?v.name:v).join(', ')||'—';
-            const days=daysTo(gf(p,FP.end));
             const comingSoon=COMING_STAGES.has(gf(p,FP.pipeline)||'');
             return `<div class="opp-prt-row" onclick="openPartnerProfile('${p.id}')">
-              <span class="drill-link">${gf(p,FP.name)||'—'}${comingSoon?' <span style="font-size:10px;color:var(--warn);font-weight:600">COMING SOON</span>':''}</span>
+              <span class="drill-link">${gf(p,FP.name)||'—'}${comingSoon?' <span style="font-size:9px;color:var(--warn);font-weight:700">SOON</span>':''}</span>
               <span>${stagePill(gf(p,FP.pipeline))}</span>
               <span style="font-variant-numeric:tabular-nums">${f$(gf(p,FP.fy26))}</span>
-              <span>${fdt(gf(p,FP.end))} ${days!=null?daysChip(days):''}</span>
-              <span style="font-size:11px;color:var(--ink2)">${team}</span>
             </div>`;
           }).join('');
 
@@ -3037,6 +3076,113 @@ function openAccProfile(id) {
 }
 
 function closeAccModal(){document.getElementById('acc-overlay').classList.remove('open');}
+
+// ── Inline Assessment Form ────────────────────────────────────────────────────
+const ASMT_DOMAINS=[
+  {cat:'Vision',     key:'visionStudents',    label:'Students & Learning'},
+  {cat:'Vision',     key:'visionSystem',      label:'Systems Thinking'},
+  {cat:'Vision',     key:'visionInstruction', label:'Instruction'},
+  {cat:'Strategy',   key:'strategySet',       label:'Setting Direction'},
+  {cat:'Strategy',   key:'strategyChange',    label:'Change Management'},
+  {cat:'Stakeholder',key:'stakeCon',          label:'Connections'},
+  {cat:'Stakeholder',key:'stakeEngage',       label:'Engagement'},
+  {cat:'Stakeholder',key:'stakeComm',         label:'Communications'},
+  {cat:'Policy',     key:'policyGuard',       label:'Governance'},
+];
+let ASMT_FORM={partnerId:null,partnerName:'',scores:{}};
+
+function openAsmtForm(partnerId,editId){
+  const p=partnerId?D.partners.find(r=>r.id===partnerId):null;
+  const pName=p?gf(p,FP.name)||'':'';
+  ASMT_FORM={partnerId:partnerId||null,partnerName:pName,scores:{}};
+  const existing=editId?D.assessments.find(r=>r.id===editId):null;
+  if(existing) ASMT_DOMAINS.forEach(d=>{ const v=gf(existing,FASMT[d.key]); if(v!=null) ASMT_FORM.scores[d.key]=+v; });
+  document.getElementById('asmt-modal-title').textContent=editId?'Edit Assessment':'New Assessment';
+  const today=new Date().toISOString().slice(0,10);
+  let lastCat='';
+  const domainRows=ASMT_DOMAINS.map(d=>{
+    const catHdr=d.cat!==lastCat?`<div class="asmt-cat-hd">${d.cat}</div>`:'';
+    lastCat=d.cat;
+    const sel=ASMT_FORM.scores[d.key]||null;
+    return catHdr+`<div class="asmt-domain-row"><span class="asmt-domain-lbl">${d.label}</span><div class="asmt-score-group">`+
+      [1,2,3,4].map(v=>`<button class="asmt-score-btn${sel===v?' sel':''}" onclick="setAsmtScore('${d.key}',${v},this)">${v}</button>`).join('')+
+      `</div></div>`;
+  }).join('');
+  // Partner picker when opened without a specific partner
+  const partnerPicker=!partnerId?`<div class="form-group" style="margin-bottom:12px"><label class="form-label" for="af-partner">Partner</label><select class="form-select" id="af-partner" onchange="ASMT_FORM.partnerId=this.value;ASMT_FORM.partnerName=this.options[this.selectedIndex].text"><option value="">— select —</option>${D.partners.filter(r=>gf(r,FP.name)).sort((a,b)=>(gf(a,FP.name)||'').localeCompare(gf(b,FP.name)||'')).map(r=>`<option value="${r.id}">${esc(gf(r,FP.name))}</option>`).join('')}</select></div>`:
+    `<div style="margin-bottom:12px"><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--ink3);margin-bottom:3px">Partner</div><div style="font-size:14px;font-weight:600;color:var(--ink)">${esc(pName)}</div></div>`;
+  document.getElementById('asmt-modal-body').innerHTML=
+    partnerPicker+
+    `<div style="display:grid;grid-template-columns:1fr auto;gap:10px;align-items:end;margin-bottom:10px">
+      <div class="form-group" style="margin:0"><label class="form-label" for="af-type">Assessment Type</label>
+        <select class="form-select" id="af-type"><option value="">— select —</option>${
+          ['Pre-Assessment','Goals','Check-In','Final Assessment','Not Applicable'].map(t=>`<option value="${t}"${existing&&gf(existing,FASMT.type)===t?' selected':''}>${t}</option>`).join('')
+        }</select></div>
+      <div class="form-group" style="margin:0"><label class="form-label" for="af-date">Date</label>
+        <input type="date" class="form-input" id="af-date" value="${existing?gf(existing,FASMT.date)||today:today}" style="width:140px"></div>
+    </div>
+    <div style="font-size:11px;color:var(--ink3);padding:4px 0 2px;margin-bottom:2px;border-bottom:1px solid var(--border)">
+      <strong>Score:</strong> 1 = Beginning &nbsp;·&nbsp; 2 = Developing &nbsp;·&nbsp; 3 = Proficient &nbsp;·&nbsp; 4 = Advanced
+    </div>
+    ${domainRows}
+    <div class="form-group" style="margin-top:14px"><label class="form-label" for="af-notes">Notes</label>
+      <textarea class="form-textarea" id="af-notes" rows="3" placeholder="Observations, context, next steps…">${existing?esc(gf(existing,FASMT.notes)||''):''}</textarea>
+    </div>
+    <div class="flex gap-8 mt-16">
+      <button class="btn-sm" onclick="closeAsmtModal()">Cancel</button>
+      <button class="btn-sm primary" id="af-save-btn" onclick="saveAssessment('${editId||''}')">Save Assessment</button>
+    </div>`;
+  document.getElementById('asmt-overlay').classList.add('open');
+}
+
+function setAsmtScore(key,val,btn){
+  ASMT_FORM.scores[key]=val;
+  btn.closest('.asmt-score-group').querySelectorAll('.asmt-score-btn').forEach(b=>b.classList.remove('sel'));
+  btn.classList.add('sel');
+}
+
+async function saveAssessment(editId){
+  const type=(document.getElementById('af-type')||{}).value||'';
+  const date=(document.getElementById('af-date')||{}).value||'';
+  const notes=((document.getElementById('af-notes')||{}).value||'').trim();
+  // Resolve partner from picker if present
+  const pickerEl=document.getElementById('af-partner');
+  if(pickerEl&&pickerEl.value){ ASMT_FORM.partnerId=pickerEl.value; ASMT_FORM.partnerName=pickerEl.options[pickerEl.selectedIndex].text; }
+  if(!ASMT_FORM.partnerId){ toast('Please select a partner','error'); return; }
+  if(!type){ toast('Please select an assessment type','error'); return; }
+  if(!date){ toast('Please enter a date','error'); return; }
+  const saveBtn=document.getElementById('af-save-btn');
+  saveBtn.disabled=true; saveBtn.textContent='Saving…';
+  try{
+    const fields={
+      [FASMT.name]:`${ASMT_FORM.partnerName} — ${type} — ${date}`,
+      [FASMT.prtText]:ASMT_FORM.partnerName,
+      [FASMT.opportunity]:[ASMT_FORM.partnerId],
+      [FASMT.type]:type,
+      [FASMT.date]:date,
+    };
+    if(notes) fields[FASMT.notes]=notes;
+    ASMT_DOMAINS.forEach(d=>{ const v=ASMT_FORM.scores[d.key]; if(v!=null) fields[FASMT[d.key]]=v; });
+    let rec;
+    if(editId){
+      rec=await apiWrite('PATCH',BASE,T.asmt,{id:editId,fields});
+      const idx=D.assessments.findIndex(r=>r.id===editId);
+      if(idx>=0) D.assessments[idx]={id:rec.id||editId,fields:{...D.assessments[idx].fields,...fields,...(rec.fields||{})}};
+    } else {
+      rec=await apiWrite('POST',BASE,T.asmt,{fields});
+      const created=rec.records?.[0]||rec;
+      D.assessments.push({id:created.id,fields:created.fields||fields});
+    }
+    closeAsmtModal();
+    renderAssessments();
+    toast(editId?'Assessment updated':'Assessment saved','success');
+  } catch(e){
+    toast('Save failed: '+e.message,'error');
+    saveBtn.disabled=false; saveBtn.textContent='Save Assessment';
+  }
+}
+
+function closeAsmtModal(){document.getElementById('asmt-overlay').classList.remove('open');}
 document.addEventListener('DOMContentLoaded',()=>{
   document.getElementById('acc-overlay')?.addEventListener('click',e=>{if(e.target.id==='acc-overlay')closeAccModal();});
 });
@@ -3148,7 +3294,7 @@ function openPartnerProfile(id){
     <div style="margin-bottom:16px">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
         <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink3)">Assessments</div>
-        <a href="https://partner-assessment.vercel.app/?partner=${encodeURIComponent(gf(p,FP.name)||'')}" target="_blank" class="btn-sm" style="font-size:11px;padding:3px 10px;text-decoration:none">Start Assessment →</a>
+        <button class="btn-sm" style="font-size:11px;padding:3px 10px" onclick="closeAccModal();openAsmtForm('${id}')">+ Assessment</button>
       </div>
       ${(()=>{
         const pName = gf(p,FP.name)||'';
@@ -3697,7 +3843,7 @@ function renderAssessments(){
         return `<div class="card" style="padding:14px 16px">
           <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:10px">
             <div style="font-size:13px;font-weight:600;color:var(--ink);line-height:1.3;cursor:${partner?'pointer':'default'}" ${partner?`onclick="openPartnerProfile('${partner.id}')"`:''}>${esc(pName)}</div>
-            <a href="https://partner-assessment.vercel.app/?partner=${encodeURIComponent(pName)}" target="_blank" style="font-size:10px;color:var(--teal);white-space:nowrap;flex-shrink:0">Start →</a>
+            <button class="btn-sm" style="font-size:10px;padding:2px 8px;flex-shrink:0" onclick="${partner?`openAsmtForm('${partner.id}')`:'openAsmtForm(null)'}">+ Assess</button>
           </div>
           <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px">
             ${badge(initDone, 'Pre', '#3b82f6')}
@@ -3738,7 +3884,7 @@ function renderAssessments(){
       <td>${score(asmtAvg(r,POLICY_FIELDS))}</td>
       <td style="max-width:180px;white-space:normal;font-size:11px;color:var(--ink2)">${esc(gf(r,FASMT.notes)||'')}</td>
       <td><a href="https://airtable.com/appgdtYPttWwiBZzA/tblC8Zfw2iJrDKjw4/${r.id}" target="_blank" style="font-size:11px;color:var(--teal)">AT ↗</a></td>
-      <td><a href="https://partner-assessment.vercel.app/?partner=${encodeURIComponent(p?gf(p,FP.name):prt)}" target="_blank" style="font-size:11px;color:var(--teal);white-space:nowrap">Start →</a></td>
+      <td><button class="btn-sm" style="font-size:11px" onclick="openAsmtForm(${p?`'${p.id}'`:'null'}, '${r.id}')">Edit</button> <button class="btn-sm" style="font-size:11px" onclick="openAsmtForm(${p?`'${p.id}'`:'null'})">+ New</button></td>
     </tr>`;
   }).join('') || `<tr><td colspan="10" class="empty-state">No assessments found</td></tr>`;
 
@@ -4057,12 +4203,12 @@ function renderRecentUpdates(){
   const colors = { log:'rgba(0,160,160,.15)', mou:'rgba(26,122,74,.15)' };
   container.innerHTML = top.map(u=>`
     <div class="update-item"${u.pid?` onclick="openPartnerProfile('${u.pid}')" style="cursor:pointer"`:''}>
-      <div class="update-icon" style="background:${colors[u.type]}">${icons[u.type]}</div>
+      <div class="update-icon" style="background:${colors[u.type]};width:22px;height:22px;font-size:11px;flex-shrink:0">${icons[u.type]}</div>
       <div style="flex:1;min-width:0">
-        <div style="font-size:12px;font-weight:600;color:var(--ink)">${esc(u.partner)}</div>
-        <div style="font-size:12px;color:var(--muted);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(u.text)}</div>
+        <div style="font-size:11px;font-weight:600;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(u.partner)}</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(u.text)}</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:2px">${fdt(u.date)}</div>
       </div>
-      <div style="font-size:11px;color:var(--muted);flex-shrink:0">${fdt(u.date)}</div>
     </div>`).join('');
 }
 
@@ -5749,6 +5895,18 @@ async function updatePartnerStage(recId, newStage){
     try{ localStorage.removeItem(CACHE_KEY); }catch(e){}
   } catch(err){ toast('Update failed: '+err.message,'error'); }
 }
+
+function scrollToSec(id){
+  const el=document.getElementById(id); if(!el) return;
+  el.scrollIntoView({behavior:'smooth',block:'start'});
+  return false;
+}
+
+// Back-to-top visibility
+window.addEventListener('scroll',()=>{
+  const btn=document.getElementById('back-to-top');
+  if(btn) btn.classList.toggle('show',window.scrollY>400);
+},{passive:true});
 
 // ── Boot ──────────────────────────────────────────────────────────────────────
 wireClickTargets();
