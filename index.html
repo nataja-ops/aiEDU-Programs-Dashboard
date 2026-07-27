@@ -1003,7 +1003,7 @@ button{cursor:pointer;font-family:inherit;}
       </div>
       <div class="card table-wrap">
         <table class="data-table" id="pls-tbl">
-          <thead><tr><th>#</th><th>Session Name</th><th>Product(s)</th><th>Format</th><th>Domain</th><th>Duration</th><th>Status</th></tr></thead>
+          <thead><tr><th>#</th><th>Session Name</th><th>Product(s)</th><th>Format</th><th>Domain</th><th>Duration</th><th>Status</th><th>Usage</th></tr></thead>
           <tbody><tr><td colspan="7" class="empty-state">Loading…</td></tr></tbody>
         </table>
       </div>
@@ -1772,7 +1772,6 @@ const SC = {
   year:           'fldmGKqbZv0qJvWWo',
   type:           'fldBFMshLO0KgKo9T',
   status:         'fldTvBAR9zXzfBTlA',
-  rubric:         'fldYgjgik3JVejnvA',
   selDomains:     'fldH1naKfvG0nK2XQ',
   initComplete:   'flddp5zvktINxwAT7',
   goalsComplete:  'fldJm6kEXpkmMry4D',
@@ -1885,7 +1884,10 @@ const FPLS = {
   format:  'fldAkbz4nhoJxbVqz',  // Format
   domain:  'fldM8v33SISrihSTv',  // Priority Domain
   subDom:  'fldkhLJf10Ygmbf6Y',  // Sub-Domain Alignment
-  plProds: 'fldS4KBZtLK2thFkC',  // PL Products (record links)
+  plProds:    'fldS4KBZtLK2thFkC',  // PL Products (record links)
+  cntEvents:  'fldWHlbb1DCVLRh0b',  // Count (Events)
+  cntParts:   'fldYIgrBrv2IXe40u',  // Count (Opportunities & Partnerships)
+  totalUsage: 'fld904UkSNLHKMl8q',  // Total Usage (formula)
 };
 // PL Products fields
 const FPLP = {
@@ -2250,14 +2252,19 @@ function drillComp(){
 }
 function drillMous(){
   const COL_MOU=[
-    {label:'Partner',   fn:m=>{const n=ga(m,FM.partner).join(', ')||'—'; const p=D.partners.find(x=>gf(x,FP.name)===n); return p?`<span class="drill-link" onclick="openPartnerProfile('${p.id}')">${n}</span>`:n;}},
+    {label:'Partner',   fn:m=>{
+      const ids=ga(m,FM.partnerships);
+      const prts=ids.map(id=>D.partners.find(x=>x.id===id)).filter(Boolean);
+      if(prts.length) return prts.map(prt=>`<span class="drill-link" onclick="openPartnerProfile('${prt.id}')">${esc(gf(prt,FP.name)||'—')}</span>`).join(', ');
+      const n=ga(m,FM.partner).join(', ')||'—'; return esc(n);
+    }},
     {label:'Stage',     fn:m=>stagePill(gf(m,FM.pipeline))},
     {label:'Signed',    fn:m=>fdt(gf(m,FM.dateSigned))},
     {label:'Begins',    fn:m=>fdt(gf(m,FM.begins))},
     {label:'Ends',      fn:m=>{const d=daysTo(gf(m,FM.ends));return `${fdt(gf(m,FM.ends))}${d!=null?' '+daysChip(d):''}`;} },
     {label:'Amount',    fn:m=>`<span style="font-variant-numeric:tabular-nums">${f$(gf(m,FM.amount))}</span>`},
   ];
-  const isFy26Mou=m=>{ const ds=gf(m,FM.dateSigned); return !!ds&&ds.slice(0,4)==='2026'; };
+  const isFy26Mou=m=>{ const ds=gf(m,FM.dateSigned); return !!ds&&ds.slice(0,4)==='2026'&&ga(m,FM.partnerships).length>0; };
   const r=D.mous.filter(isFy26Mou).sort((a,b)=>(gf(b,FM.dateSigned)||'').localeCompare(gf(a,FM.dateSigned)||''));
   showDrill('Service MOUs — FY26',r.length+' of 15 signed in 2026',r,COL_MOU);
 }
@@ -2446,7 +2453,7 @@ function buildEventScores() {
 // ── Load ──────────────────────────────────────────────────────────────────────
 const FY26_START = '2025-12-31';
 const FY26_END   = '2027-01-01';
-const CACHE_KEY  = 'aiedu_dash_v32';
+const CACHE_KEY  = 'aiedu_dash_v33';
 const CACHE_TTL  = 3 * 60 * 1000; // 3 minutes
 
 function loadProgress(pct) {
@@ -2655,7 +2662,7 @@ function renderOverview() {
   // Use MOU table: count records with signed date in 2026
   const mouCount = D.mous.filter(m=>{
     const ds=gf(m,FM.dateSigned); if(!ds) return false;
-    if(!ga(m,FM.partner).length) return false;
+    if(!ga(m,FM.partnerships).length) return false;
     return ds.slice(0,4)==='2026';
   }).length;
   setOkr('mou', mouCount, 15);
@@ -3270,7 +3277,7 @@ function renderPartnerships(f={}) {
   // Populate team filter
   const teamEl = document.getElementById('f-team'), curTm=teamEl.value;
   const allTeams = [...new Set(D.partners.flatMap(p=>teamOf(p)).filter(Boolean))].sort();
-  teamEl.innerHTML = '<option value="">All Team</option>'+allTeams.map(t=>`<option${t===curTm?' selected':''}>${esc(t)}</option>`).join('');
+  teamEl.innerHTML = '<option value="">All Team</option>'+allTeams.map(t=>`<option value="${esc(t)}"${t.trim()===curTm.trim()?' selected':''}>${esc(t)}</option>`).join('');
 
   // Populate type filter
   const typeEl = document.getElementById('f-type'), curTy=typeEl.value;
@@ -3289,7 +3296,7 @@ function renderPartnerships(f={}) {
 
   let rows = D.partners.filter(p=>gf(p,FP.name));
   if(f.stage)   rows=rows.filter(r=>gf(r,FP.pipeline)===f.stage);
-  if(f.team)    rows=rows.filter(r=>teamOf(r).includes(f.team));
+  if(f.team)    rows=rows.filter(r=>teamOf(r).map(t=>t.trim()).includes(f.team.trim()));
   if(f.type)    rows=rows.filter(r=>typeOf(r).includes(f.type));
   if(f.state)   rows=rows.filter(r=>stateOf(r).includes(f.state));
   if(f.funding) rows=rows.filter(r=>gf(r,FP.fundingStage)===f.funding);
@@ -3901,13 +3908,17 @@ function renderPlSessions(f={}) {
     const na=+gf(a,FPLS.num)||Infinity, nb=+gf(b,FPLS.num)||Infinity;
     return na!==nb ? na-nb : (gf(a,FPLS.name)||'').localeCompare(gf(b,FPLS.name)||'');
   });
-  tbody.innerHTML=rows.length===0?'<tr><td colspan="7" class="empty-state">No sessions found</td></tr>':
+  tbody.innerHTML=rows.length===0?'<tr><td colspan="8" class="empty-state">No sessions found</td></tr>':
     rows.map(r=>{
       const name=gf(r,FPLS.name)||gf(r,FPLS.indiv)||'—';
       const prods=gf(r,FPLS.products)||'—';
       const link=gf(r,FPLS.link);
       const num=gf(r,FPLS.num);
       const subDoms=ga(r,FPLS.subDom).map(v=>typeof v==='object'?v.name:v);
+      const usage=gf(r,FPLS.totalUsage);
+      const usageDisp = usage!=null&&+usage>0
+        ? `<span style="font-weight:700;color:var(--teal)">${+usage}</span>`
+        : '<span style="color:var(--ink3)">—</span>';
       return `<tr>
         <td style="color:var(--ink3);font-size:11px;font-variant-numeric:tabular-nums">${num!=null?num:'—'}</td>
         <td><strong>${name}</strong>${link?` <a href="${link}" target="_blank" style="font-size:11px;color:var(--teal);margin-left:6px">Recording ↗</a>`:''}
@@ -3918,6 +3929,7 @@ function renderPlSessions(f={}) {
         <td>${gf(r,FPLS.domain)||'—'}</td>
         <td style="font-size:12px;font-variant-numeric:tabular-nums">${fmin(gf(r,FPLS.dur))}</td>
         <td>${devStatusPill(gf(r,FPLS.status))}</td>
+        <td style="text-align:center;font-variant-numeric:tabular-nums">${usageDisp}</td>
       </tr>`;
     }).join('');
 }
@@ -4866,7 +4878,9 @@ function openPrtDrawer(id) {
   const p=D.partners.find(r=>r.id===id); if(!p) return;
   DRAWER={table:T.prt, base:BASE, id, isPrt:true};
   document.getElementById('drawer-title').textContent='Edit: '+(gf(p,FP.name)||'');
-  document.getElementById('edit-pipeline').value=gf(p,FP.pipeline)||'';
+  const pipeEl=document.getElementById('edit-pipeline');
+  const cur=gf(p,FP.pipeline)||'';
+  pipeEl.innerHTML='<option value="">— select —</option>'+STAGE_ORDER.map(s=>`<option value="${esc(s)}"${s===cur?' selected':''}>${esc(s)}</option>`).join('');
   document.getElementById('edit-start').value=gf(p,FP.start)||'';
   document.getElementById('edit-end').value=gf(p,FP.end)||'';
   document.getElementById('edit-notes').value=gf(p,FP.notes)||'';
@@ -4876,11 +4890,14 @@ function openPrtDrawer(id) {
 
 function openMouDrawer(id) {
   const m=D.mous.find(r=>r.id===id); if(!m) return;
-  const pid=ga(m,FM.partner)[0];
-  const pn=pid?(D.partners.find(p=>p.id===pid)||{}).fields?.[FP.name]||'—':'—';
+  const pn=ga(m,FM.partner).join(', ')||'—';
   DRAWER={table:T.mou, base:BASE, id, isPrt:false};
   document.getElementById('drawer-title').textContent='Edit Contract: '+pn;
-  document.getElementById('edit-pipeline').value=gf(m,FM.pipeline)||'';
+  // Populate pipeline from live MOU data (not hardcoded partnership stages)
+  const mouStages=[...new Set(D.mous.map(m=>gf(m,FM.pipeline)).filter(Boolean))].sort();
+  const pipeEl=document.getElementById('edit-pipeline');
+  const cur=gf(m,FM.pipeline)||'';
+  pipeEl.innerHTML='<option value="">— select —</option>'+mouStages.map(s=>`<option value="${esc(s)}"${s===cur?' selected':''}>${esc(s)}</option>`).join('');
   document.getElementById('edit-start').value=gf(m,FM.begins)||'';
   document.getElementById('edit-end').value=gf(m,FM.ends)||'';
   document.getElementById('notes-group').style.display='none';
