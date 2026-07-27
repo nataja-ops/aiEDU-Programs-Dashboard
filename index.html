@@ -236,6 +236,8 @@ button{cursor:pointer;font-family:inherit;}
 .btn-sm:hover{border-color:var(--teal);color:var(--teal);}
 .btn-sm.primary{background:var(--teal);color:#fff;border-color:var(--teal);}
 .btn-sm.primary:hover{background:var(--teal-d);}
+.add-data-btn{height:20px;padding:0 7px;border-radius:4px;font-size:10px;font-weight:600;border:1px dashed var(--border);background:transparent;color:var(--ink3);cursor:pointer;transition:all .15s;}
+.add-data-btn:hover{border-color:var(--teal);color:var(--teal);background:var(--teal-faint,rgba(0,180,160,.07));}
 /* Data Entry Portal */
 .portal-btn{
   display:flex;flex-direction:column;align-items:center;gap:8px;
@@ -425,6 +427,7 @@ button{cursor:pointer;font-family:inherit;}
   <div class="stat-item"><span class="stat-val" id="s-fees">—</span><span class="stat-lbl">Fees Awarded</span></div>
   <div class="stat-item"><span class="stat-val" id="s-events">—</span><span class="stat-lbl">Events (PL)</span></div>
   <div class="stat-item"><span class="stat-val" id="s-parts">—</span><span class="stat-lbl">Participants</span></div>
+  <div class="stat-item"><span class="stat-val" id="s-collab">—</span><span class="stat-lbl">Collaborations</span></div>
   <div class="stat-item"><span class="stat-val" id="s-nps">—</span><span class="stat-lbl">NPS</span></div>
   <div class="stat-item"><span class="stat-val" id="s-sat">—</span><span class="stat-lbl">Avg Sat</span></div>
 </div>
@@ -2209,6 +2212,10 @@ function drillAllPartners(){
   const r = D.accounts.filter(a=>mouAccIds_D.has(a.id)).sort((a,b)=>(gf(a,FA.name)||'').localeCompare(gf(b,FA.name)||''));
   showDrill('Partners since 2023 (MOU Signed/Complete)', r.length+' accounts', r, COL_ACCS);
 }
+function drillCollabs(){
+  const r=D.partners.filter(p=>!!gf(p,FP.collab)).sort((a,b)=>(gf(a,FP.name)||'').localeCompare(gf(b,FP.name)||''));
+  showDrill('Active Collaborations (Collaboration? = checked)',r.length+' partnerships',r,COL_PRTS);
+}
 function drillActive(){
   const ACTIVE_PRT_STAGES_D = new Set(['MOU Signed','Collaboration','Verbal Agreement']);
   const activeAccIds_D = new Set(D.accounts.filter(a=>(gf(a,FA.status)||'').toLowerCase()==='active').map(a=>a.id));
@@ -2425,7 +2432,7 @@ function addExpandButtons(){
 }
 
 function wireClickTargets(){
-  [['s-partners',drillAllPartners],['s-active',drillActive],['s-fees',drillFY26Fees],
+  [['s-partners',drillAllPartners],['s-active',drillActive],['s-collab',drillCollabs],['s-fees',drillFY26Fees],
    ['s-events',drillAllEvents],['s-parts',drillParticipants],['s-nps',drillNPS],['s-sat',drillSat]]
   .forEach(([id,fn])=>{
     const el=document.getElementById(id)?.closest('.stat-item');
@@ -2575,6 +2582,7 @@ function renderAll() {
   renderSurveys();
   renderContent();
   renderCatalyst();
+  renderAssessments();
   if(LEAD){ renderWorkspacePipeline(); renderWorkspaceTimeline(); renderWorkspaceOps(); }
   addExpandButtons();
 }
@@ -2611,8 +2619,10 @@ function renderStats() {
     if(!MOU_STAGES.has(gf(p,FP.pipeline))) return;
     ga(p,FP.account).forEach(id=>mouAccIds.add(id));
   });
+  const collabCount = D.partners.filter(p=>!!gf(p,FP.collab)).length;
   document.getElementById('s-partners').textContent = mouAccIds.size;
   document.getElementById('s-active').textContent   = active;
+  document.getElementById('s-collab').textContent   = collabCount;
   document.getElementById('s-fees').textContent     = f$(awarded);
   document.getElementById('s-events').textContent   = plEvts.length;
   document.getElementById('s-parts').textContent    = plParts.toLocaleString();
@@ -3111,8 +3121,8 @@ function openPartnerProfile(id){
     <div style="background:var(--surface2);border-radius:8px;padding:12px;margin-bottom:14px">
       <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink3);margin-bottom:8px">Read-only Info</div>
       <div class="acc-field-row" style="padding:5px 0"><span class="acc-field-key">Account</span><span class="acc-field-val">${acc?`<span class="drill-link" onclick="openAccProfile('${acc}');closeAccModal()">${esc(accName)}</span>`:'—'}</span></div>
-      <div class="acc-field-row" style="padding:5px 0"><span class="acc-field-key">State</span><span class="acc-field-val">${esc(state)}</span></div>
-      <div class="acc-field-row" style="padding:5px 0"><span class="acc-field-key">Team</span><span class="acc-field-val">${esc(team)}</span></div>
+      <div class="acc-field-row" style="padding:5px 0"><span class="acc-field-key">State</span><span class="acc-field-val">${state!=='—'?esc(state):`<a href="https://airtable.com/${BASE}/${T.prt}/${id}" target="_blank" style="font-size:11px;color:var(--teal)">+ Add in Airtable ↗</a>`}</span></div>
+      <div class="acc-field-row" style="padding:5px 0"><span class="acc-field-key">Team</span><span class="acc-field-val">${team!=='—'?esc(team):`<a href="https://airtable.com/${BASE}/${T.prt}/${id}" target="_blank" style="font-size:11px;color:var(--teal)">+ Add in Airtable ↗</a>`}</span></div>
       <div class="acc-field-row" style="padding:5px 0"><span class="acc-field-key">MOU Status</span><span class="acc-field-val">${mouSigned?`<span class="pill pill-good">✓ Signed${mouDateStr?' · '+mouDateStr:''}</span>`:`<span class="pill pill-gray">Not Signed</span>`}</span></div>
       <div class="acc-field-row" style="padding:5px 0"><span class="acc-field-key">FY26 Fees</span><span class="acc-field-val"><strong>${f$(gf(p,FP.fy26))}</strong>${dEnd!=null?' '+daysChip(dEnd):''}</span></div>
       <div class="acc-field-row" style="padding:5px 0;border-bottom:none"><span class="acc-field-key">Missing Info</span><span class="acc-field-val">${gf(p,FP.missing)||'<span style="color:var(--good)">None</span>'}</span></div>
@@ -3349,13 +3359,14 @@ function renderPartnerships(f={}) {
       // Sr. Lead lookup returns array of names via REST API
       const team = ga(r,FP.team).map(v=>typeof v==='object'?v.name:v).join(', ');
       const missing = gf(r,FP.missing) ? `<span style="color:var(--warn)">⚠ Missing</span>` : '';
+      const addBtn = `<button class="add-data-btn" onclick="openPartnerProfile('${r.id}')">+ Add</button>`;
       return `<tr>
         <td><strong>${gf(r,FP.name)||'—'}</strong></td>
         <td>${stagePill(gf(r,FP.pipeline))}</td>
-        <td>${stateOf(r)||'—'}</td>
+        <td>${stateOf(r)||addBtn}</td>
         <td style="font-variant-numeric:tabular-nums">${f$(gf(r,FP.fy26))}</td>
-        <td>${fdt(gf(r,FP.end))} ${daysChip(days)}</td>
-        <td style="color:var(--ink2);font-size:12px">${team||'—'}</td>
+        <td>${gf(r,FP.end)?fdt(gf(r,FP.end))+' '+daysChip(days):addBtn}</td>
+        <td style="color:var(--ink2);font-size:12px">${team||addBtn}</td>
         <td>${missing}</td>
         <td><button class="btn-sm" onclick="openPrtDrawer('${r.id}')">Edit</button></td>
       </tr>`;
