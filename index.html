@@ -316,19 +316,15 @@ button{cursor:pointer;font-family:inherit;}
 @keyframes sk{0%{background-position:200% 0}100%{background-position:-200% 0}}
 @media(max-width:700px){#nav{justify-content:flex-start;}.logo span{display:none;}}
 /* Opportunities view */
-.opp-account{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;height:fit-content;}
-.opp-account-hd{display:flex;align-items:center;gap:10px;padding:12px 16px;cursor:pointer;user-select:none;transition:background .15s;}
-.opp-account-hd:hover{background:var(--surface2);}
-.opp-toggle{font-size:10px;color:var(--ink3);width:14px;flex-shrink:0;transition:transform .2s;}
-.opp-account.open .opp-toggle{transform:rotate(90deg);}
+.opp-account{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;display:flex;flex-direction:column;}
+.opp-account-hd{display:flex;align-items:center;gap:10px;padding:14px 16px;}
 .opp-name{font-weight:600;font-size:14px;flex:1;color:var(--ink);}
-.opp-acc-meta{display:flex;align-items:center;gap:12px;font-size:12px;color:var(--ink3);flex-wrap:wrap;}
-.opp-prt-list{display:none;border-top:1px solid var(--border);background:var(--surface2);}
-.opp-account.open .opp-prt-list{display:block;}
-.opp-prt-row{display:grid;grid-template-columns:2fr 1fr 1fr;align-items:center;gap:6px;padding:8px 12px 8px 36px;border-bottom:1px solid var(--border);font-size:11px;}
+.opp-acc-meta{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink3);flex-wrap:wrap;margin-top:4px;}
+.opp-prt-list{flex:1;border-top:1px solid var(--border);background:var(--surface2);}
+.opp-prt-row{display:grid;grid-template-columns:2fr 1fr 1fr;align-items:center;gap:6px;padding:8px 12px 8px 16px;border-bottom:1px solid var(--border);font-size:11px;cursor:pointer;}
 .opp-prt-row:last-child{border-bottom:none;}
 .opp-prt-row:hover{background:var(--surface3);}
-.opp-prt-hd{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--ink3);padding:5px 12px 5px 36px;display:grid;grid-template-columns:2fr 1fr 1fr;gap:6px;border-bottom:1px solid var(--border);}
+.opp-prt-hd{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--ink3);padding:5px 12px 5px 16px;display:grid;grid-template-columns:2fr 1fr 1fr;gap:6px;border-bottom:1px solid var(--border);}
 /* Success tracker */
 .tracker-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s;border-radius:6px;}
 .tracker-row:hover{background:var(--surface2);}
@@ -3065,17 +3061,18 @@ function renderOpportunities(q='', overviewMode=false, elId='opp-list') {
     const statusCls = status.toLowerCase().includes('active')?'pill-good':status.toLowerCase().includes('prospect')?'pill-warn':'pill-gray';
 
     return `<div class="opp-account" id="opp-${id}">
-      <div class="opp-account-hd" onclick="toggleOpp('${id}')">
-        <span class="opp-toggle">▶</span>
-        <span class="opp-name">${name}</span>
-        <div class="opp-acc-meta">
-          ${status?`<span class="pill ${statusCls}">${status}</span>`:''}
-          ${state?`<span>${state}</span>`:''}
-          <span>${prts.length} partnership${prts.length!==1?'s':''}</span>
-          ${activeCount?`<span style="color:var(--good)">${activeCount} active</span>`:''}
-          <span class="pill ${types==='—'?'pill-gray':'pill-teal'}">${types}</span>
+      <div class="opp-account-hd">
+        <div style="flex:1;min-width:0">
+          <div class="opp-name">${name}</div>
+          <div class="opp-acc-meta">
+            ${status?`<span class="pill ${statusCls}">${status}</span>`:''}
+            ${state?`<span>${state}</span>`:''}
+            <span>${prts.length} partnership${prts.length!==1?'s':''}</span>
+            ${activeCount?`<span style="color:var(--good)">${activeCount} active</span>`:''}
+            ${types!=='—'?`<span class="pill pill-teal">${types}</span>`:''}
+          </div>
         </div>
-        <button class="btn-sm" onclick="event.stopPropagation();openAccProfile('${id}')" style="margin-left:8px;flex-shrink:0">Profile</button>
+        <button class="btn-sm" onclick="openAccProfile('${id}')" style="flex-shrink:0">Profile</button>
       </div>
       <div class="opp-prt-list">${prtsHtml}</div>
     </div>`;
