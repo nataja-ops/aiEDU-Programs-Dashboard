@@ -823,26 +823,45 @@ button{cursor:pointer;font-family:inherit;}
       </div>
     <div id="prt-assessments-view" style="display:none">
       <div class="section-hd mb-16">
-        <div><div class="section-title">Internal Partner Assessments</div><div class="section-sub">AI Readiness Rubric results by partnership — Pre-Assessment, Goals, Check-In, and Final</div></div>
-        <div class="flex gap-8 items-center">
-          <a href="https://partner-assessment.vercel.app" target="_blank" class="btn-sm primary" style="text-decoration:none;white-space:nowrap">+ Start Assessment</a>
+        <div><div class="section-title">Internal Partner Assessments</div><div class="section-sub">AI Readiness Rubric — completion tracking and level growth per partnership</div></div>
+        <a href="https://partner-assessment.vercel.app" target="_blank" class="btn-sm primary" style="text-decoration:none;white-space:nowrap">+ Start Assessment</a>
+      </div>
+
+      <!-- Subtabs -->
+      <div class="flex gap-8 mb-16" style="justify-content:center">
+        <button class="btn-sm primary" id="asmt-sub-scorecard" onclick="setAsmtSubtab('scorecard')">Scorecards</button>
+        <button class="btn-sm" id="asmt-sub-records" onclick="setAsmtSubtab('records')">All Records</button>
+      </div>
+
+      <!-- Scorecard view -->
+      <div id="asmt-scorecard-view">
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin-bottom:20px" id="asmt-kpis"></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+          <div style="font-size:12px;font-weight:600;color:var(--ink2)">All Partnerships — click to filter records</div>
+          <input class="form-input" id="f-asmt-sc-search" placeholder="Search partner…" style="width:180px" oninput="renderAssessments()">
+        </div>
+        <div id="asmt-sc-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px">
+          <div class="empty-state">Loading…</div>
+        </div>
+      </div>
+
+      <!-- Records view -->
+      <div id="asmt-records-view" style="display:none">
+        <div class="flex gap-8 mb-12 items-center" style="flex-wrap:wrap">
           <select class="form-select" id="f-asmt-type" style="width:auto">
             <option value="">All Types</option>
-            <option>Pre-Assessment</option>
-            <option>Goals</option>
-            <option>Check-In</option>
-            <option>Final Assessment</option>
+            <option>Pre-Assessment</option><option>Goals</option>
+            <option>Check-In</option><option>Final Assessment</option>
             <option>Not Applicable</option>
           </select>
           <input class="form-input" id="f-asmt-search" placeholder="Search partner…" style="width:160px">
         </div>
-      </div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin-bottom:20px" id="asmt-kpis"></div>
-      <div class="card table-wrap">
-        <table class="data-table" id="asmt-tbl">
-          <thead><tr><th>Partnership</th><th>Type</th><th>Date</th><th>Vision</th><th>Strategy</th><th>Stakeholders</th><th>Policy</th><th>Notes</th><th></th><th></th></tr></thead>
-          <tbody><tr><td colspan="10" class="empty-state">Loading…</td></tr></tbody>
-        </table>
+        <div class="card table-wrap">
+          <table class="data-table" id="asmt-tbl">
+            <thead><tr><th>Partnership</th><th>Type</th><th>Date</th><th>Vision</th><th>Strategy</th><th>Stakeholders</th><th>Policy</th><th>Notes</th><th></th><th></th></tr></thead>
+            <tbody><tr><td colspan="10" class="empty-state">Loading…</td></tr></tbody>
+          </table>
+        </div>
       </div>
     </div>
     </div>
@@ -1700,6 +1719,7 @@ const T = {
   contact:'tblfVziiqmyIci0r0',
   interact:'tblNrIYLnxFswHXQO',
   asmt:'tblC8Zfw2iJrDKjw4',
+  scorecard:'tbll0Llrzz8olGDIA',
   scores:'tbljs4iPtmSVbyQN3',
 };
 // NPS by Administration Year fields
@@ -1747,6 +1767,27 @@ const FSCORE = {
   total:       'fldXtNa2oYZQ7fdOT', // rollup total
 };
 const GR_REVIEWERS = ['Emma','Lindsay','Christian'];
+const SC = {
+  partner:        'fldZMYYilzcab5XwD',
+  year:           'fldmGKqbZv0qJvWWo',
+  type:           'fldBFMshLO0KgKo9T',
+  status:         'fldTvBAR9zXzfBTlA',
+  rubric:         'fldYgjgik3JVejnvA',
+  selDomains:     'fldH1naKfvG0nK2XQ',
+  initComplete:   'flddp5zvktINxwAT7',
+  goalsComplete:  'fldJm6kEXpkmMry4D',
+  finalComplete:  'fldyJ1nxSqDslcGI9',
+  initAvg:        'fldEJUBZH0GuJQ0XR',
+  finalAvg:       'fldfRtz10d28EfH2Q',
+  growth:         'fldVjvDXEiOZkNaLN',
+  goalsMet:       'fld4E7r0ZpLGpbQWI',
+  goalsTotal:     'fld3qD4Pze7cEwGso',
+  goalProgressPct:'fldCQxqoQucCa4MMV',
+  initDate:       'fldR3UUvHO9vKRBSa',
+  goalsDate:      'fldplJRZj0kJwtzxD',
+  finalDate:      'fldTVbU7RSMSIfF7t',
+  lastUpdated:    'fld637u0DKtyELOXZ',
+};
 const FP = {
   name:'fldpkporCZ8A6HZTT', pipeline:'fldEoTQtHQMygOKT3', start:'fldZtu03mx9rpSMEl',
   end:'fldmO78r4NxmHW8wn', missing:'fldNc1hZCyd0GiKwF', team:'fldl6l6te8tgmiENL',
@@ -1890,7 +1931,7 @@ const STAGE_ORDER = [
 ];
 
 // ── State ────────────────────────────────────────────────────────────────────
-let D = { partners:[], fees:[], mous:[], events:[], feedback:[], surveys:[], staff:[], catalyst:[], accounts:[], npsYears:[], plSessions:[], plProducts:[], assessments:[], scores:[] };
+let D = { partners:[], fees:[], mous:[], events:[], feedback:[], surveys:[], staff:[], catalyst:[], accounts:[], npsYears:[], plSessions:[], plProducts:[], assessments:[], scorecards:[], scores:[] };
 let EVT_SCORES = {}; // eventId → { sat, facEff, objMet, before, after, nps }
 let LEAD = null;
 let CHARTS = {};
@@ -2405,7 +2446,7 @@ function buildEventScores() {
 // ── Load ──────────────────────────────────────────────────────────────────────
 const FY26_START = '2025-12-31';
 const FY26_END   = '2027-01-01';
-const CACHE_KEY  = 'aiedu_dash_v31';
+const CACHE_KEY  = 'aiedu_dash_v32';
 const CACHE_TTL  = 3 * 60 * 1000; // 3 minutes
 
 function loadProgress(pct) {
@@ -2439,7 +2480,8 @@ async function fetchFresh() {
   const fPLP = Object.values(FPLP);
 
   const fScore = Object.values(FSCORE);
-  const [partners, fees, mous, staff, surveys, events, feedback, catalyst, accounts, npsYears, plSessions, plProducts, assessments, scores] = await Promise.all([
+  const fSC = Object.values(SC);
+  const [partners, fees, mous, staff, surveys, events, feedback, catalyst, accounts, npsYears, plSessions, plProducts, assessments, scorecards, scores] = await Promise.all([
     atFetch(BASE, T.prt, fPrt),
     atFetch(BASE, T.fee, fFee, feeFilter),
     atFetch(BASE, T.mou, fMou),
@@ -2453,9 +2495,10 @@ async function fetchFresh() {
     atFetch(BASE, T.plSess, fPLS),
     atFetch(BASE, T.plProd, fPLP),
     atFetch(BASE, T.asmt, Object.values(FASMT)),
+    atFetch(BASE, T.scorecard, fSC),
     atFetch(BASE, T.scores, fScore),
   ]);
-  return { partners, fees, mous, events, feedback, surveys, staff, catalyst, accounts, npsYears, plSessions, plProducts, assessments, scores };
+  return { partners, fees, mous, events, feedback, surveys, staff, catalyst, accounts, npsYears, plSessions, plProducts, assessments, scorecards, scores };
 }
 
 async function loadAll() {
@@ -3069,6 +3112,42 @@ function openPartnerProfile(id){
         }).join('');
       })()}
     </div>
+    ${(()=>{
+      const accIds = new Set(ga(p,FP.account));
+      const prtEvts = D.events.filter(e=>ga(e,FE.partner).some(id=>accIds.has(id)))
+        .sort((a,b)=>(gf(b,FE.date)||'').localeCompare(gf(a,FE.date)||'')).slice(0,5);
+      const evtIds = new Set(prtEvts.map(e=>e.id));
+      const prtFb = D.feedback.filter(fb=>ga(fb,FFB.event).some(id=>evtIds.has(id)));
+      const fbWithNps = prtFb.filter(fb=>gf(fb,FFB.npsPoints)!=null);
+      const fbWithSat = prtFb.filter(fb=>gf(fb,FFB.sat)!=null&&+gf(fb,FFB.sat)>0);
+      const avgNps = fbWithNps.length?(fbWithNps.reduce((s,fb)=>s+(+gf(fb,FFB.npsPoints)||0),0)/fbWithNps.length).toFixed(1):null;
+      const avgSat = fbWithSat.length?(fbWithSat.reduce((s,fb)=>s+(+gf(fb,FFB.sat)||0),0)/fbWithSat.length).toFixed(1):null;
+      const totalParts = prtEvts.reduce((s,e)=>s+(+gf(e,FE.parts)||0),0);
+      if(!prtEvts.length) return `<div style="margin-bottom:16px"><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink3);margin-bottom:6px">Recent Events</div><div style="font-size:11px;color:var(--ink3)">No events on file</div></div>`;
+      return `<div style="margin-bottom:16px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink3)">Recent Events</div>
+          <span style="font-size:11px;color:var(--ink3)">${prtEvts.length} shown · ${totalParts} total participants</span>
+        </div>
+        ${prtFb.length?`<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px">
+          ${avgNps!=null?`<span style="font-size:11px;background:var(--surface2);border-radius:6px;padding:3px 8px">NPS avg <strong style="color:${+avgNps>=0?'var(--good)':'var(--warn)'}">${+avgNps>=0?'+':''}${avgNps}</strong></span>`:''}
+          ${avgSat!=null?`<span style="font-size:11px;background:var(--surface2);border-radius:6px;padding:3px 8px">Satisfaction <strong>${avgSat}/5</strong></span>`:''}
+          <span style="font-size:11px;background:var(--surface2);border-radius:6px;padding:3px 8px"><strong>${prtFb.length}</strong> survey response${prtFb.length!==1?'s':''}</span>
+        </div>`:''}
+        ${prtEvts.map(e=>{
+          const parts=+gf(e,FE.parts)||0;
+          const npsVal=gf(e,FE.npsAuto);
+          const types=ga(e,FE.type).map(v=>typeof v==='object'?v.name:v).join(', ');
+          return `<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border)">
+            <span style="font-size:11px;color:var(--ink3);min-width:72px;flex-shrink:0">${fdt(gf(e,FE.date))}</span>
+            <span style="font-size:12px;color:var(--ink);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(gf(e,FE.nameT)||gf(e,FE.name)||'')}">${esc(gf(e,FE.nameT)||gf(e,FE.name)||'—')}</span>
+            ${types?`<span style="font-size:10px;color:var(--ink3);white-space:nowrap">${esc(types)}</span>`:''}
+            ${parts?`<span style="font-size:11px;color:var(--ink2);white-space:nowrap;flex-shrink:0">${parts} ppts</span>`:''}
+            ${npsVal!=null?`<span style="font-size:11px;font-weight:600;white-space:nowrap;flex-shrink:0;color:${+npsVal>=0?'var(--good)':'var(--warn)'}">${+npsVal>=0?'+':''}${npsVal} NPS</span>`:''}
+          </div>`;
+        }).join('')}
+      </div>`;
+    })()}
     <div style="margin-bottom:16px">
       <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink3);margin-bottom:6px">Change Log</div>
       <div style="max-height:110px;overflow-y:auto;margin-bottom:8px">${logHtml}</div>
@@ -3466,71 +3545,148 @@ const ASMT_TYPE_COLOR = {
 };
 function asmtAvg(r, fields){ const vals=fields.map(f=>+gf(r,f)).filter(v=>v>0); return vals.length?vals.reduce((a,b)=>a+b)/vals.length:null; }
 
+function setAsmtSubtab(tab) {
+  document.getElementById('asmt-scorecard-view').style.display = tab==='scorecard' ? '' : 'none';
+  document.getElementById('asmt-records-view').style.display   = tab==='records'   ? '' : 'none';
+  document.getElementById('asmt-sub-scorecard').classList.toggle('primary', tab==='scorecard');
+  document.getElementById('asmt-sub-records').classList.toggle('primary', tab==='records');
+  renderAssessments();
+}
+
 function renderAssessments(){
   const typeFilter = (document.getElementById('f-asmt-type')||{}).value||'';
-  const search = ((document.getElementById('f-asmt-search')||{}).value||'').toLowerCase();
+  const recSearch  = ((document.getElementById('f-asmt-search')||{}).value||'').toLowerCase();
+  const scSearch   = ((document.getElementById('f-asmt-sc-search')||{}).value||'').toLowerCase();
 
-  let rows = [...D.assessments].sort((a,b)=>(gf(b,FASMT.date)||'').localeCompare(gf(a,FASMT.date)||''));
-  if(typeFilter) rows = rows.filter(r=>(gf(r,FASMT.type)||'')===typeFilter);
-  if(search) rows = rows.filter(r=>(gf(r,FASMT.prtText)||'').toLowerCase().includes(search));
-
-  // KPIs
-  const allByPrt = new Set(D.assessments.map(r=>gf(r,FASMT.prtText)).filter(Boolean));
-  const naSet = new Set(D.assessments.filter(r=>(gf(r,FASMT.type)||'')==='Not Applicable').map(r=>gf(r,FASMT.prtText)));
+  // ── KPIs ──────────────────────────────────────────────────────────────────
+  const allByPrt  = new Set(D.assessments.map(r=>gf(r,FASMT.prtText)).filter(Boolean));
+  const naSet     = new Set(D.assessments.filter(r=>(gf(r,FASMT.type)||'')==='Not Applicable').map(r=>gf(r,FASMT.prtText)));
   const withAssmt = new Set(D.assessments.filter(r=>(gf(r,FASMT.type)||'')!=='Not Applicable').map(r=>gf(r,FASMT.prtText)));
   const activePrt = D.partners.filter(p=>['MOU Signed','MOU Sent','MOU Complete','Collaboration','Verbal Agreement'].includes(gf(p,FP.pipeline)));
-  const missingCount = activePrt.filter(p=>{ const n=gf(p,FP.name); return n && !allByPrt.has(n) && !naSet.has(n); }).length;
-  const byType = {};
-  D.assessments.forEach(r=>{ const t=gf(r,FASMT.type)||'Other'; byType[t]=(byType[t]||0)+1; });
+  const missingCount = activePrt.filter(p=>{ const n=gf(p,FP.name); return n&&!allByPrt.has(n)&&!naSet.has(n); }).length;
+  const byType = {}; D.assessments.forEach(r=>{ const t=gf(r,FASMT.type)||'Other'; byType[t]=(byType[t]||0)+1; });
+  const withGrowth = D.scorecards.filter(s=>{ const g=gf(s,SC.growth); return g!=null&&+g>0; }).length;
 
   const kpiEl = document.getElementById('asmt-kpis');
   if(kpiEl) kpiEl.innerHTML = [
-    {l:'Assessed Partners', v:withAssmt.size, c:'var(--teal)'},
-    {l:'Missing Assessment', v:missingCount, c:'#e07b1e'},
-    {l:'N/A', v:naSet.size, c:'#94a3b8'},
-    {l:'Pre-Assessment', v:byType['Pre-Assessment']||0, c:'#3b82f6'},
-    {l:'Goals', v:byType['Goals']||0, c:'#f59e0b'},
-    {l:'Check-In', v:byType['Check-In']||0, c:'#8b5cf6'},
-    {l:'Final Assessment', v:byType['Final Assessment']||0, c:'#10b981'},
+    {l:'Partners Assessed', v:withAssmt.size,               c:'var(--teal)'},
+    {l:'Missing Assessment',v:missingCount,                  c:'#e07b1e'},
+    {l:'Showing Growth',    v:withGrowth,                    c:'#10b981'},
+    {l:'Pre-Assessment',    v:byType['Pre-Assessment']||0,   c:'#3b82f6'},
+    {l:'Goals',             v:byType['Goals']||0,            c:'#f59e0b'},
+    {l:'Check-In',          v:byType['Check-In']||0,         c:'#8b5cf6'},
+    {l:'Final Assessment',  v:byType['Final Assessment']||0, c:'#10b981'},
   ].map(k=>`<div class="card" style="padding:12px 14px;text-align:center">
     <div style="font-size:22px;font-weight:700;color:${k.c}">${k.v}</div>
     <div style="font-size:11px;color:var(--ink3);margin-top:2px">${k.l}</div>
   </div>`).join('');
 
-  // Table
-  const VISION_FIELDS = [FASMT.visionStudents, FASMT.visionSystem, FASMT.visionInstruction];
-  const STRAT_FIELDS  = [FASMT.strategySet, FASMT.strategyChange];
-  const STAKE_FIELDS  = [FASMT.stakeCon, FASMT.stakeEngage, FASMT.stakeComm];
+  // ── Scorecard grid ────────────────────────────────────────────────────────
+  const scGrid = document.getElementById('asmt-sc-grid');
+  if(scGrid) {
+    let scs = [...D.scorecards].sort((a,b)=>(gf(a,SC.partner)||'').localeCompare(gf(b,SC.partner)||''));
+    if(scSearch) scs = scs.filter(s=>(gf(s,SC.partner)||'').toLowerCase().includes(scSearch));
+
+    const badge = (done, label, color) =>
+      `<span style="display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;background:${done?color+'22':'var(--surface2)'};color:${done?color:'var(--ink3)'};border:1px solid ${done?color+'44':'var(--border)'}">${done?'✓':'○'} ${label}</span>`;
+
+    const levelBar = (val, max=4, color='#0d7a6b') => {
+      if(val==null) return '<span style="color:var(--ink3);font-size:11px">—</span>';
+      const pct = Math.min(100, (val/max)*100);
+      return `<div style="display:flex;align-items:center;gap:6px">
+        <div style="flex:1;height:5px;background:var(--border);border-radius:3px;overflow:hidden">
+          <div style="width:${pct}%;height:100%;background:${color};border-radius:3px"></div>
+        </div>
+        <span style="font-size:11px;font-weight:600;min-width:26px">${+val>0?Number(val).toFixed(1):'—'}</span>
+      </div>`;
+    };
+
+    if(!scs.length){
+      scGrid.innerHTML = '<div class="empty-state" style="grid-column:1/-1">No scorecard data found</div>';
+    } else {
+      scGrid.innerHTML = scs.map(s=>{
+        const pName   = gf(s,SC.partner)||'—';
+        const initDone = gf(s,SC.initComplete);
+        const goalsDone= gf(s,SC.goalsComplete);
+        const finalDone= gf(s,SC.finalComplete);
+        const initAvg  = gf(s,SC.initAvg)!=null  ? +gf(s,SC.initAvg)  : null;
+        const finalAvg = gf(s,SC.finalAvg)!=null ? +gf(s,SC.finalAvg) : null;
+        const growth   = gf(s,SC.growth)!=null   ? +gf(s,SC.growth)   : null;
+        const goalsMet = gf(s,SC.goalsMet);
+        const goalsTotal = gf(s,SC.goalsTotal);
+        const goalsPct = gf(s,SC.goalProgressPct)!=null ? +gf(s,SC.goalProgressPct) : null;
+        const partner  = D.partners.find(p=>(gf(p,FP.name)||'')===pName);
+
+        const growthHtml = (initAvg!=null||finalAvg!=null) ? `
+          <div style="margin:10px 0 6px">
+            <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink3);margin-bottom:6px">Level Progress</div>
+            <div style="display:flex;align-items:center;gap:6px;font-size:11px;margin-bottom:4px">
+              <span style="color:var(--ink3);min-width:28px">Pre</span>${levelBar(initAvg,4,'#3b82f6')}
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;font-size:11px">
+              <span style="color:var(--ink3);min-width:28px">Final</span>${levelBar(finalAvg,4,'#10b981')}
+            </div>
+            ${growth!=null&&growth>0?`<div style="margin-top:6px;font-size:12px;font-weight:700;color:#10b981">↑ +${Number(growth).toFixed(1)} levels growth</div>`
+            :growth!=null&&growth<0?`<div style="margin-top:6px;font-size:12px;font-weight:700;color:var(--warn)">↓ ${Number(growth).toFixed(1)} levels</div>`:''}
+          </div>` : '';
+
+        const goalsHtml = (goalsMet!=null&&goalsTotal!=null) ? `
+          <div style="margin-top:8px;font-size:11px;color:var(--ink2)">
+            Goals: <strong>${goalsMet}/${goalsTotal}</strong>
+            ${goalsPct!=null?`<span style="color:var(--ink3)"> · ${Math.round(goalsPct)}%</span>`:''}
+          </div>` : '';
+
+        return `<div class="card" style="padding:14px 16px">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:10px">
+            <div style="font-size:13px;font-weight:600;color:var(--ink);line-height:1.3;cursor:${partner?'pointer':'default'}" ${partner?`onclick="openPartnerProfile('${partner.id}')"`:''}>${esc(pName)}</div>
+            <a href="https://partner-assessment.vercel.app/?partner=${encodeURIComponent(pName)}" target="_blank" style="font-size:10px;color:var(--teal);white-space:nowrap;flex-shrink:0">Start →</a>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px">
+            ${badge(initDone, 'Pre', '#3b82f6')}
+            ${badge(goalsDone,'Goals','#f59e0b')}
+            ${badge(finalDone,'Final','#10b981')}
+          </div>
+          ${growthHtml}
+          ${goalsHtml}
+        </div>`;
+      }).join('');
+    }
+  }
+
+  // ── Records table ─────────────────────────────────────────────────────────
+  let rows = [...D.assessments].sort((a,b)=>(gf(b,FASMT.date)||'').localeCompare(gf(a,FASMT.date)||''));
+  if(typeFilter) rows = rows.filter(r=>(gf(r,FASMT.type)||'')===typeFilter);
+  if(recSearch)  rows = rows.filter(r=>(gf(r,FASMT.prtText)||'').toLowerCase().includes(recSearch));
+
+  const VISION_FIELDS = [FASMT.visionStudents,FASMT.visionSystem,FASMT.visionInstruction];
+  const STRAT_FIELDS  = [FASMT.strategySet,FASMT.strategyChange];
+  const STAKE_FIELDS  = [FASMT.stakeCon,FASMT.stakeEngage,FASMT.stakeComm];
   const POLICY_FIELDS = [FASMT.policyGuard];
+  const score = v => v!=null ? `<span style="font-weight:600">${v.toFixed(1)}</span>/4` : '—';
 
   const tbody = rows.map(r=>{
     const type = gf(r,FASMT.type)||'—';
     const color = ASMT_TYPE_COLOR[type]||'#64748b';
-    const vision = asmtAvg(r,VISION_FIELDS); const strat = asmtAvg(r,STRAT_FIELDS);
-    const stake = asmtAvg(r,STAKE_FIELDS);   const policy = asmtAvg(r,POLICY_FIELDS);
-    const score = v => v!=null ? `<span style="font-weight:600">${v.toFixed(1)}</span>/4` : '—';
     const prt = gf(r,FASMT.prtText)||'—';
-    const p = D.partners.find(x=>(gf(x,FP.name)||'')===(gf(r,FASMT.prtText)||''));
+    const p = D.partners.find(x=>(gf(x,FP.name)||'')===prt);
     const prtLink = p ? `<span class="drill-link" onclick="openPartnerProfile('${p.id}')">${esc(prt)}</span>` : esc(prt);
-    const notes = esc(gf(r,FASMT.notes)||'');
     return `<tr>
       <td>${prtLink}</td>
       <td><span style="background:${color}22;color:${color};padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600">${esc(type)}</span></td>
       <td>${fdt(gf(r,FASMT.date))}</td>
-      <td>${score(vision)}</td>
-      <td>${score(strat)}</td>
-      <td>${score(stake)}</td>
-      <td>${score(policy)}</td>
-      <td style="max-width:180px;white-space:normal;font-size:11px;color:var(--ink2)">${notes}</td>
-      <td><a href="https://airtable.com/appgdtYPttWwiBZzA/tblC8Zfw2iJrDKjw4/${r.id}" target="_blank" class="drill-link" style="font-size:11px">AT ↗</a></td>
-      <td><a href="https://partner-assessment.vercel.app/?partner=${encodeURIComponent(gf(p,FP.name)||prt)}" target="_blank" style="font-size:11px;color:var(--teal);white-space:nowrap">Start →</a></td>
+      <td>${score(asmtAvg(r,VISION_FIELDS))}</td>
+      <td>${score(asmtAvg(r,STRAT_FIELDS))}</td>
+      <td>${score(asmtAvg(r,STAKE_FIELDS))}</td>
+      <td>${score(asmtAvg(r,POLICY_FIELDS))}</td>
+      <td style="max-width:180px;white-space:normal;font-size:11px;color:var(--ink2)">${esc(gf(r,FASMT.notes)||'')}</td>
+      <td><a href="https://airtable.com/appgdtYPttWwiBZzA/tblC8Zfw2iJrDKjw4/${r.id}" target="_blank" style="font-size:11px;color:var(--teal)">AT ↗</a></td>
+      <td><a href="https://partner-assessment.vercel.app/?partner=${encodeURIComponent(p?gf(p,FP.name):prt)}" target="_blank" style="font-size:11px;color:var(--teal);white-space:nowrap">Start →</a></td>
     </tr>`;
   }).join('') || `<tr><td colspan="10" class="empty-state">No assessments found</td></tr>`;
 
   const tbl = document.getElementById('asmt-tbl');
   if(tbl) tbl.querySelector('tbody').innerHTML = tbody;
 
-  // Wire filters
   ['f-asmt-type','f-asmt-search'].forEach(id=>{
     const el=document.getElementById(id); if(el&&!el._asmtBound){ el._asmtBound=true; el.addEventListener('input',renderAssessments); }
   });
@@ -3837,10 +3993,10 @@ function renderRecentUpdates(){
   const icons = { log:'✏️', mou:'📄' };
   const colors = { log:'rgba(0,160,160,.15)', mou:'rgba(26,122,74,.15)' };
   container.innerHTML = top.map(u=>`
-    <div class="update-item">
+    <div class="update-item"${u.pid?` onclick="openPartnerProfile('${u.pid}')" style="cursor:pointer"`:''}>
       <div class="update-icon" style="background:${colors[u.type]}">${icons[u.type]}</div>
       <div style="flex:1;min-width:0">
-        <div style="font-size:12px;font-weight:600;color:var(--ink)">${u.pid?`<span class="drill-link" onclick="openPartnerProfile('${u.pid}')">${esc(u.partner)}</span>`:esc(u.partner)}</div>
+        <div style="font-size:12px;font-weight:600;color:var(--ink)">${esc(u.partner)}</div>
         <div style="font-size:12px;color:var(--muted);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(u.text)}</div>
       </div>
       <div style="font-size:11px;color:var(--muted);flex-shrink:0">${fdt(u.date)}</div>
