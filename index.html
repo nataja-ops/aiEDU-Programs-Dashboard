@@ -1188,22 +1188,22 @@ button{cursor:pointer;font-family:inherit;}
     <button class="icon-btn" id="drawer-close">✕</button>
   </div>
   <div class="form-group">
-    <label class="form-label">Pipeline Stage</label>
+    <label class="form-label" for="edit-pipeline">Pipeline Stage</label>
     <select class="form-select" id="edit-pipeline">
       <option>Prospect</option><option>Outreach</option><option>Proposal</option>
       <option>Negotiation</option><option>Active</option><option>Renewal</option><option>Lost</option>
     </select>
   </div>
   <div class="form-group">
-    <label class="form-label">Start Date</label>
+    <label class="form-label" for="edit-start">Start Date</label>
     <input type="date" class="form-input" id="edit-start">
   </div>
   <div class="form-group">
-    <label class="form-label">End Date</label>
+    <label class="form-label" for="edit-end">End Date</label>
     <input type="date" class="form-input" id="edit-end">
   </div>
   <div class="form-group" id="notes-group">
-    <label class="form-label">Notes</label>
+    <label class="form-label" for="edit-notes">Notes</label>
     <textarea class="form-textarea" id="edit-notes" rows="4"></textarea>
   </div>
   <div class="flex gap-8 mt-16">
@@ -1346,17 +1346,17 @@ button{cursor:pointer;font-family:inherit;}
     <div class="modal-sub" style="margin-bottom:20px">Creates a new partnership record in Airtable</div>
 
     <div class="form-group">
-      <label class="form-label">Partnership Start Year &amp; Name <span style="color:var(--crit)">*</span></label>
+      <label class="form-label" for="no-name">Partnership Start Year &amp; Name <span style="color:var(--crit)">*</span></label>
       <input class="form-input" id="no-name" placeholder="Fiscal Year | Partner(s) Name (i.e.:2026 | NYC Public Schools)">
     </div>
 
     <div class="form-group">
-      <label class="form-label">Associate Partner Account(s)</label>
+      <label class="form-label" for="no-account">Associate Partner Account(s)</label>
       <select class="form-select" id="no-account"><option value="">— Select account —</option></select>
     </div>
 
     <div class="form-group">
-      <label class="form-label">Service Lines</label>
+      <span class="form-label">Service Lines</span>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:10px;background:var(--surface2);border-radius:8px;border:1px solid var(--border)">
         <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" class="no-svc-cb" value="Teacher Professional Learning"> Teacher Professional Learning</label>
         <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" class="no-svc-cb" value="District Strategic Advising"> District Strategic Advising</label>
@@ -1373,7 +1373,7 @@ button{cursor:pointer;font-family:inherit;}
 
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
       <div class="form-group" style="margin:0">
-        <label class="form-label">Pipeline Status</label>
+        <label class="form-label" for="no-pipeline">Pipeline Status</label>
         <select class="form-select" id="no-pipeline">
           <option value="">— Select —</option>
           <option>Relationship Building</option><option>Initial Contact</option><option>Early Exploration</option>
@@ -1383,7 +1383,7 @@ button{cursor:pointer;font-family:inherit;}
         </select>
       </div>
       <div class="form-group" style="margin:0">
-        <label class="form-label">Opportunity Status</label>
+        <label class="form-label" for="no-opp-status">Opportunity Status</label>
         <select class="form-select" id="no-opp-status">
           <option value="">— Select —</option>
           <option selected>Potential Partner</option>
@@ -1395,7 +1395,7 @@ button{cursor:pointer;font-family:inherit;}
 
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px">
       <div class="form-group" style="margin:0">
-        <label class="form-label">Potential Duration (Fiscal Year)</label>
+        <label class="form-label" for="no-fiscal">Potential Duration (Fiscal Year)</label>
         <select class="form-select" id="no-fiscal">
           <option value="">— Select —</option>
           <option>FY25</option><option>FY26</option><option>FY27</option>
@@ -1403,7 +1403,7 @@ button{cursor:pointer;font-family:inherit;}
         </select>
       </div>
       <div class="form-group" style="margin:0">
-        <label class="form-label">Funding Stage</label>
+        <label class="form-label" for="no-funding">Funding Stage</label>
         <select class="form-select" id="no-funding">
           <option value="">— Select —</option>
           <option selected>Proposed</option><option>Awarded</option><option>Not Funded</option>
@@ -1412,7 +1412,7 @@ button{cursor:pointer;font-family:inherit;}
     </div>
 
     <div class="form-group mt-12">
-      <label class="form-label">Notes</label>
+      <label class="form-label" for="no-notes">Notes</label>
       <textarea class="form-textarea" id="no-notes" rows="4"></textarea>
     </div>
 
@@ -1442,17 +1442,17 @@ button{cursor:pointer;font-family:inherit;}
     </div>
 
     <div class="form-group">
-      <label class="form-label">Name <span style="color:var(--crit)">*</span></label>
+      <label class="form-label" for="na-name">Name <span style="color:var(--crit)">*</span></label>
       <input class="form-input" id="na-name" placeholder="Organization name">
     </div>
 
     <div class="form-group">
-      <label class="form-label">Website</label>
+      <label class="form-label" for="na-website">Website</label>
       <input class="form-input" id="na-website" type="url" placeholder="https://…">
     </div>
 
     <div class="form-group">
-      <label class="form-label">State(s)</label>
+      <label class="form-label" for="na-states">State(s)</label>
       <select class="form-select" id="na-states" multiple size="5" style="height:auto">
         <option>AL</option><option>AK</option><option>AZ</option><option>AR</option><option>CA</option>
         <option>CO</option><option>CT</option><option>DE</option><option>DC</option><option>FL</option>
@@ -1471,7 +1471,7 @@ button{cursor:pointer;font-family:inherit;}
 
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
       <div class="form-group" style="margin:0">
-        <label class="form-label">Partner Type</label>
+        <span class="form-label">Partner Type</span>
         <div style="display:flex;flex-direction:column;gap:4px;padding:8px;background:var(--surface2);border-radius:8px;border:1px solid var(--border)">
           <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer"><input type="checkbox" class="na-type-cb" value="School Partnership"> School Partnership</label>
           <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer"><input type="checkbox" class="na-type-cb" value="Non Profit Org"> Non Profit Org</label>
@@ -1483,7 +1483,7 @@ button{cursor:pointer;font-family:inherit;}
         </div>
       </div>
       <div class="form-group" style="margin:0">
-        <label class="form-label">Account Status</label>
+        <label class="form-label" for="na-status">Account Status</label>
         <select class="form-select" id="na-status">
           <option value="">— Select —</option>
           <option>Prospect</option><option>Active</option><option>Inactive</option>
@@ -1507,20 +1507,20 @@ button{cursor:pointer;font-family:inherit;}
       <button class="icon-btn" onclick="document.getElementById('new-contact-ov').style.display='none'">✕</button>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-      <div class="form-group" style="margin:0"><label class="form-label">First Name *</label><input class="form-input" id="nc-first" placeholder="First"></div>
-      <div class="form-group" style="margin:0"><label class="form-label">Last Name *</label><input class="form-input" id="nc-last" placeholder="Last"></div>
+      <div class="form-group" style="margin:0"><label class="form-label" for="nc-first">First Name *</label><input class="form-input" id="nc-first" placeholder="First"></div>
+      <div class="form-group" style="margin:0"><label class="form-label" for="nc-last">Last Name *</label><input class="form-input" id="nc-last" placeholder="Last"></div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px">
-      <div class="form-group" style="margin:0"><label class="form-label">Title / Role</label><input class="form-input" id="nc-title" placeholder="e.g. Superintendent"></div>
-      <div class="form-group" style="margin:0"><label class="form-label">Email</label><input class="form-input" id="nc-email" type="email" placeholder="email@org.edu"></div>
+      <div class="form-group" style="margin:0"><label class="form-label" for="nc-title">Title / Role</label><input class="form-input" id="nc-title" placeholder="e.g. Superintendent"></div>
+      <div class="form-group" style="margin:0"><label class="form-label" for="nc-email">Email</label><input class="form-input" id="nc-email" type="email" placeholder="email@org.edu"></div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px">
-      <div class="form-group" style="margin:0"><label class="form-label">Phone</label><input class="form-input" id="nc-phone" type="tel" placeholder="(555) 000-0000"></div>
-      <div class="form-group" style="margin:0"><label class="form-label">Account</label>
+      <div class="form-group" style="margin:0"><label class="form-label" for="nc-phone">Phone</label><input class="form-input" id="nc-phone" type="tel" placeholder="(555) 000-0000"></div>
+      <div class="form-group" style="margin:0"><label class="form-label" for="nc-account">Account</label>
         <select class="form-select" id="nc-account"><option value="">— Select —</option></select>
       </div>
     </div>
-    <div class="form-group mt-12"><label class="form-label">Notes</label><textarea class="form-textarea" id="nc-notes" rows="3"></textarea></div>
+    <div class="form-group mt-12"><label class="form-label" for="nc-notes">Notes</label><textarea class="form-textarea" id="nc-notes" rows="3"></textarea></div>
     <div class="flex gap-8 mt-16">
       <button class="btn-sm primary flex-1" id="nc-ok">Save to Airtable</button>
       <button class="btn-sm" onclick="document.getElementById('new-contact-ov').style.display='none'">Cancel</button>
@@ -1535,33 +1535,33 @@ button{cursor:pointer;font-family:inherit;}
       <div><div class="modal-title">New MOU / Contract</div><div class="modal-sub">Creates a new program MOU record in Airtable</div></div>
       <button class="icon-btn" onclick="document.getElementById('new-mou-ov').style.display='none'">✕</button>
     </div>
-    <div class="form-group"><label class="form-label">Contract Name *</label><input class="form-input" id="nm-name" placeholder="e.g. Springfield USD MOU 2025"></div>
-    <div class="form-group"><label class="form-label">Partnership</label>
+    <div class="form-group"><label class="form-label" for="nm-name">Contract Name *</label><input class="form-input" id="nm-name" placeholder="e.g. Springfield USD MOU 2025"></div>
+    <div class="form-group"><label class="form-label" for="nm-partnership">Partnership</label>
       <select class="form-select" id="nm-partnership"><option value="">— Select partnership —</option></select>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-      <div class="form-group" style="margin:0"><label class="form-label">Document Type</label>
+      <div class="form-group" style="margin:0"><label class="form-label" for="nm-doctype">Document Type</label>
         <select class="form-select" id="nm-doctype">
           <option value="">— Select —</option>
           <option>MOU</option><option>SOW</option><option>Contract</option><option>Letter of Intent</option><option>Other</option>
         </select>
       </div>
-      <div class="form-group" style="margin:0"><label class="form-label">Date Signed</label><input type="date" class="form-input" id="nm-signed-date"></div>
+      <div class="form-group" style="margin:0"><label class="form-label" for="nm-signed-date">Date Signed</label><input type="date" class="form-input" id="nm-signed-date"></div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px">
-      <div class="form-group" style="margin:0"><label class="form-label">Work Begins</label><input type="date" class="form-input" id="nm-begins"></div>
-      <div class="form-group" style="margin:0"><label class="form-label">Work Ends</label><input type="date" class="form-input" id="nm-ends"></div>
+      <div class="form-group" style="margin:0"><label class="form-label" for="nm-begins">Work Begins</label><input type="date" class="form-input" id="nm-begins"></div>
+      <div class="form-group" style="margin:0"><label class="form-label" for="nm-ends">Work Ends</label><input type="date" class="form-input" id="nm-ends"></div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px">
-      <div class="form-group" style="margin:0"><label class="form-label">Signer Name</label><input class="form-input" id="nm-signer-name" placeholder="Full name"></div>
-      <div class="form-group" style="margin:0"><label class="form-label">Signer Email</label><input class="form-input" id="nm-signer-email" type="email" placeholder="email@org.edu"></div>
+      <div class="form-group" style="margin:0"><label class="form-label" for="nm-signer-name">Signer Name</label><input class="form-input" id="nm-signer-name" placeholder="Full name"></div>
+      <div class="form-group" style="margin:0"><label class="form-label" for="nm-signer-email">Signer Email</label><input class="form-input" id="nm-signer-email" type="email" placeholder="email@org.edu"></div>
     </div>
-    <div class="form-group mt-12"><label class="form-label">Document Link</label><input class="form-input" id="nm-link" type="url" placeholder="https://drive.google.com/…"></div>
+    <div class="form-group mt-12"><label class="form-label" for="nm-link">Document Link</label><input class="form-input" id="nm-link" type="url" placeholder="https://drive.google.com/…"></div>
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
       <input type="checkbox" id="nm-signed-check" style="width:16px;height:16px;cursor:pointer">
       <label for="nm-signed-check" style="font-size:13px;cursor:pointer">Document is signed</label>
     </div>
-    <div class="form-group"><label class="form-label">Notes</label><textarea class="form-textarea" id="nm-notes" rows="3"></textarea></div>
+    <div class="form-group"><label class="form-label" for="nm-notes">Notes</label><textarea class="form-textarea" id="nm-notes" rows="3"></textarea></div>
     <div class="flex gap-8 mt-16">
       <button class="btn-sm primary flex-1" id="nm-ok">Save to Airtable</button>
       <button class="btn-sm" onclick="document.getElementById('new-mou-ov').style.display='none'">Cancel</button>
@@ -1576,18 +1576,18 @@ button{cursor:pointer;font-family:inherit;}
       <div><div class="modal-title">Log Interaction</div><div class="modal-sub">Records a touchpoint in the Interactions table</div></div>
       <button class="icon-btn" onclick="document.getElementById('new-int-ov').style.display='none'">✕</button>
     </div>
-    <div class="form-group"><label class="form-label">Subject *</label><input class="form-input" id="ni-subject" placeholder="e.g. Intro call with Superintendent"></div>
+    <div class="form-group"><label class="form-label" for="ni-subject">Subject *</label><input class="form-input" id="ni-subject" placeholder="e.g. Intro call with Superintendent"></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-      <div class="form-group" style="margin:0"><label class="form-label">Type</label>
+      <div class="form-group" style="margin:0"><label class="form-label" for="ni-type">Type</label>
         <select class="form-select" id="ni-type">
           <option value="">— Select —</option>
           <option>Email</option><option>Phone Call</option><option>Meeting</option>
           <option>Conference</option><option>Site Visit</option><option>Other</option>
         </select>
       </div>
-      <div class="form-group" style="margin:0"><label class="form-label">Date</label><input type="date" class="form-input" id="ni-date"></div>
+      <div class="form-group" style="margin:0"><label class="form-label" for="ni-date">Date</label><input type="date" class="form-input" id="ni-date"></div>
     </div>
-    <div class="form-group mt-12"><label class="form-label">Interaction Details</label><textarea class="form-textarea" id="ni-details" rows="4" placeholder="What happened? Key takeaways…"></textarea></div>
+    <div class="form-group mt-12"><label class="form-label" for="ni-details">Interaction Details</label><textarea class="form-textarea" id="ni-details" rows="4" placeholder="What happened? Key takeaways…"></textarea></div>
     <div class="flex gap-8 mt-16">
       <button class="btn-sm primary flex-1" id="ni-ok">Save to Airtable</button>
       <button class="btn-sm" onclick="document.getElementById('new-int-ov').style.display='none'">Cancel</button>
@@ -1602,35 +1602,35 @@ button{cursor:pointer;font-family:inherit;}
     <div class="modal-sub">Creates a new record in the Events table in Airtable.</div>
     <div class="grid-2 mt-16" style="gap:12px">
       <div class="form-group" style="margin:0">
-        <label class="form-label">Event Name *</label>
+        <label class="form-label" for="le-name">Event Name *</label>
         <input class="form-input" id="le-name" placeholder="Event name">
       </div>
       <div class="form-group" style="margin:0">
-        <label class="form-label">Date *</label>
+        <label class="form-label" for="le-date">Date *</label>
         <input class="form-input" id="le-date" type="date">
       </div>
     </div>
     <div class="form-group mt-12">
-      <label class="form-label">Partner Account</label>
+      <label class="form-label" for="le-partner">Partner Account</label>
       <input class="form-input" id="le-partner" placeholder="Partner name (optional)">
     </div>
     <div class="grid-2 mt-0" style="gap:12px">
       <div class="form-group" style="margin:0">
-        <label class="form-label">Format</label>
+        <label class="form-label" for="le-format">Format</label>
         <select class="form-select" id="le-format"><option value="">— Select —</option></select>
       </div>
       <div class="form-group" style="margin:0">
-        <label class="form-label">PL Type</label>
+        <label class="form-label" for="le-pltype">PL Type</label>
         <select class="form-select" id="le-pltype"><option value="">— Select —</option></select>
       </div>
     </div>
     <div class="grid-2 mt-12" style="gap:12px">
       <div class="form-group" style="margin:0">
-        <label class="form-label"># Participants</label>
+        <label class="form-label" for="le-parts"># Participants</label>
         <input class="form-input" id="le-parts" type="number" min="0" placeholder="0">
       </div>
       <div class="form-group" style="margin:0">
-        <label class="form-label">Facilitator</label>
+        <label class="form-label" for="le-fac">Facilitator</label>
         <input class="form-input" id="le-fac" placeholder="Name">
       </div>
     </div>
@@ -1663,11 +1663,11 @@ button{cursor:pointer;font-family:inherit;}
     <div class="modal-title">Submit a Request</div>
     <div class="modal-sub">Goes directly into the team blockers log in Airtable.</div>
     <div class="form-group mt-16">
-      <label class="form-label">Your Name</label>
+      <label class="form-label" for="req-name">Your Name</label>
       <input class="form-input" id="req-name" placeholder="Your name">
     </div>
     <div class="form-group">
-      <label class="form-label">Request Type</label>
+      <label class="form-label" for="req-type">Request Type</label>
       <select class="form-select" id="req-type">
         <option value="General Question">General Question</option>
         <option value="Partnership Inquiry">Partnership Inquiry</option>
@@ -1677,7 +1677,7 @@ button{cursor:pointer;font-family:inherit;}
       </select>
     </div>
     <div class="form-group">
-      <label class="form-label">Priority</label>
+      <label class="form-label" for="req-priority">Priority</label>
       <select class="form-select" id="req-priority">
         <option value="Medium">Medium</option>
         <option value="High">High</option>
@@ -1685,7 +1685,7 @@ button{cursor:pointer;font-family:inherit;}
       </select>
     </div>
     <div class="form-group">
-      <label class="form-label">Description</label>
+      <label class="form-label" for="req-msg">Description</label>
       <textarea class="form-input" id="req-msg" rows="4" placeholder="Describe your request…" style="resize:vertical"></textarea>
     </div>
     <div class="flex gap-8 mt-16">
@@ -3018,19 +3018,19 @@ function openPartnerProfile(id){
   document.getElementById('acc-modal-title').textContent=gf(p,FP.name)||'Partnership';
   document.getElementById('acc-modal-body').innerHTML=`
     <div class="form-group" style="margin-bottom:12px">
-      <label class="form-label">Partnership Name</label>
+      <label class="form-label" for="pf-name">Partnership Name</label>
       <input class="form-input" id="pf-name" value="${esc(gf(p,FP.name)||'')}" placeholder="Partnership name">
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
       <div class="form-group" style="margin:0">
-        <label class="form-label">Pipeline Stage</label>
+        <label class="form-label" for="pf-pipeline">Pipeline Stage</label>
         <select class="form-select" id="pf-pipeline">
           <option value=""></option>
           ${STAGE_ORDER.map(s=>`<option value="${esc(s)}"${gf(p,FP.pipeline)===s?' selected':''}>${esc(s)}</option>`).join('')}
         </select>
       </div>
       <div class="form-group" style="margin:0">
-        <label class="form-label">Funding Stage</label>
+        <label class="form-label" for="pf-funding">Funding Stage</label>
         <select class="form-select" id="pf-funding">
           <option value="">— none —</option>
           ${fundingOpts.map(s=>`<option value="${esc(s)}"${gf(p,FP.fundingStage)===s?' selected':''}>${esc(s)}</option>`).join('')}
@@ -3039,34 +3039,34 @@ function openPartnerProfile(id){
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px">
       <div class="form-group" style="margin:0">
-        <label class="form-label">Work Start</label>
+        <label class="form-label" for="pf-start">Work Start</label>
         <input type="date" class="form-input" id="pf-start" value="${gf(p,FP.start)||''}">
       </div>
       <div class="form-group" style="margin:0">
-        <label class="form-label">Work End</label>
+        <label class="form-label" for="pf-end">Work End</label>
         <input type="date" class="form-input" id="pf-end" value="${gf(p,FP.end)||''}">
       </div>
       <div class="form-group" style="margin:0">
-        <label class="form-label">Cultivation Start</label>
+        <label class="form-label" for="pf-cultstart">Cultivation Start</label>
         <input type="date" class="form-input" id="pf-cultstart" value="${gf(p,FP.cultStart)||''}">
       </div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
       <div class="form-group" style="margin:0">
-        <label class="form-label">Services (comma-separated)</label>
+        <label class="form-label" for="pf-services">Services (comma-separated)</label>
         <input class="form-input" id="pf-services" value="${esc(services)}" placeholder="PL, Curriculum…">
       </div>
       <div class="form-group" style="margin:0">
-        <label class="form-label">Partner Type (comma-separated)</label>
+        <label class="form-label" for="pf-parttype">Partner Type (comma-separated)</label>
         <input class="form-input" id="pf-parttype" value="${esc(partType)}" placeholder="District, School…">
       </div>
     </div>
     <div class="form-group" style="margin-bottom:12px">
-      <label class="form-label">Proposed Fees ($)</label>
+      <label class="form-label" for="pf-proposed">Proposed Fees ($)</label>
       <input type="number" class="form-input" id="pf-proposed" value="${gf(p,FP.proposed)||''}" placeholder="0" step="1000" style="max-width:180px">
     </div>
     <div class="form-group" style="margin-bottom:14px">
-      <label class="form-label">Notes</label>
+      <label class="form-label" for="pf-notes">Notes</label>
       <textarea class="form-textarea" id="pf-notes" rows="3">${esc(gf(p,FP.notes)||'')}</textarea>
     </div>
     <div style="background:var(--surface2);border-radius:8px;padding:12px;margin-bottom:14px">
