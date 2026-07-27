@@ -2220,32 +2220,56 @@ function drillMous(){
   showDrill('Service MOUs — FY26',r.length+' of 15 signed in 2026',r,COL_MOU);
 }
 function drillEdu(){
-  const evts=[...D.events].sort((a,b)=>(gf(b,FE.date)||'').localeCompare(gf(a,FE.date)||''));
-  // Group by partner account name
-  const grouped={};
-  evts.forEach(e=>{
-    const pName=ga(e,FE.partner).map(v=>typeof v==='object'?v.name:v).join(', ')||'No Partner';
-    (grouped[pName]=grouped[pName]||[]).push(e);
+  const evts2026 = D.events.filter(e=>{ const d=gf(e,FE.date); return d&&d.slice(0,4)==='2026'; });
+  const totalParts = evts2026.reduce((s,e)=>s+(+gf(e,FE.parts)||0),0);
+
+  // Group by event type, sum participants
+  const byType={};
+  evts2026.forEach(e=>{
+    const types = ga(e,FE.type).map(v=>typeof v==='object'?v.name:v).filter(Boolean);
+    const label = types.length ? types.join(', ') : (gf(e,FE.plType)||'Other');
+    const parts = +gf(e,FE.parts)||0;
+    if(!byType[label]) byType[label]={events:0,parts:0};
+    byType[label].events++;
+    byType[label].parts+=parts;
   });
-  const cols=COL_EVTS;
-  const rows=[];
-  Object.entries(grouped).sort(([a],[b])=>a.localeCompare(b)).forEach(([grp,grpEvts])=>{
-    const total=grpEvts.reduce((s,e)=>s+(+gf(e,FE.parts)||0),0);
-    rows.push({_isGroup:true, _label:`${grp} — ${grpEvts.length} events · ${total.toLocaleString()} participants`});
-    grpEvts.forEach(e=>rows.push(e));
+
+  const sorted = Object.entries(byType).sort((a,b)=>b[1].parts-a[1].parts);
+  const PIE_COLORS = ['#0d7a6b','#3a6baf','#e07c2a','#9b5ca5','#22a878','#d4840a','#c43535','#64748b','#f59e0b','#10b981'];
+
+  document.getElementById('drill-title').textContent = 'Educators Trained — 2026';
+  document.getElementById('drill-sub').textContent   = `${totalParts.toLocaleString()} participants across ${evts2026.length} events`;
+
+  // Summary table by type
+  document.getElementById('drill-thead').innerHTML = '<tr><th>Event Type</th><th style="text-align:right">Events</th><th style="text-align:right">Participants</th></tr>';
+  document.getElementById('drill-tbody').innerHTML = sorted.map(([type,d],i)=>
+    `<tr>
+      <td><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${PIE_COLORS[i%PIE_COLORS.length]};margin-right:7px;vertical-align:middle"></span>${esc(type)}</td>
+      <td style="text-align:right;font-variant-numeric:tabular-nums">${d.events}</td>
+      <td style="text-align:right;font-weight:600;font-variant-numeric:tabular-nums">${d.parts.toLocaleString()}</td>
+    </tr>`
+  ).join('') || '<tr><td colspan="3" class="empty-state">No events in 2026</td></tr>';
+
+  // Pie chart
+  const cs = document.getElementById('drill-chart-section');
+  cs.style.display = 'block';
+  const canvas = document.getElementById('drill-chart-canvas');
+  if(CHARTS['drill-chart-canvas']){ CHARTS['drill-chart-canvas'].destroy(); delete CHARTS['drill-chart-canvas']; }
+  CHARTS['drill-chart-canvas'] = new Chart(canvas, {
+    type: 'pie',
+    data: {
+      labels: sorted.map(([t])=>t),
+      datasets:[{ data: sorted.map(([,d])=>d.parts), backgroundColor: sorted.map((_,i)=>PIE_COLORS[i%PIE_COLORS.length]), borderWidth:2, borderColor:'var(--surface)' }]
+    },
+    options:{
+      plugins:{
+        legend:{ position:'right', labels:{ boxWidth:12, font:{size:11}, color:'var(--ink2)', padding:10 } },
+        tooltip:{ callbacks:{ label: ctx => ` ${ctx.label}: ${ctx.parsed.toLocaleString()} participants` } }
+      },
+      maintainAspectRatio:true
+    }
   });
-  const totalParts=evts.reduce((s,e)=>s+(+gf(e,FE.parts)||0),0);
-  document.getElementById('drill-title').textContent='Educators Trained — FY26';
-  document.getElementById('drill-sub').textContent=totalParts.toLocaleString()+' total participants';
-  document.getElementById('drill-thead').innerHTML='<tr>'+cols.map(c=>`<th>${c.label}</th>`).join('')+'</tr>';
-  document.getElementById('drill-tbody').innerHTML=rows.map(r=>{
-    if(r._isGroup) return `<tr style="background:var(--surface2)"><td colspan="${cols.length}" style="font-weight:700;padding:8px 10px;font-size:12px;color:var(--ink2)">${r._label}</td></tr>`;
-    const first=cols[0].fn(r);
-    const m=first.match(/onclick="([^"]+)"/);
-    const rc=m?` style="cursor:pointer" onclick="${m[1]}"`:' ';
-    return `<tr${rc}>${cols.map(c=>`<td>${c.fn(r)}</td>`).join('')}</tr>`;
-  }).join('');
-  document.getElementById('drill-chart-section').style.display='none';
+
   document.getElementById('drill-overlay').classList.add('open');
 }
 function drillPeer(){
@@ -2593,11 +2617,12 @@ function renderOverview() {
   const mouPctEl = document.getElementById('okr-mou-pct');
   if (mouPctEl) mouPctEl.textContent = `${mouCount} MOUs signed in FY26`;
 
-  // ── OKR 3: Educators trained — sum of PL session participants
-  const eduCount   = D.events.reduce((s,e)=>s+(+gf(e,FE.parts)||0),0);
+  // ── OKR 3: Educators trained — 2026 events only
+  const eduEvts2026 = D.events.filter(e=>{ const d=gf(e,FE.date); return d&&d.slice(0,4)==='2026'; });
+  const eduCount = eduEvts2026.reduce((s,e)=>s+(+gf(e,FE.parts)||0),0);
   setOkr('edu', eduCount, 2000);
   const eduPctEl = document.getElementById('okr-edu-pct');
-  if (eduPctEl) eduPctEl.textContent = `${eduCount.toLocaleString()} PL session participants`;
+  if (eduPctEl) eduPctEl.textContent = `${eduCount.toLocaleString()} participants across ${eduEvts2026.length} events in 2026`;
 
   // ── OKR 4a: Peer organization partnership MOUs
   const peerMous   = D.partners.filter(p=>{
