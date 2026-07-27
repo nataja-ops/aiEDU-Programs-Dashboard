@@ -992,11 +992,19 @@ button{cursor:pointer;font-family:inherit;}
 
   <!-- COMMUNITY CATALYST -->
   <div class="tab-panel" id="tab-catalyst">
-    <div class="mb-12">
-      <div class="section-title">Community Catalyst</div>
-      <div class="section-sub">Grant-funded organizations building AI literacy in their communities</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+      <div>
+        <div class="section-title">Community Catalyst</div>
+        <div class="section-sub">Grant-funded organizations building AI literacy in their communities</div>
+      </div>
+      <div class="flex gap-8">
+        <button class="btn-sm primary" id="cat-sub-orgs" onclick="setCatSubtab('orgs')">Funded Orgs</button>
+        <button class="btn-sm" id="cat-sub-review" onclick="setCatSubtab('review')">Grant Review</button>
+      </div>
     </div>
 
+    <!-- ── Funded Orgs subtab ───────────────────────────────────────────── -->
+    <div id="cat-orgs-view">
     <!-- KPI tiles -->
     <div class="stat-row mb-20" id="cat-kpis" style="grid-template-columns:repeat(auto-fill,minmax(160px,1fr))">
       <div class="stat-card"><div class="stat-val" id="cat-k-orgs">—</div><div class="stat-lbl">Funded Orgs</div></div>
@@ -1058,6 +1066,49 @@ button{cursor:pointer;font-family:inherit;}
         </div>
       </div>
     </div>
+    </div><!-- /cat-orgs-view -->
+
+    <!-- ── Grant Review subtab ──────────────────────────────────────────── -->
+    <div id="cat-grant-view" style="display:none">
+      <!-- KPIs -->
+      <div class="stat-row mb-20" style="grid-template-columns:repeat(auto-fill,minmax(160px,1fr))">
+        <div class="stat-card"><div class="stat-val" id="gr-k-total">—</div><div class="stat-lbl">Proposals</div></div>
+        <div class="stat-card"><div class="stat-val" id="gr-k-scored">—</div><div class="stat-lbl">Fully Scored</div></div>
+        <div class="stat-card"><div class="stat-val" id="gr-k-avg">—</div><div class="stat-lbl">Avg Score</div></div>
+        <div class="stat-card"><div class="stat-val" id="gr-k-decided">—</div><div class="stat-lbl">Decided</div></div>
+      </div>
+
+      <!-- Reviewer picker + proposals table -->
+      <div class="section-hd mb-12">
+        <div class="section-title">All Proposals</div>
+        <div class="flex gap-8 items-center" style="flex-wrap:wrap">
+          <select class="form-select" id="gr-f-pathway" style="width:auto"><option value="">All Pathways</option></select>
+          <select class="form-select" id="gr-f-decision" style="width:auto">
+            <option value="">All Decisions</option>
+            <option>Awarded</option><option>Not Awarded</option><option>Waitlisted</option>
+          </select>
+          <input class="form-input" id="gr-search" placeholder="Search…" style="width:160px" oninput="renderGrantReview()">
+        </div>
+      </div>
+      <div class="card table-wrap mb-24">
+        <table class="data-table" id="gr-table">
+          <thead><tr><th>Organization</th><th>Pathway</th><th>State</th><th>Emma</th><th>Lindsay</th><th>Christian</th><th>Combined</th><th>Decision</th><th></th></tr></thead>
+          <tbody id="gr-tbody"><tr><td colspan="9" class="empty-state">Loading…</td></tr></tbody>
+        </table>
+      </div>
+
+      <!-- Scoring section -->
+      <div id="gr-scoring-wrap">
+        <div class="section-hd mb-12">
+          <div class="section-title">Score Proposals</div>
+          <select class="form-select" id="gr-reviewer-sel" style="width:auto" onchange="renderGrScoring()">
+            <option value="">— Select reviewer —</option>
+            <option>Emma</option><option>Lindsay</option><option>Christian</option>
+          </select>
+        </div>
+        <div id="gr-scoring-list"><div class="empty-state">Select a reviewer above to enter scores</div></div>
+      </div>
+    </div><!-- /cat-grant-view -->
   </div>
 
 </main>
@@ -1648,6 +1699,7 @@ const T = {
   contact:'tblfVziiqmyIci0r0',
   interact:'tblNrIYLnxFswHXQO',
   asmt:'tblC8Zfw2iJrDKjw4',
+  scores:'tbljs4iPtmSVbyQN3',
 };
 // NPS by Administration Year fields
 const FNPS = {
@@ -1673,7 +1725,27 @@ const FCAT = {
   mission:   'fldHxYDdElDJYDdcV', // Mission Statement
   communities:'fldCVBZsG1e2hE0rc', // Communities Served
   budget:    'fldH1rxepk3bnzkcR',  // Current Annual Operating Budget
+  scoreIds:  'fldBQjPkJibRnlrHt',  // linked score records
+  totalScore:'fldCQ6I6qaeCl2C6Y',  // combined score rollup
+  decision:  'fld3FCUgeTe3yW6y6',
+  driveLink: 'fldMQ1qnu9XemFsC1',
+  proposalLink:'fldIQQeWdewcq8wSM',
+  teamNotes: 'fldadZckdni2uzyfT',
+  projDesc:  'fldNElomdWdtOPNTg',
 };
+const FSCORE = {
+  entry:       'fldSA0PG5wx5WLt2Y', // reviewer name (text rollup)
+  reviewer:    'fldlkNmeWGBbfCy4H', // linked reviewer record
+  proposal:    'fldtkypyGNowTcKsP', // linked proposal record
+  notes:       'fldNIDfIUrnLtVNrs',
+  orgHealth:   'fldBsyppXIpINSRoz', // 0 or 1
+  generalFit:  'fldvg2h6ZdxK5SzME', // 1-3
+  budget:      'fld5G8bEKx7QKCI7q', // 1-3
+  impact:      'fldWTypB8Ol3UNdMU', // 1-3
+  feasibility: 'fld1oFYp8wkbvGkF0', // 1-3
+  total:       'fldXtNa2oYZQ7fdOT', // rollup total
+};
+const GR_REVIEWERS = ['Emma','Lindsay','Christian'];
 const FP = {
   name:'fldpkporCZ8A6HZTT', pipeline:'fldEoTQtHQMygOKT3', start:'fldZtu03mx9rpSMEl',
   end:'fldmO78r4NxmHW8wn', missing:'fldNc1hZCyd0GiKwF', team:'fldl6l6te8tgmiENL',
@@ -1817,7 +1889,7 @@ const STAGE_ORDER = [
 ];
 
 // ── State ────────────────────────────────────────────────────────────────────
-let D = { partners:[], fees:[], mous:[], events:[], feedback:[], surveys:[], staff:[], catalyst:[], accounts:[], npsYears:[], plSessions:[], plProducts:[], assessments:[] };
+let D = { partners:[], fees:[], mous:[], events:[], feedback:[], surveys:[], staff:[], catalyst:[], accounts:[], npsYears:[], plSessions:[], plProducts:[], assessments:[], scores:[] };
 let EVT_SCORES = {}; // eventId → { sat, facEff, objMet, before, after, nps }
 let LEAD = null;
 let CHARTS = {};
@@ -2307,7 +2379,7 @@ function buildEventScores() {
 // ── Load ──────────────────────────────────────────────────────────────────────
 const FY26_START = '2025-12-31';
 const FY26_END   = '2027-01-01';
-const CACHE_KEY  = 'aiedu_dash_v30';
+const CACHE_KEY  = 'aiedu_dash_v31';
 const CACHE_TTL  = 3 * 60 * 1000; // 3 minutes
 
 function loadProgress(pct) {
@@ -2340,7 +2412,8 @@ async function fetchFresh() {
   const fPLS = Object.values(FPLS);
   const fPLP = Object.values(FPLP);
 
-  const [partners, fees, mous, staff, surveys, events, feedback, catalyst, accounts, npsYears, plSessions, plProducts, assessments] = await Promise.all([
+  const fScore = Object.values(FSCORE);
+  const [partners, fees, mous, staff, surveys, events, feedback, catalyst, accounts, npsYears, plSessions, plProducts, assessments, scores] = await Promise.all([
     atFetch(BASE, T.prt, fPrt),
     atFetch(BASE, T.fee, fFee, feeFilter),
     atFetch(BASE, T.mou, fMou),
@@ -2354,8 +2427,9 @@ async function fetchFresh() {
     atFetch(BASE, T.plSess, fPLS),
     atFetch(BASE, T.plProd, fPLP),
     atFetch(BASE, T.asmt, Object.values(FASMT)),
+    atFetch(BASE, T.scores, fScore),
   ]);
-  return { partners, fees, mous, events, feedback, surveys, staff, catalyst, accounts, npsYears, plSessions, plProducts, assessments };
+  return { partners, fees, mous, events, feedback, surveys, staff, catalyst, accounts, npsYears, plSessions, plProducts, assessments, scores };
 }
 
 async function loadAll() {
@@ -4091,6 +4165,214 @@ function renderCatalyst(){
     });
   }
 }
+
+// ── Community Catalyst subtab switching ───────────────────────────────────────
+function setCatSubtab(tab) {
+  document.getElementById('cat-orgs-view').style.display   = tab==='orgs'    ? '' : 'none';
+  document.getElementById('cat-grant-view').style.display  = tab==='review'  ? '' : 'none';
+  document.getElementById('cat-sub-orgs').classList.toggle('primary', tab==='orgs');
+  document.getElementById('cat-sub-review').classList.toggle('primary', tab==='review');
+  if(tab==='review') renderGrantReview();
+}
+
+// ── Grant Review ──────────────────────────────────────────────────────────────
+let _grDebounce = null;
+
+function renderGrantReview() {
+  const scores = D.scores||[];
+  const proposals = (D.catalyst||[]).filter(r=>gf(r,FCAT.orgName));
+
+  // Build score lookup: scoresByProposal[proposalId][reviewerName] = scoreRecord
+  const byProp = {};
+  scores.forEach(s=>{
+    const propIds = ga(s,FSCORE.proposal);
+    if(!propIds.length) return;
+    const pid = propIds[0];
+    if(!byProp[pid]) byProp[pid]={};
+    const rev = (gf(s,FSCORE.entry)||'').trim();
+    if(rev) byProp[pid][rev] = s;
+  });
+
+  // KPIs
+  const totalProps = proposals.length;
+  const fullScored = proposals.filter(p=>GR_REVIEWERS.every(r=>byProp[p.id]&&byProp[p.id][r])).length;
+  const allTotals = proposals.map(p=>{
+    const pScores = byProp[p.id]||{};
+    return GR_REVIEWERS.reduce((sum,r)=>sum+(+(gf(pScores[r],FSCORE.total)||0)),0);
+  }).filter(v=>v>0);
+  const avgScore = allTotals.length ? (allTotals.reduce((a,b)=>a+b)/allTotals.length).toFixed(1) : '—';
+  const decided = proposals.filter(p=>gf(p,FCAT.decision)&&gf(p,FCAT.decision)!=='').length;
+  document.getElementById('gr-k-total').textContent   = totalProps;
+  document.getElementById('gr-k-scored').textContent  = fullScored;
+  document.getElementById('gr-k-avg').textContent     = avgScore !== '—' ? avgScore+'/39' : '—';
+  document.getElementById('gr-k-decided').textContent = decided;
+
+  // Populate pathway filter
+  const pwEl = document.getElementById('gr-f-pathway'), curPw=pwEl.value;
+  const allPw = [...new Set(proposals.flatMap(p=>ga(p,FCAT.pathway).map(v=>typeof v==='object'?v.name:v)).filter(Boolean))].sort();
+  pwEl.innerHTML = '<option value="">All Pathways</option>'+allPw.map(pw=>`<option${pw===curPw?' selected':''}>${esc(pw)}</option>`).join('');
+
+  // Filters
+  const pwVal = document.getElementById('gr-f-pathway').value;
+  const decVal = document.getElementById('gr-f-decision').value;
+  const srch = (document.getElementById('gr-search').value||'').toLowerCase();
+  let rows = proposals;
+  if(pwVal) rows = rows.filter(p=>ga(p,FCAT.pathway).some(v=>(typeof v==='object'?v.name:v)===pwVal));
+  if(decVal) rows = rows.filter(p=>(gf(p,FCAT.decision)||'')=== decVal);
+  if(srch) rows = rows.filter(p=>(gf(p,FCAT.orgName)||'').toLowerCase().includes(srch));
+  rows.sort((a,b)=>(gf(a,FCAT.orgName)||'').localeCompare(gf(b,FCAT.orgName)||''));
+
+  // Decision pill
+  const decPill = d => {
+    if(!d) return '<span style="color:var(--ink3);font-size:11px">—</span>';
+    const c = d==='Awarded'?'var(--good)':d==='Not Awarded'?'var(--red,#c43535)':'var(--warn)';
+    return `<span style="background:${c}22;color:${c};padding:1px 8px;border-radius:10px;font-size:11px;font-weight:600">${esc(d)}</span>`;
+  };
+  const scoreCell = (scoreRec) => {
+    if(!scoreRec) return '<span style="color:var(--ink3)">—</span>';
+    const t = gf(scoreRec,FSCORE.total);
+    return `<span style="font-weight:600">${t!=null?t:'—'}</span><span style="color:var(--ink3);font-size:10px">/13</span>`;
+  };
+
+  const tbody = document.getElementById('gr-tbody');
+  tbody.innerHTML = rows.length===0 ? '<tr><td colspan="9" class="empty-state">No proposals match</td></tr>' :
+    rows.map(p=>{
+      const pScores = byProp[p.id]||{};
+      const combined = GR_REVIEWERS.reduce((s,r)=>s+(+(gf(pScores[r],FSCORE.total)||0)),0);
+      const pathway = ga(p,FCAT.pathway).map(v=>typeof v==='object'?v.name:v).join(', ')||'—';
+      const state   = ga(p,FCAT.state).map(v=>typeof v==='object'?v.name:v).join(', ')||'—';
+      const pLink   = gf(p,FCAT.proposalLink);
+      return `<tr>
+        <td><strong>${esc(gf(p,FCAT.orgName)||'(Unnamed)')}</strong></td>
+        <td><span style="font-size:11px">${esc(pathway)}</span></td>
+        <td style="font-size:12px">${esc(state)}</td>
+        <td style="text-align:center">${scoreCell(pScores['Emma'])}</td>
+        <td style="text-align:center">${scoreCell(pScores['Lindsay'])}</td>
+        <td style="text-align:center">${scoreCell(pScores['Christian'])}</td>
+        <td style="text-align:center;font-weight:700">${combined||'—'}<span style="color:var(--ink3);font-size:10px">/39</span></td>
+        <td>${decPill(gf(p,FCAT.decision))}</td>
+        <td>${pLink?`<a href="${esc(pLink)}" target="_blank" style="font-size:11px;color:var(--teal)">↗ View</a>`:''}</td>
+      </tr>`;
+    }).join('');
+
+  // Auto-select reviewer if LEAD matches
+  const revSel = document.getElementById('gr-reviewer-sel');
+  if(LEAD && !revSel.value){
+    const match = GR_REVIEWERS.find(r=>LEAD.name.toLowerCase().includes(r.toLowerCase()));
+    if(match) { revSel.value=match; renderGrScoring(); }
+  }
+}
+
+function renderGrScoring() {
+  const rev = document.getElementById('gr-reviewer-sel')?.value;
+  const el = document.getElementById('gr-scoring-list');
+  if(!el) return;
+  if(!rev){ el.innerHTML='<div class="empty-state">Select a reviewer above</div>'; return; }
+
+  const scores = D.scores||[];
+  const proposals = (D.catalyst||[]).filter(r=>gf(r,FCAT.orgName));
+  const byProp = {};
+  scores.forEach(s=>{
+    const pids=ga(s,FSCORE.proposal); if(!pids.length) return;
+    const pid=pids[0];
+    const r=(gf(s,FSCORE.entry)||'').trim();
+    if(r===rev) byProp[pid]=s;
+  });
+
+  const CATS = [
+    {key:'orgHealth',   label:'Org Health',     max:1},
+    {key:'generalFit',  label:'General Fit',    max:3},
+    {key:'budget',      label:'Budget',         max:3},
+    {key:'impact',      label:'Impact',         max:3},
+    {key:'feasibility', label:'Feasibility / Innovation', max:3},
+  ];
+
+  el.innerHTML = `<div style="display:flex;flex-direction:column;gap:12px">` +
+    proposals.map(p=>{
+      const pName = esc(gf(p,FCAT.orgName)||'(Unnamed)');
+      const sid = p.id;
+      const scoreRec = byProp[sid];
+      const curScores = {};
+      CATS.forEach(c=>{ curScores[c.key]=scoreRec?+gf(scoreRec,FSCORE[c.key]):(c.key==='orgHealth'?0:null); });
+      const pLink = gf(p,FCAT.proposalLink);
+      const curNotes = scoreRec?(gf(scoreRec,FSCORE.notes)||''):'';
+
+      const scoreButtons = CATS.map(c=>{
+        const opts = Array.from({length:c.max+1-(c.key==='orgHealth'?0:1)},(_,i)=>c.key==='orgHealth'?i:i+1);
+        return `<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+          <span style="font-size:11px;color:var(--ink3);width:150px;flex-shrink:0">${c.label}</span>
+          <div style="display:flex;gap:3px">
+            ${opts.map(v=>`<button onclick="grSetScore('${sid}','${rev}','${c.key}',${v},this)" style="width:28px;height:26px;border-radius:4px;border:1px solid var(--border);background:${curScores[c.key]===v?'var(--teal)':'var(--surface2)'};color:${curScores[c.key]===v?'#fff':'var(--ink)'};font-size:12px;font-weight:600;cursor:pointer">${v}</button>`).join('')}
+          </div>
+        </div>`;
+      }).join('');
+
+      return `<div class="card" style="padding:16px" id="gr-card-${sid}">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+          <strong style="flex:1">${pName}</strong>
+          ${pLink?`<a href="${esc(pLink)}" target="_blank" style="font-size:11px;color:var(--teal)">↗ Proposal</a>`:''}
+        </div>
+        ${scoreButtons}
+        <div style="margin-top:8px">
+          <textarea id="gr-notes-${sid}" rows="2" class="form-textarea" style="font-size:11px" placeholder="Notes…" oninput="grScheduleNoteSave('${sid}','${rev}')">${esc(curNotes)}</textarea>
+        </div>
+      </div>`;
+    }).join('') + '</div>';
+}
+
+async function grSetScore(propId, reviewer, category, value, btn) {
+  const scores = D.scores||[];
+  const pids_check = scores.filter(s=>{
+    const pids=ga(s,FSCORE.proposal); return pids.includes(propId)&&(gf(s,FSCORE.entry)||'').trim()===reviewer;
+  });
+  const existing = pids_check[0];
+
+  // Update button UI immediately
+  const card = document.getElementById('gr-card-'+propId);
+  if(card){
+    btn.closest('div').querySelectorAll('button').forEach(b=>{b.style.background='var(--surface2)';b.style.color='var(--ink)';});
+    btn.style.background='var(--teal)'; btn.style.color='#fff';
+  }
+
+  const fields = {};
+  fields[FSCORE[category]] = value;
+
+  try {
+    if(existing){
+      await apiWrite('PATCH',BASE,T.scores,{id:existing.id,fields});
+      Object.assign(existing.fields, fields);
+    } else {
+      const propLink = ga((D.catalyst||[]).find(r=>r.id===propId)||{},FCAT.scoreIds);
+      const res = await apiWrite('POST',BASE,T.scores,{fields:{...fields,[FSCORE.proposal]:[propId]}});
+      const rec = res.records?.[0];
+      if(rec){ D.scores.push({id:rec.id,fields:rec.fields||fields}); }
+    }
+    toast('Score saved','success');
+    renderGrantReview();
+  } catch(e){ toast('Save failed: '+e.message,'error'); }
+}
+
+function grScheduleNoteSave(propId, reviewer) {
+  clearTimeout(_grDebounce);
+  _grDebounce = setTimeout(()=>grSaveNote(propId,reviewer), 800);
+}
+
+async function grSaveNote(propId, reviewer) {
+  const notes = document.getElementById('gr-notes-'+propId)?.value||'';
+  const existing = (D.scores||[]).find(s=>{
+    const pids=ga(s,FSCORE.proposal); return pids.includes(propId)&&(gf(s,FSCORE.entry)||'').trim()===reviewer;
+  });
+  if(!existing) return;
+  try {
+    await apiWrite('PATCH',BASE,T.scores,{id:existing.id,fields:{[FSCORE.notes]:notes}});
+    existing.fields[FSCORE.notes]=notes;
+  } catch(e){ toast('Note save failed','error'); }
+}
+
+// Grant Review filter wiring
+['gr-f-pathway','gr-f-decision'].forEach(id=>{
+  const el=document.getElementById(id); if(el) el.addEventListener('change',renderGrantReview);
+});
 
 function openCatProfile(id){
   const r = (D.catalyst||[]).find(x=>x.id===id);
