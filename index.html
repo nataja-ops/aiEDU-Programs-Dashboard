@@ -2215,11 +2215,7 @@ function drillMous(){
     {label:'Ends',      fn:m=>{const d=daysTo(gf(m,FM.ends));return `${fdt(gf(m,FM.ends))}${d!=null?' '+daysChip(d):''}`;} },
     {label:'Amount',    fn:m=>`<span style="font-variant-numeric:tabular-nums">${f$(gf(m,FM.amount))}</span>`},
   ];
-  const isFy26Mou=m=>{
-    if(!gf(m,FM.signed)) return false;
-    const ds=gf(m,FM.dateSigned); if(!ds) return false;
-    return new Date(ds.slice(0,10)+'T00:00:00').getFullYear()===2026 && ga(m,FM.partner).length>0;
-  };
+  const isFy26Mou=m=>{ const ds=gf(m,FM.dateSigned); return !!ds&&ds.slice(0,4)==='2026'; };
   const r=D.mous.filter(isFy26Mou).sort((a,b)=>(gf(b,FM.dateSigned)||'').localeCompare(gf(a,FM.dateSigned)||''));
   showDrill('Service MOUs — FY26',r.length+' of 15 signed in 2026',r,COL_MOU);
 }
@@ -2590,9 +2586,8 @@ function renderOverview() {
   const mouStages  = new Set(['MOU Signed','MOU Complete']);
   // Use MOU table: count records with signed date in 2026
   const mouCount = D.mous.filter(m=>{
-    if(!gf(m,FM.signed)) return false;
     const ds=gf(m,FM.dateSigned); if(!ds) return false;
-    return new Date(ds.slice(0,10)+'T00:00:00').getFullYear()===2026 && ga(m,FM.partner).length>0;
+    return ds.slice(0,4)==='2026';
   }).length;
   setOkr('mou', mouCount, 15);
   const mouPctEl = document.getElementById('okr-mou-pct');
