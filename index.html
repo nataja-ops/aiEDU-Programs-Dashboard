@@ -3849,7 +3849,9 @@ function renderRecentUpdates(){
 // ── Accounts Tab ───────────────────────────────────────────────────────────────
 function renderAccountsTab(){
   const q = (document.getElementById('f-acc-search')||{}).value?.toLowerCase()||'';
-  let accs = D.accounts.slice().sort((a,b)=>(gf(a,FA.name)||'').localeCompare(gf(b,FA.name)||''));
+  const STATUS_ORDER = {'Active':0,'Prospect':1,'Expiring Soon':2};
+  const statusRank = a => STATUS_ORDER[gf(a,FA.status)] ?? 99;
+  let accs = D.accounts.slice().sort((a,b)=> statusRank(a)-statusRank(b) || (gf(a,FA.name)||'').localeCompare(gf(b,FA.name)||''));
   if(q) accs = accs.filter(a=>(gf(a,FA.name)||'').toLowerCase().includes(q));
 
   const active   = D.accounts.filter(a=>(gf(a,FA.status)||'').toLowerCase()==='active').length;
