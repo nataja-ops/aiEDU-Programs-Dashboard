@@ -317,6 +317,10 @@ button{cursor:pointer;font-family:inherit;}
 @media(max-width:700px){#nav{justify-content:flex-start;}.logo span{display:none;}}
 /* Opportunities view */
 .opp-account{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;display:flex;flex-direction:column;}
+.plp-card .opp-account-hd{cursor:pointer;user-select:none;transition:background .15s;}
+.plp-card .opp-account-hd:hover{background:var(--surface2);}
+.plp-card .opp-prt-list{display:none;}
+.plp-card.open .opp-prt-list{display:block;}
 .opp-account-hd{display:flex;align-items:center;gap:10px;padding:14px 16px;}
 .opp-name{font-weight:600;font-size:14px;flex:1;color:var(--ink);}
 .opp-acc-meta{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink3);flex-wrap:wrap;margin-top:4px;}
@@ -987,7 +991,7 @@ button{cursor:pointer;font-family:inherit;}
           <div><canvas id="ch-evt-timeline"></canvas></div>
         </div>
         <div class="card chart-card">
-          <div class="section-hd"><div><div class="section-title">PL Sessions Used</div><div class="section-sub">Sessions delivered at events (top 10)</div></div></div>
+          <div class="section-hd"><div><div class="section-title">PL Products Used at Events</div><div class="section-sub">Event usage by PL product — click a slice to see sessions</div></div></div>
           <div><canvas id="ch-evt-sessions"></canvas></div>
         </div>
       </div>
@@ -2133,16 +2137,17 @@ function mkChart(id, type, labels, data, colors, label, clickFn=null) {
   if(!el) return;
   const ink3 = cssVar('--ink3'), border = cssVar('--border');
   const isLine = type==='line';
+  const isPie = type==='pie'||type==='doughnut';
   const opts = {
     responsive:true, maintainAspectRatio:true,
     plugins:{
-      legend:{display:false},
-      tooltip:{callbacks:{label:ctx=>{ const v=ctx.raw; return label.includes('$')?' '+f$(v):' '+v; }}}
+      legend:{display:isPie,position:'right',labels:{color:ink3,font:{size:11},boxWidth:10,padding:8}},
+      tooltip:{callbacks:{label:ctx=>{ const v=ctx.raw; return ' '+v; }}}
     },
-    scales:{
+    ...(isPie?{}:{scales:{
       x:{ticks:{color:ink3,font:{size:11}},grid:{display:false}},
       y:{ticks:{color:ink3,font:{size:11}},grid:{color:border},beginAtZero:true}
-    }
+    }})
   };
   if(clickFn){
     opts.onClick = (_e,els)=>{ if(els.length) clickFn(els[0].index); };
@@ -2153,8 +2158,8 @@ function mkChart(id, type, labels, data, colors, label, clickFn=null) {
     data:{ labels, datasets:[{
       label, data,
       backgroundColor: isLine ? 'transparent' : colors,
-      borderColor: isLine ? (colors[0]||cssVar('--teal')) : colors,
-      borderWidth: isLine?2:0, borderRadius: isLine?0:4,
+      borderColor: isLine ? (colors[0]||cssVar('--teal')) : isPie ? cssVar('--surface') : colors,
+      borderWidth: isLine?2:isPie?2:0, borderRadius: isLine||isPie?0:4,
       pointRadius: isLine?4:0, pointHoverRadius: isLine?6:0,
       tension: isLine?.35:0,
     }]},
@@ -2552,7 +2557,7 @@ function buildEventScores() {
 // ── Load ──────────────────────────────────────────────────────────────────────
 const FY26_START = '2025-12-31';
 const FY26_END   = '2027-01-01';
-const CACHE_KEY  = 'aiedu_dash_v34';
+const CACHE_KEY  = 'aiedu_dash_v35';
 const CACHE_TTL  = 3 * 60 * 1000; // 3 minutes
 
 function loadProgress(pct) {
@@ -2614,8 +2619,9 @@ async function loadAll() {
     let cached = null;
     try { cached = JSON.parse(localStorage.getItem(CACHE_KEY)); } catch(e) {}
 
+    const D_DEFAULTS = {partners:[],fees:[],mous:[],events:[],feedback:[],surveys:[],staff:[],catalyst:[],accounts:[],npsYears:[],plSessions:[],plProducts:[],assessments:[],scorecards:[],scores:[]};
     if (cached && (Date.now() - cached.ts) < CACHE_TTL) {
-      D = cached.data;
+      D = {...D_DEFAULTS, ...cached.data};
       EVT_SCORES = buildEventScores();
       renderAll();
       loadProgress(100);
@@ -3763,13 +3769,18 @@ function renderEventsCharts() {
   mkChart('ch-evt-timeline','bar',moLabels,months.map(m=>byMo[m]),months.map(()=>cssVar('--teal')),'Events',
     i=>{ const mo=months[i]; const rows=D.events.filter(e=>(gf(e,FE.date)||'').slice(0,7)===mo).sort((a,b)=>(gf(b,FE.date)||'').localeCompare(gf(a,FE.date)||'')); showDrill('Events — '+moLabels[i],rows.length+' events',rows,COL_EVTS); });
 
-  // Chart 3: Top PL Sessions used at events (by cntEvents count)
-  const sessRows=D.plSessions.filter(s=>(+gf(s,FPLS.cntEvents)||0)>0)
-    .sort((a,b)=>(+gf(b,FPLS.cntEvents)||0)-(+gf(a,FPLS.cntEvents)||0)).slice(0,10);
-  if(sessRows.length){
-    const sLabels=sessRows.map(s=>gf(s,FPLS.name)||gf(s,FPLS.indiv)||'—');
-    const sTrunc=sLabels.map(l=>l.length>28?l.slice(0,27)+'…':l);
-    mkChart('ch-evt-sessions','bar',sTrunc,sessRows.map(s=>+gf(s,FPLS.cntEvents)||0),sessRows.map(()=>cssVar('--teal')),'Events Used At',null,{indexAxis:'y'});
+  // Chart 3: PL Products used at events (pie — sum cntEvents across each product's sessions)
+  const prodUsage={};
+  D.plSessions.forEach(s=>{
+    const cnt=+gf(s,FPLS.cntEvents)||0; if(!cnt) return;
+    ga(s,FPLS.plProds).forEach(pid=>{ prodUsage[pid]=(prodUsage[pid]||0)+cnt; });
+  });
+  const prodEntries=Object.entries(prodUsage).sort((a,b)=>b[1]-a[1]).slice(0,12);
+  if(prodEntries.length){
+    const piePalette=['#0d9488','#3b82f6','#8b5cf6','#f59e0b','#10b981','#ef4444','#64748b','#ec4899','#0ea5e9','#a16207','#be185d','#065f46'];
+    const pieLabels=prodEntries.map(([pid])=>{const p=D.plProducts.find(x=>x.id===pid); const n=gf(p,FPLP.name)||gf(p,FPLP.nameSL)||pid; return n.length>24?n.slice(0,23)+'…':n;});
+    mkChart('ch-evt-sessions','doughnut',pieLabels,prodEntries.map(([,v])=>v),piePalette.slice(0,prodEntries.length),'Sessions',
+      i=>{ const [pid]=prodEntries[i]; const sRows=D.plSessions.filter(s=>(+gf(s,FPLS.cntEvents)||0)>0&&ga(s,FPLS.plProds).includes(pid)).sort((a,b)=>(+gf(b,FPLS.cntEvents)||0)-(+gf(a,FPLS.cntEvents)||0)); const pName=pieLabels[i]; showDrill('Sessions — '+pName,sRows.length+' sessions',sRows,[{label:'Session',fn:r=>esc(gf(r,FPLS.name)||gf(r,FPLS.indiv)||'—')},{label:'Events Used',fn:r=>gf(r,FPLS.cntEvents)||0}]); });
   }
 }
 
@@ -4117,7 +4128,7 @@ function renderPlProducts(q='') {
         const sessIds=ga(p,FPLP.sessions);
         const sessCount=sessIds.length;
         const linked=D.plSessions.filter(s=>sessIds.includes(s.id));
-        return `<div class="opp-account" id="plp-${p.id}" style="border-left:3px solid ${color}">
+        return `<div class="opp-account plp-card" id="plp-${p.id}" style="border-left:3px solid ${color}">
           <div class="opp-account-hd" onclick="togglePlp('${p.id}')">
             <span class="opp-toggle">▶</span>
             <span class="opp-name">${name}</span>
