@@ -2698,7 +2698,7 @@ function renderStats() {
   // Events excluding Government and Private Dinner
   const plEvts  = D.events.filter(isPLEvent);
   // Participants — all events with standard exclusions (Government, Private Dinner)
-  const plParts = D.events.filter(isPLEvent).reduce((s,e)=>s+(+gf(e,FE.parts)||0),0);
+  const plParts = D.events.reduce((s,e)=>s+(+gf(e,FE.parts)||0),0);
   // NPS — average of all non-empty NPS Score (Calculated) rows from NPS by Administration Year
   const npsYrForStat = D.npsYears.filter(r=>{ const raw=gf(r,FNPS.score); if(raw==null||raw==='') return false; const v=+raw; return !isNaN(v)&&isFinite(v); });
   const npsScore = npsYrForStat.length ? Math.round(npsYrForStat.reduce((a,b)=>a+(+gf(b,FNPS.score)||0),0)/npsYrForStat.length) : null;
