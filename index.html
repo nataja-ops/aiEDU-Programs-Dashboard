@@ -2251,21 +2251,19 @@ function drillComp(){
   showDrill('Competency Improvement',`${improved} of ${fbBoth.length} respondents improved`,fbBoth,cols);
 }
 function drillMous(){
+  const mouDateOf = p => ga(p,FP.mouDate).map(v=>typeof v==='object'?v.name:v).find(Boolean)||null;
   const COL_MOU=[
-    {label:'Partner',   fn:m=>{
-      const ids=ga(m,FM.partnerships);
-      const prts=ids.map(id=>D.partners.find(x=>x.id===id)).filter(Boolean);
-      if(prts.length) return prts.map(prt=>`<span class="drill-link" onclick="openPartnerProfile('${prt.id}')">${esc(gf(prt,FP.name)||'—')}</span>`).join(', ');
-      const n=ga(m,FM.partner).join(', ')||'—'; return esc(n);
-    }},
-    {label:'Stage',     fn:m=>stagePill(gf(m,FM.pipeline))},
-    {label:'Signed',    fn:m=>fdt(gf(m,FM.dateSigned))},
-    {label:'Begins',    fn:m=>fdt(gf(m,FM.begins))},
-    {label:'Ends',      fn:m=>{const d=daysTo(gf(m,FM.ends));return `${fdt(gf(m,FM.ends))}${d!=null?' '+daysChip(d):''}`;} },
-    {label:'Amount',    fn:m=>`<span style="font-variant-numeric:tabular-nums">${f$(gf(m,FM.amount))}</span>`},
+    {label:'Partner',  fn:p=>`<span class="drill-link" onclick="openPartnerProfile('${p.id}')">${esc(gf(p,FP.name)||'—')}</span>`},
+    {label:'Pipeline', fn:p=>stagePill(gf(p,FP.pipeline))},
+    {label:'Signed',   fn:p=>fdt(mouDateOf(p))},
+    {label:'Team',     fn:p=>esc(ga(p,FP.team).map(v=>typeof v==='object'?v.name:v).join(', ')||'—')},
+    {label:'State',    fn:p=>esc(ga(p,FP.state).map(v=>typeof v==='object'?v.name:v).join(', ')||'—')},
   ];
-  const isFy26Mou=m=>{ const ds=gf(m,FM.dateSigned); return !!ds&&ds.slice(0,4)==='2026'&&ga(m,FM.partnerships).length>0; };
-  const r=D.mous.filter(isFy26Mou).sort((a,b)=>(gf(b,FM.dateSigned)||'').localeCompare(gf(a,FM.dateSigned)||''));
+  const r=D.partners.filter(p=>{
+    if(gf(p,FP.pipeline)!=='MOU Signed') return false;
+    const ds=mouDateOf(p);
+    return !!ds && String(ds).slice(0,4)==='2026';
+  }).sort((a,b)=>(mouDateOf(b)||'').localeCompare(mouDateOf(a)||''));
   showDrill('Service MOUs — FY26',r.length+' of 15 signed in 2026',r,COL_MOU);
 }
 function drillEdu(){
@@ -2657,17 +2655,15 @@ function renderOverview() {
   const compPctEl = document.getElementById('okr-comp-pct');
   if (compPctEl) compPctEl.textContent = `${improved} of ${fbBoth.length} respondents improved`;
 
-  // ── OKR 2: Service MOUs — signed date falls in FY26 (2026)
-  const mouStages  = new Set(['MOU Signed','MOU Complete']);
-  // Use MOU table: count records with signed date in 2026
-  const mouCount = D.mous.filter(m=>{
-    const ds=gf(m,FM.dateSigned); if(!ds) return false;
-    if(!ga(m,FM.partnerships).length) return false;
-    return ds.slice(0,4)==='2026';
+  // ── OKR 2: Service MOUs — opportunities with pipeline=MOU Signed and mouDate in 2026
+  const mouCount = D.partners.filter(p=>{
+    if(gf(p,FP.pipeline)!=='MOU Signed') return false;
+    const ds=ga(p,FP.mouDate).map(v=>typeof v==='object'?v.name:v).find(Boolean);
+    return !!ds && String(ds).slice(0,4)==='2026';
   }).length;
   setOkr('mou', mouCount, 15);
   const mouPctEl = document.getElementById('okr-mou-pct');
-  if (mouPctEl) mouPctEl.textContent = `${mouCount} MOUs signed in FY26`;
+  if (mouPctEl) mouPctEl.textContent = `${mouCount} opportunities MOU Signed in FY26`;
 
   // ── OKR 3: Educators trained — 2026 events only
   const eduEvts2026 = D.events.filter(e=>{ const d=gf(e,FE.date); return d&&d.slice(0,4)==='2026'; });
