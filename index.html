@@ -2152,9 +2152,9 @@ function drillAllPartners(){
 function drillActive(){
   const ACTIVE_PRT_STAGES_D = new Set(['MOU Signed','Collaboration','Verbal Agreement']);
   const activeAccIds_D = new Set(D.accounts.filter(a=>(gf(a,FA.status)||'').toLowerCase()==='active').map(a=>a.id));
-  const accIdsWithActive = new Set(D.partners.filter(p=>ACTIVE_PRT_STAGES_D.has(gf(p,FP.pipeline))&&ga(p,FP.account).some(id=>activeAccIds_D.has(id))).flatMap(p=>ga(p,FP.account)));
-  const r = D.accounts.filter(a=>accIdsWithActive.has(a.id)).sort((a,b)=>(gf(a,FA.name)||'').localeCompare(gf(b,FA.name)||''));
-  showDrill('Active Partnerships (MOU Signed / Collaboration / Verbal Agreement)', r.length+' accounts', r, COL_ACCS);
+  const r = D.partners.filter(p=>ACTIVE_PRT_STAGES_D.has(gf(p,FP.pipeline))&&ga(p,FP.account).some(id=>activeAccIds_D.has(id)))
+    .sort((a,b)=>(gf(a,FP.name)||'').localeCompare(gf(b,FP.name)||''));
+  showDrill('Active Partnerships (MOU Signed / Collaboration / Verbal Agreement)', r.length+' partnerships', r, COL_PRTS);
 }
 function drillFY26Fees(){
   const r=D.fees.filter(f=>{const s=ga(f,FF.funding).map(v=>(typeof v==='object'?v.name:v)).join(' ').toLowerCase();return s.includes('award');}).sort((a,b)=>(+gf(b,FF.amount)||0)-(+gf(a,FF.amount)||0));
