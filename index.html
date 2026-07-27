@@ -735,6 +735,14 @@ button{cursor:pointer;font-family:inherit;}
         <div id="prt-recent" style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px"></div>
       </div>
 
+      <!-- Inline Partnership Search + Profile -->
+      <div class="card mb-20" style="padding:16px">
+        <input class="form-input" id="prt-inline-search" placeholder="Search partnerships by name or state…"
+          oninput="renderInlinePrtSearch(this.value)" autocomplete="off" style="width:100%;box-sizing:border-box">
+        <div id="prt-inline-results" style="display:none;border:1px solid var(--border);border-radius:6px;margin-top:8px;max-height:220px;overflow-y:auto;background:var(--surface)"></div>
+        <div id="prt-inline-profile" style="display:none;margin-top:14px;border-top:1px solid var(--border);padding-top:14px"></div>
+      </div>
+
       <!-- Full Opportunities View -->
       <div class="section-hd mb-12">
         <div><div class="section-title">Opportunities &amp; Accounts</div><div class="section-sub">All partner accounts and their associated partnerships — search by name and click any row to open the record</div></div>
@@ -6062,6 +6070,73 @@ function showPartnerPanelProfile(id){
     </div>
   `;
   profileEl.classList.add('show');
+}
+
+function renderInlinePrtSearch(q){
+  const lc=(q||'').toLowerCase().trim();
+  const resEl=document.getElementById('prt-inline-results');
+  const profEl=document.getElementById('prt-inline-profile');
+  if(!resEl) return;
+  if(!lc){ resEl.style.display='none'; resEl.innerHTML=''; return; }
+  let prts=[...D.partners].sort((a,b)=>(gf(a,FP.name)||'').localeCompare(gf(b,FP.name)||''));
+  prts=prts.filter(p=>(gf(p,FP.name)||'').toLowerCase().includes(lc)||(ga(p,FP.state).map(v=>typeof v==='object'?v.name:v).join(' ').toLowerCase().includes(lc)));
+  if(!prts.length){ resEl.innerHTML='<div class="empty-state" style="padding:14px">No partnerships found</div>'; resEl.style.display=''; return; }
+  resEl.style.display='';
+  resEl.innerHTML=prts.slice(0,40).map(p=>`
+    <div class="pp-result-item" onclick="showInlinePrtProfile('${p.id}',this)">
+      <div>${esc(gf(p,FP.name)||'—')}</div>
+      <div class="pp-result-meta">${esc(gf(p,FP.pipeline)||'—')} · ${esc(ga(p,FP.state).map(v=>typeof v==='object'?v.name:v).join(', ')||'—')}</div>
+    </div>`).join('');
+  if(profEl) profEl.style.display='none';
+}
+
+function showInlinePrtProfile(id, itemEl){
+  const p=D.partners.find(r=>r.id===id); if(!p) return;
+  document.querySelectorAll('#prt-inline-results .pp-result-item').forEach(el=>el.classList.remove('active'));
+  if(itemEl) itemEl.classList.add('active');
+  const profEl=document.getElementById('prt-inline-profile'); if(!profEl) return;
+
+  const pName=gf(p,FP.name)||'—';
+  const pipeline=gf(p,FP.pipeline)||'—';
+  const team=ga(p,FP.team).map(v=>typeof v==='object'?v.name:v).join(', ')||'—';
+  const state=ga(p,FP.state).map(v=>typeof v==='object'?v.name:v).join(', ')||'—';
+  const services=ga(p,FP.services).join(', ')||'—';
+  const notes=gf(p,FP.notes)||'';
+  const end=gf(p,FP.end); const days=daysTo(end);
+  const asmts=D.assessments.filter(r=>(gf(r,FASMT.prtText)||'')===pName).sort((a,b)=>(gf(b,FASMT.date)||'').localeCompare(gf(a,FASMT.date)||'')).slice(0,3);
+  const prtEvts=D.events.filter(e=>{const accIds=new Set(ga(p,FP.account));return ga(e,FE.partner).some(id=>accIds.has(id));}).sort((a,b)=>(gf(b,FE.date)||'').localeCompare(gf(a,FE.date)||'')).slice(0,3);
+  const row=(k,v)=>`<div style="display:flex;justify-content:space-between;align-items:baseline;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px"><span style="color:var(--ink3);font-size:11px;font-weight:600;flex-shrink:0;margin-right:12px">${k}</span><span style="color:var(--ink);text-align:right;word-break:break-word">${v}</span></div>`;
+
+  profEl.innerHTML=`
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:12px">
+      <div style="font-size:16px;font-weight:700;color:var(--ink);line-height:1.3">${esc(pName)}</div>
+      <button class="btn-sm primary" onclick="openPartnerProfile('${id}')" style="flex-shrink:0">Full Profile</button>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 24px">
+      <div>
+        ${row('Stage', stagePill(pipeline))}
+        ${row('State', esc(state))}
+        ${row('Team', esc(team))}
+      </div>
+      <div>
+        ${row('Services', esc(services))}
+        ${row('FY26 Fees', f$(gf(p,FP.fy26)))}
+        ${end?row('Contract End', fdt(end)+(days!=null?' '+daysChip(days):'')):''}
+      </div>
+    </div>
+    ${notes?`<div style="font-size:11px;color:var(--ink2);margin-top:10px;padding:8px 10px;background:var(--surface3);border-radius:6px;line-height:1.5">${esc(notes)}</div>`:''}
+    <div style="display:grid;grid-template-columns:${asmts.length&&prtEvts.length?'1fr 1fr':'1fr'};gap:16px;margin-top:12px">
+      ${asmts.length?`<div><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink3);margin-bottom:6px">Assessments</div>`+
+        asmts.map(a=>`<div style="font-size:11px;padding:4px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between"><span>${esc(gf(a,FASMT.type)||'—')}</span><span style="color:var(--ink3)">${fdt(gf(a,FASMT.date))}</span></div>`).join('')+`</div>`:''}
+      ${prtEvts.length?`<div><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink3);margin-bottom:6px">Recent Events</div>`+
+        prtEvts.map(e=>`<div style="font-size:11px;padding:4px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;gap:8px"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(gf(e,FE.nameT)||gf(e,FE.name)||'—')}</span><span style="color:var(--ink3);flex-shrink:0">${fdt(gf(e,FE.date))}</span></div>`).join('')+`</div>`:''}
+    </div>
+    <div style="margin-top:14px;display:flex;gap:6px">
+      <button class="btn-sm" onclick="openAsmtForm('${id}')" style="font-size:11px">+ Assessment</button>
+      <button class="btn-sm" onclick="openPrtDrawer('${id}')" style="font-size:11px">Edit</button>
+    </div>
+  `;
+  profEl.style.display='';
 }
 
 function scrollToSec(id){
