@@ -615,7 +615,22 @@ button{cursor:pointer;font-family:inherit;}
     <!-- Charts row 1: Pipeline by Stage -->
     <div class="mb-16">
       <div class="card chart-card">
-        <div class="section-hd"><div class="section-title">Pipeline by Stage</div><div class="section-sub">Number of partnerships at each pipeline stage — click a bar to see the partner list</div></div>
+        <div class="section-hd">
+          <div>
+            <div class="section-title">Pipeline by Stage</div>
+            <div class="section-sub">Number of partnerships at each pipeline stage — click a bar to see the partner list</div>
+          </div>
+          <div class="flex gap-8 items-center" style="flex-wrap:wrap;margin-top:6px">
+            <select class="form-select" id="pipe-f-state" style="width:auto" onchange="renderPipelineChart()"><option value="">All States</option></select>
+            <select class="form-select" id="pipe-f-svc" style="width:auto" onchange="renderPipelineChart()"><option value="">All Service Lines</option></select>
+            <select class="form-select" id="pipe-f-team" style="width:auto" onchange="renderPipelineChart()"><option value="">All Team</option></select>
+            <select class="form-select" id="pipe-f-collab" style="width:auto" onchange="renderPipelineChart()">
+              <option value="">All</option>
+              <option value="yes">Collaboration</option>
+              <option value="no">Not Collaboration</option>
+            </select>
+          </div>
+        </div>
         <div><canvas id="ch-pipeline"></canvas></div>
       </div>
     </div>
@@ -1798,6 +1813,7 @@ const FP = {
   mouSigned:'fldxOLvOZrBpAyhWS',     // "SIGNED (from Program MOU)" lookup
   mouDate:'fld8yKp3q4fYCG07X',       // "Date Signed (from Program MOU)" lookup
   changeLog:'fldKXjQ7tw0KFtFuB',     // "Partnership Change Log" multilineText
+  collab:'fldhPOoISlfUQjeHi',        // "Collaboration?" checkbox
 };
 const FF = {
   name:'fldm0J2jZ5FNoeij4', amount:'fld74B4jxPOYfABSr', fy:'fldueOo2EOiAGsWev',
@@ -2451,7 +2467,7 @@ function buildEventScores() {
 // ── Load ──────────────────────────────────────────────────────────────────────
 const FY26_START = '2025-12-31';
 const FY26_END   = '2027-01-01';
-const CACHE_KEY  = 'aiedu_dash_v33';
+const CACHE_KEY  = 'aiedu_dash_v34';
 const CACHE_TTL  = 3 * 60 * 1000; // 3 minutes
 
 function loadProgress(pct) {
@@ -2673,9 +2689,10 @@ function renderOverview() {
   if (eduPctEl) eduPctEl.textContent = `${eduCount.toLocaleString()} participants across ${eduEvts2026.length} events in 2026`;
 
   // ── OKR 4a: Peer organization partnership MOUs
+  const _peerMouStages = new Set(['MOU Signed','MOU Complete']);
   const peerMous   = D.partners.filter(p=>{
     const type = ga(p,FP.partType).map(v=>typeof v==='object'?v.name:v).join(',').toLowerCase();
-    return mouStages.has(gf(p,FP.pipeline)) && (type.includes('peer')||type.includes('org'));
+    return _peerMouStages.has(gf(p,FP.pipeline)) && (type.includes('peer')||type.includes('org'));
   }).length;
   const peerPct = Math.min(100,Math.round(peerMous/5*100));
   const peerBar = document.getElementById('okr-peer-bar');
@@ -2701,12 +2718,19 @@ function renderOverview() {
   const npsArr  = Object.values(EVT_SCORES).map(s=>s.nps).filter(v=>v!=null);
   const avgNps  = npsArr.length ? npsArr.reduce((a,b)=>a+b)/npsArr.length : null;
 
-  // Pipeline counts
-  const byStage = {};
-  D.partners.forEach(p=>{ const s=gf(p,FP.pipeline)||'Unknown'; byStage[s]=(byStage[s]||0)+1; });
-  const sLabels = STAGE_ORDER.filter(s=>byStage[s]);
-  mkChart('ch-pipeline','bar',sLabels,sLabels.map(s=>byStage[s]),sLabels.map(s=>STAGE_COLORS[s]||'#999'),'Partnerships',
-    i=>drillTrackerStages([sLabels[i]],'Pipeline: '+sLabels[i]));
+  // Pipeline chart — populate filters then render
+  (()=>{
+    const allStates = [...new Set(D.partners.flatMap(p=>ga(p,FP.state).map(v=>typeof v==='object'?v.name:v).filter(Boolean)))].sort();
+    const allSvcs   = [...new Set(D.partners.flatMap(p=>ga(p,FP.services).filter(Boolean)))].sort();
+    const allTeams  = [...new Set(D.partners.flatMap(p=>ga(p,FP.team).map(v=>typeof v==='object'?v.name:v).filter(Boolean)))].sort();
+    const stateEl=document.getElementById('pipe-f-state');
+    const svcEl  =document.getElementById('pipe-f-svc');
+    const teamEl =document.getElementById('pipe-f-team');
+    if(stateEl&&!stateEl.dataset.populated){ stateEl.innerHTML='<option value="">All States</option>'+allStates.map(s=>`<option value="${esc(s)}">${esc(s)}</option>`).join(''); stateEl.dataset.populated='1'; }
+    if(svcEl  &&!svcEl.dataset.populated)  { svcEl.innerHTML  ='<option value="">All Service Lines</option>'+allSvcs.map(s=>`<option value="${esc(s)}">${esc(s)}</option>`).join('');  svcEl.dataset.populated='1'; }
+    if(teamEl &&!teamEl.dataset.populated) { teamEl.innerHTML ='<option value="">All Team</option>'+allTeams.map(s=>`<option value="${esc(s)}">${esc(s)}</option>`).join('');          teamEl.dataset.populated='1'; }
+  })();
+  renderPipelineChart();
 
   // Fees by stage
   const fByStage = {};
@@ -2751,6 +2775,25 @@ function renderOverview() {
     mos.map(m=>new Date(m+'-01').toLocaleDateString('en-US',{month:'short',year:'2-digit'})),
     mos.map(m=>byMo[m]),[cssVar('--teal')],'Events',
     i=>{ const mo=mos[i]; const rows=D.events.filter(e=>{const d=gf(e,FE.date);return d&&d.slice(0,7)===mo;}).sort((a,b)=>(gf(b,FE.date)||'').localeCompare(gf(a,FE.date)||'')); showDrill('Events — '+new Date(mo+'-15').toLocaleDateString('en-US',{month:'long',year:'numeric'}),rows.length+' events',rows,COL_EVTS); });
+}
+
+function renderPipelineChart() {
+  if(!D.partners) return;
+  const fState  = (document.getElementById('pipe-f-state') ||{}).value||'';
+  const fSvc    = (document.getElementById('pipe-f-svc')   ||{}).value||'';
+  const fTeam   = (document.getElementById('pipe-f-team')  ||{}).value||'';
+  const fCollab = (document.getElementById('pipe-f-collab')||{}).value||'';
+  let rows = D.partners;
+  if(fState)  rows=rows.filter(p=>ga(p,FP.state).map(v=>typeof v==='object'?v.name:v).includes(fState));
+  if(fSvc)    rows=rows.filter(p=>ga(p,FP.services).includes(fSvc));
+  if(fTeam)   rows=rows.filter(p=>ga(p,FP.team).map(v=>typeof v==='object'?v.name:v).map(t=>t.trim()).includes(fTeam.trim()));
+  if(fCollab==='yes') rows=rows.filter(p=>!!gf(p,FP.collab));
+  if(fCollab==='no')  rows=rows.filter(p=>!gf(p,FP.collab));
+  const byStage={};
+  rows.forEach(p=>{ const s=gf(p,FP.pipeline)||'Unknown'; byStage[s]=(byStage[s]||0)+1; });
+  const sLabels=STAGE_ORDER.filter(s=>byStage[s]);
+  mkChart('ch-pipeline','bar',sLabels,sLabels.map(s=>byStage[s]),sLabels.map(s=>STAGE_COLORS[s]||'#999'),'Partnerships',
+    i=>drillTrackerStages([sLabels[i]],'Pipeline: '+sLabels[i]));
 }
 
 // ── Success Tracker ───────────────────────────────────────────────────────────
