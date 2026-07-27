@@ -825,6 +825,7 @@ button{cursor:pointer;font-family:inherit;}
       <div class="section-hd mb-16">
         <div><div class="section-title">Internal Partner Assessments</div><div class="section-sub">AI Readiness Rubric results by partnership — Pre-Assessment, Goals, Check-In, and Final</div></div>
         <div class="flex gap-8 items-center">
+          <a href="https://partner-assessment.vercel.app" target="_blank" class="btn-sm primary" style="text-decoration:none;white-space:nowrap">+ Start Assessment</a>
           <select class="form-select" id="f-asmt-type" style="width:auto">
             <option value="">All Types</option>
             <option>Pre-Assessment</option>
@@ -3522,7 +3523,7 @@ function renderAssessments(){
       <td>${score(policy)}</td>
       <td style="max-width:180px;white-space:normal;font-size:11px;color:var(--ink2)">${notes}</td>
       <td><a href="https://airtable.com/appgdtYPttWwiBZzA/tblC8Zfw2iJrDKjw4/${r.id}" target="_blank" class="drill-link" style="font-size:11px">AT ↗</a></td>
-      <td>${p?`<a href="https://partner-assessment.vercel.app/?partner=${encodeURIComponent(gf(p,FP.name)||'')}" target="_blank" style="font-size:11px;color:var(--teal);white-space:nowrap">Start Assessment →</a>`:'—'}</td>
+      <td><a href="https://partner-assessment.vercel.app/?partner=${encodeURIComponent(gf(p,FP.name)||prt)}" target="_blank" style="font-size:11px;color:var(--teal);white-space:nowrap">Start →</a></td>
     </tr>`;
   }).join('') || `<tr><td colspan="10" class="empty-state">No assessments found</td></tr>`;
 
