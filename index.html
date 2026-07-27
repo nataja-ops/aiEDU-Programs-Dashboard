@@ -2655,6 +2655,7 @@ function renderOverview() {
   // Use MOU table: count records with signed date in 2026
   const mouCount = D.mous.filter(m=>{
     const ds=gf(m,FM.dateSigned); if(!ds) return false;
+    if(!ga(m,FM.partner).length) return false;
     return ds.slice(0,4)==='2026';
   }).length;
   setOkr('mou', mouCount, 15);
