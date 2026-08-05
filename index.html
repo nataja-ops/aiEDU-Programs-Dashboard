@@ -447,6 +447,7 @@ button{cursor:pointer;font-family:inherit;}
   <button class="sidebar-nav-btn" data-sidetab="catalyst" onclick="switchTab('catalyst')">🌱&nbsp; Community Catalyst</button>
   <button class="sidebar-nav-btn" data-sidetab="data-entry" onclick="switchTab('data-entry')">✏️&nbsp; Data Entry</button>
   <button class="sidebar-nav-btn" data-sidetab="content" onclick="switchTab('content')">📚&nbsp; aiEDU Products</button>
+  <button class="sidebar-nav-btn" data-sidetab="airtable-ops" onclick="switchTab('airtable-ops')" id="nav-airtable-ops" style="display:none">🛠️&nbsp; Airtable Ops</button>
 </div>
 <header id="topbar">
   <div class="logo">
@@ -1284,6 +1285,24 @@ button{cursor:pointer;font-family:inherit;}
   </div>
 </div>
 
+<!-- ═══ Airtable Ops Tab (personal — hidden unless logged in as owner) ══ -->
+<div class="tab-panel" id="tab-airtable-ops">
+  <div style="max-width:900px;margin:0 auto;padding:32px 16px">
+    <div class="section-title" style="margin-bottom:4px">Airtable Ops</div>
+    <div class="section-sub" style="margin-bottom:20px">Backlog and change log for Airtable schema/automation work on this base</div>
+    <div class="grid-2">
+      <div class="card" style="padding:16px">
+        <div class="ops-section-lbl" style="margin-bottom:8px">Backlog</div>
+        <div id="ao-backlog"><div class="empty-state">Loading…</div></div>
+      </div>
+      <div class="card" style="padding:16px">
+        <div class="ops-section-lbl" style="margin-bottom:8px">Change Log</div>
+        <div id="ao-log"><div class="empty-state">Loading…</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ═══ Data Entry Portal (modal, kept for legacy) ══════════════════════════ -->
 <div id="portal-ov" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:600;justify-content:center;align-items:center">
   <div style="background:var(--surface);border-radius:16px;padding:32px;width:540px;max-width:calc(100vw - 32px);box-shadow:0 24px 64px rgba(0,0,0,.3)">
@@ -1746,6 +1765,20 @@ const T = {
   asmt:'tblC8Zfw2iJrDKjw4',
   scorecard:'tbll0Llrzz8olGDIA',
   scores:'tbljs4iPtmSVbyQN3',
+  changeReq:'tblqwx7nJY8wu5cta', // Change Requests (Airtable Ops backlog)
+};
+// Change Requests fields (Airtable Ops backlog) — T.changeReq
+const FCR = {
+  title:'fldq5nq0TnLdU8MIZ', severity:'fldb0WYadqvIc5KJq', category:'fld521povQAYWmmZ6',
+  status:'fldYTbGM7R6nj1Gsf', sourceAudit:'fldcloGUOzdpoIjz1', affectedBase:'fldBMk2j3neCsEiTF',
+  description:'fldSSq2iC9Cl8Pn3f', recommendation:'flddUgy2esw6Ii5NY', effort:'fldgEdhOq6izPoDQi',
+  priority:'fldwxtnK3fH5F3T5o', assignee:'fldA0zYu893wCCmqX', notes:'fldcNQWsgGsegzGzx',
+};
+// Change Log fields (Airtable Ops log) — T.log
+const FCL = {
+  desc:'fldJmC77cLymyCQAm', tableName:'fld2rYyFcHXHywFET', recordId:'flduEQOrzmkVpugDk',
+  changedFields:'fld6pOScVGdwRuFur', changeType:'fldTm40ZcgFS1uOwW', changedBy:'fldY25CaF9yjYnEiF',
+  changeTime:'fldWoNsT2xDDwNI4w', relatedPartnership:'fldj1BQiUR1ij7Ifm',
 };
 // NPS by Administration Year fields
 const FNPS = {
@@ -5594,6 +5627,10 @@ function handleGoogleCredential(response){
   const wsBar = document.getElementById('ws-bar');
   wsBar.style.display = hasWorkspace ? '' : 'none';
 
+  // Airtable Ops tab: personal, visible only for the owner's account
+  const aoNav = document.getElementById('nav-airtable-ops');
+  if(aoNav) aoNav.style.display = (LEAD.email||'').toLowerCase()==='nataja@aiedu.org' ? '' : 'none';
+
   // Admin: show member selector so they can view any workspace
   const wsSel = document.getElementById('ws-member-sel');
   if(isAdmin && wsSel){
@@ -5656,6 +5693,7 @@ function switchTab(name) {
   logUsage('tab:'+name, name.charAt(0).toUpperCase()+name.slice(1));
   if(name==='landing') renderLanding();
   if(name==='catalyst') renderCatalyst();
+  if(name==='airtable-ops') renderAirtableOps();
 }
 document.querySelectorAll('.nav-tab').forEach(b=>b.addEventListener('click',()=>switchTab(b.dataset.tab)));
 
@@ -5903,6 +5941,77 @@ document.getElementById('ni-ok').addEventListener('click', async()=>{
   }catch(err){toast('Save failed: '+err.message,'error');}
   finally{btn.disabled=false;btn.textContent='Save to Airtable';}
 });
+
+// ── Airtable Ops (personal backlog + change log) ──────────────────────────────
+let AO_LOADED = false, AO_DATA = { reqs:[], log:[] };
+const AO_STATUS_PILL = {
+  'Done':'pill-good', 'In Progress':'pill-teal', 'To Do':'pill-gray', 'Pending':'pill-gray',
+  'Requested':'pill-gray', 'Approved':'pill-teal', 'Deferred':'pill-warn', 'Rejected':'pill-crit',
+};
+const AO_SEVERITY_PILL = { 'Critical':'pill-crit', 'High':'pill-warn', 'Medium':'pill-warn', 'Low':'pill-good' };
+const AO_CHANGE_PILL = { 'Created':'pill-good', 'Updated':'pill-teal', 'Deleted':'pill-crit' };
+
+async function renderAirtableOps(){
+  const backlogEl = document.getElementById('ao-backlog');
+  const logEl = document.getElementById('ao-log');
+  if(!backlogEl || !logEl) return;
+  if(!AO_LOADED){
+    backlogEl.innerHTML = '<div class="empty-state">Loading…</div>';
+    logEl.innerHTML = '<div class="empty-state">Loading…</div>';
+    try {
+      const [reqs, log] = await Promise.all([
+        atFetch(BASE, T.changeReq, Object.values(FCR)),
+        atFetch(BASE, T.log, Object.values(FCL)),
+      ]);
+      AO_DATA = { reqs, log };
+      AO_LOADED = true;
+    } catch(err){
+      backlogEl.innerHTML = `<div class="empty-state">Failed to load: ${esc(err.message)}</div>`;
+      logEl.innerHTML = '';
+      return;
+    }
+  }
+  renderAoBacklog();
+  renderAoLog();
+}
+
+function renderAoBacklog(){
+  const el = document.getElementById('ao-backlog'); if(!el) return;
+  const items = [...AO_DATA.reqs].sort((a,b)=>(gf(a,FCR.priority)??999)-(gf(b,FCR.priority)??999));
+  if(!items.length){ el.innerHTML = '<div class="empty-state">No backlog items</div>'; return; }
+  el.innerHTML = items.map(r=>{
+    const status = gf(r,FCR.status)||'—';
+    const severity = gf(r,FCR.severity)||'—';
+    return `<div class="ops-item" style="cursor:default">
+      <div class="ops-dot" style="background:var(--teal)"></div>
+      <div class="ops-item-body">
+        <div class="ops-item-name">${esc(gf(r,FCR.title)||'Untitled')}</div>
+        <div class="ops-item-meta">
+          <span class="pill ${AO_SEVERITY_PILL[severity]||'pill-gray'}">${esc(severity)}</span>
+          <span class="pill ${AO_STATUS_PILL[status]||'pill-gray'}">${esc(status)}</span>
+          ${gf(r,FCR.effort)?esc(gf(r,FCR.effort)):''}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderAoLog(){
+  const el = document.getElementById('ao-log'); if(!el) return;
+  const items = [...AO_DATA.log].sort((a,b)=>(gf(b,FCL.changeTime)||'').localeCompare(gf(a,FCL.changeTime)||''));
+  if(!items.length){ el.innerHTML = '<div class="empty-state">No changes logged</div>'; return; }
+  el.innerHTML = items.map(r=>{
+    const type = gf(r,FCL.changeType)||'—';
+    return `<div class="ops-item" style="cursor:default">
+      <div class="ops-dot" style="background:var(--teal)"></div>
+      <div class="ops-item-body">
+        <div class="ops-item-name">${esc(gf(r,FCL.tableName)||'—')} <span class="pill ${AO_CHANGE_PILL[type]||'pill-gray'}">${esc(type)}</span></div>
+        <div class="ops-item-meta">${esc(gf(r,FCL.desc)||'')}</div>
+        <div class="ops-item-meta">${gf(r,FCL.changeTime)?fdt(gf(r,FCL.changeTime)):''}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
 
 // ── Request modal ─────────────────────────────────────────────────────────────
 const REQ_KEY = 'aiedu_requests';
