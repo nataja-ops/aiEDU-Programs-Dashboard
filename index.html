@@ -1289,7 +1289,49 @@ button{cursor:pointer;font-family:inherit;}
 <div class="tab-panel" id="tab-airtable-ops">
   <div style="max-width:900px;margin:0 auto;padding:32px 16px">
     <div class="section-title" style="margin-bottom:4px">Airtable Ops</div>
-    <div class="section-sub" style="margin-bottom:20px">Backlog and change log for Airtable schema/automation work on this base</div>
+    <div class="section-sub" style="margin-bottom:20px">Weekly MOU/partnership activity, data-quality flags, and Airtable schema backlog</div>
+
+    <div class="grid-3 mb-24" id="ao-mou-stats">
+      <div class="card" style="padding:16px;text-align:center">
+        <div style="font-size:28px;font-weight:700;color:var(--teal)" id="ao-mou-sent-n">—</div>
+        <div style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink3);margin-top:2px">MOUs Sent This Week</div>
+      </div>
+      <div class="card" style="padding:16px;text-align:center">
+        <div style="font-size:28px;font-weight:700;color:var(--teal)" id="ao-mou-signed-n">—</div>
+        <div style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink3);margin-top:2px">MOUs Signed This Week</div>
+      </div>
+      <div class="card" style="padding:16px;text-align:center">
+        <div style="font-size:28px;font-weight:700;color:var(--warn)" id="ao-mou-waiting-n">—</div>
+        <div style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink3);margin-top:2px">MOUs Waiting to be Signed</div>
+      </div>
+    </div>
+
+    <div class="grid-2 mb-24">
+      <div class="card" style="padding:16px">
+        <div class="ops-section-lbl" style="margin-bottom:8px">MOUs Sent This Week</div>
+        <div id="ao-mou-sent"><div class="empty-state">Loading…</div></div>
+      </div>
+      <div class="card" style="padding:16px">
+        <div class="ops-section-lbl" style="margin-bottom:8px">MOUs Signed This Week</div>
+        <div id="ao-mou-signed"><div class="empty-state">Loading…</div></div>
+      </div>
+    </div>
+
+    <div class="card mb-24" style="padding:16px">
+      <div class="ops-section-lbl" style="margin-bottom:8px">MOUs Waiting to be Signed</div>
+      <div id="ao-mou-waiting"><div class="empty-state">Loading…</div></div>
+    </div>
+
+    <div class="card mb-24" style="padding:16px">
+      <div class="ops-section-lbl" style="margin-bottom:8px">New Partnerships Added This Week</div>
+      <div id="ao-new-partnerships"><div class="empty-state">Loading…</div></div>
+    </div>
+
+    <div class="card mb-24" style="padding:16px">
+      <div class="ops-section-lbl" style="margin-bottom:8px">Ops Report — Flagged Data</div>
+      <div id="ao-flags"><div class="empty-state">Loading…</div></div>
+    </div>
+
     <div class="grid-2">
       <div class="card" style="padding:16px">
         <div class="ops-section-lbl" style="margin-bottom:8px">Backlog</div>
@@ -1857,11 +1899,13 @@ const FP = {
   mouDate:'fld8yKp3q4fYCG07X',       // "Date Signed (from Program MOU)" lookup
   changeLog:'fldKXjQ7tw0KFtFuB',     // "Partnership Change Log" multilineText
   collab:'fldhPOoISlfUQjeHi',        // "Collaboration?" checkbox
+  created:'fldSRKPA7x9Hz6kiA',       // "Created" createdTime
 };
 const FF = {
   name:'fldm0J2jZ5FNoeij4', amount:'fld74B4jxPOYfABSr', fy:'fldueOo2EOiAGsWev',
   pipeline:'fldEz8N4Ct9efAPcl', team:'fld0orJul8RatY2gf',
   funding:'fld8htK5AFFWuroAW',  // "Funding Stage (from Associated Partnership)"
+  assocPartnership:'fldr0O655WNWgy0qK', // "Associated Partnership" link — for grouping fees by partnership
 };
 const FASMT = {
   name:      'fldStUxcFNwZ0rI4K', // Assessment Name
@@ -1883,7 +1927,7 @@ const FASMT = {
 };
 const FM = {
   contract:'fldwdDFVJ51CcOqxv', begins:'fldxzUbvz1RYElzjG', ends:'fldEANQWfvf7PTYEV',
-  signed:'fldTQ1LXC9SiUaWms', dateSigned:'fldntqkEmLRxIAjzD',
+  signed:'fldTQ1LXC9SiUaWms', dateSigned:'fldntqkEmLRxIAjzD', dateSent:'fld9ZYGx1MMkBJhGT',
   partner:'fldONduCdYmYYJTAS', partnerships:'fldlrZf2X0GFyO03t',
   pipeline:'fldWzaeTDZccoICrN', team:'fldg4K8tf6dWQR1d9', amount:'fld2IArT6QESgA5Va'
 };
@@ -5951,7 +5995,140 @@ const AO_STATUS_PILL = {
 const AO_SEVERITY_PILL = { 'Critical':'pill-crit', 'High':'pill-warn', 'Medium':'pill-warn', 'Low':'pill-good' };
 const AO_CHANGE_PILL = { 'Created':'pill-good', 'Updated':'pill-teal', 'Deleted':'pill-crit' };
 
+function isThisWeek(dateStr){
+  if(!dateStr) return false;
+  const d = dateStr.slice(0,10);
+  const now = new Date();
+  const dow = now.getDay();
+  const mon = new Date(now); mon.setDate(now.getDate()-((dow+6)%7)); mon.setHours(0,0,0,0);
+  const sun = new Date(mon); sun.setDate(mon.getDate()+6);
+  return d >= mon.toISOString().slice(0,10) && d <= sun.toISOString().slice(0,10);
+}
+
+function renderAoMouWeekly(){
+  const sentEl = document.getElementById('ao-mou-sent');
+  const signedEl = document.getElementById('ao-mou-signed');
+  const waitingEl = document.getElementById('ao-mou-waiting');
+  if(!sentEl || !signedEl || !waitingEl) return;
+
+  const mouName = m => ga(m,FM.partner).join(', ') || gf(m,FM.contract) || 'Untitled MOU';
+  const item = (m, dateField, label) => `<div class="ops-item" style="cursor:default">
+    <div class="ops-dot" style="background:var(--teal)"></div>
+    <div class="ops-item-body">
+      <div class="ops-item-name">${esc(mouName(m))}</div>
+      <div class="ops-item-meta">${label} ${fdt(gf(m,dateField))}</div>
+    </div>
+  </div>`;
+
+  const sent = D.mous.filter(m=>isThisWeek(gf(m,FM.dateSent)));
+  const signed = D.mous.filter(m=>isThisWeek(gf(m,FM.dateSigned)));
+  const waiting = D.mous.filter(m=>gf(m,FM.dateSent) && !gf(m,FM.dateSigned))
+    .sort((a,b)=>(gf(a,FM.dateSent)||'').localeCompare(gf(b,FM.dateSent)||''));
+
+  document.getElementById('ao-mou-sent-n').textContent = sent.length;
+  document.getElementById('ao-mou-signed-n').textContent = signed.length;
+  document.getElementById('ao-mou-waiting-n').textContent = waiting.length;
+
+  sentEl.innerHTML = sent.length ? sent.map(m=>item(m,FM.dateSent,'Sent')).join('') : '<div class="empty-state">None this week</div>';
+  signedEl.innerHTML = signed.length ? signed.map(m=>item(m,FM.dateSigned,'Signed')).join('') : '<div class="empty-state">None this week</div>';
+  waitingEl.innerHTML = waiting.length ? waiting.map(m=>{
+    const days = daysTo(gf(m,FM.dateSent));
+    const waitDays = days!=null ? Math.abs(days) : null;
+    return `<div class="ops-item" style="cursor:default">
+      <div class="ops-dot" style="background:${waitDays>14?'#c43535':'#e07b1e'}"></div>
+      <div class="ops-item-body">
+        <div class="ops-item-name">${esc(mouName(m))}</div>
+        <div class="ops-item-meta">Sent ${fdt(gf(m,FM.dateSent))}${waitDays!=null?' · waiting '+waitDays+'d':''}</div>
+      </div>
+    </div>`;
+  }).join('') : '<div class="empty-state" style="color:var(--good)">None waiting</div>';
+}
+
+function renderAoNewPartnerships(){
+  const el = document.getElementById('ao-new-partnerships'); if(!el) return;
+  const items = D.partners.filter(p=>isThisWeek(gf(p,FP.created)))
+    .sort((a,b)=>(gf(b,FP.created)||'').localeCompare(gf(a,FP.created)||''));
+  el.innerHTML = items.length ? items.map(p=>`<div class="ops-item" onclick="openPartnerProfile('${p.id}')">
+    <div class="ops-dot" style="background:var(--teal)"></div>
+    <div class="ops-item-body">
+      <div class="ops-item-name">${esc(gf(p,FP.name)||'Unnamed')}</div>
+      <div class="ops-item-meta">Added ${fdt(gf(p,FP.created))} · ${esc(gf(p,FP.pipeline)||'—')}</div>
+    </div>
+    <span class="ops-item-action">Open →</span>
+  </div>`).join('') : '<div class="empty-state">No new partnerships this week</div>';
+}
+
+function renderAoFlags(){
+  const el = document.getElementById('ao-flags'); if(!el) return;
+  const issues = [];
+
+  D.partners.forEach(p=>{
+    const missingInfo = gf(p,FP.missing);
+    if(missingInfo) issues.push({name:gf(p,FP.name)||'Unnamed', reason:'Missing: '+missingInfo, color:'#e07b1e', id:p.id, type:'partner'});
+  });
+
+  const flaggedIds = new Set(issues.filter(i=>i.type==='partner').map(i=>i.id));
+  const FEE_REQ_STAGES = new Set(['MOU Sent','MOU Signed','MOU Complete']);
+  D.partners.forEach(p=>{
+    if(flaggedIds.has(p.id)) return;
+    const name = gf(p,FP.name)||'Unnamed';
+    const stage = gf(p,FP.pipeline)||'';
+    if(FEE_REQ_STAGES.has(stage)&&!(+gf(p,FP.fy26)||0)) issues.push({name, reason:'Missing FY26 fees for service', color:'#9b5ca5', id:p.id, type:'partner'});
+    if(FEE_REQ_STAGES.has(stage)&&!gf(p,FP.end))        issues.push({name, reason:'Missing contract end date',    color:'#c43535', id:p.id, type:'partner'});
+  });
+
+  D.mous.forEach(m=>{
+    if(gf(m,FM.signed) && !gf(m,FM.dateSigned)){
+      const n = ga(m,FM.partner).join(', ')||'MOU';
+      issues.push({name:n, reason:'MOU signed but no date recorded', color:'#e07b1e', id:null, type:'mou'});
+    }
+  });
+
+  // Fee / Fiscal Year consistency: flag partnerships where fees look "stacked" in an
+  // earlier fiscal year while the partnership's Work End implies a later FY with no fee yet.
+  const feesByPartner = {};
+  D.fees.forEach(f=>{
+    ga(f,FF.assocPartnership).forEach(pid=>{
+      (feesByPartner[pid] = feesByPartner[pid]||[]).push(f);
+    });
+  });
+  D.partners.forEach(p=>{
+    const end = gf(p,FP.end); if(!end) return;
+    const fees = feesByPartner[p.id]; if(!fees || fees.length<2) return;
+    const impliedFY = 'FY'+(new Date(end.slice(0,10)+'T00:00:00').getFullYear()%100);
+    const fyValues = fees.map(f=>gf(f,FF.fy)).filter(Boolean);
+    if(!fyValues.length || fyValues.includes(impliedFY)) return;
+    const counts = {};
+    fyValues.forEach(fy=>counts[fy]=(counts[fy]||0)+1);
+    const dup = Object.entries(counts).filter(([,c])=>c>=2).sort((a,b)=>b[1]-a[1])[0];
+    if(dup){
+      const [dupFY, count] = dup;
+      const total = fees.filter(f=>gf(f,FF.fy)===dupFY).reduce((s,f)=>s+(+gf(f,FF.amount)||0),0);
+      issues.push({
+        name: gf(p,FP.name)||'Unnamed',
+        reason: `${count} fees tagged ${dupFY} (${f$(total)} total) but partnership runs through ${fdt(end)} — no fee tagged ${impliedFY}. Check if one belongs there.`,
+        color:'#9b5ca5', id:p.id, type:'partner'
+      });
+    }
+  });
+
+  el.innerHTML = issues.length===0
+    ? '<div class="empty-state" style="color:var(--good)">✓ All data looks complete</div>'
+    : issues.map(i=>`<div class="ops-item" onclick="${i.type==='partner'?`openPartnerProfile('${i.id}')`:''}" style="${i.type!=='partner'?'cursor:default':''}">
+        <div style="width:14px;height:14px;border:2px solid ${i.color};border-radius:3px;flex-shrink:0;margin-top:2px"></div>
+        <div class="ops-item-body">
+          <div class="ops-item-name">${esc(i.name)}</div>
+          <div class="ops-item-meta">${esc(i.reason)}</div>
+        </div>
+        ${i.type==='partner'?'<span class="ops-item-action">Fix →</span>':''}
+      </div>`).join('');
+}
+
 async function renderAirtableOps(){
+  renderAoMouWeekly();
+  renderAoNewPartnerships();
+  renderAoFlags();
+
   const backlogEl = document.getElementById('ao-backlog');
   const logEl = document.getElementById('ao-log');
   if(!backlogEl || !logEl) return;
