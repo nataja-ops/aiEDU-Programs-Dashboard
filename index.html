@@ -4905,21 +4905,24 @@ function setCatView(v){
 }
 
 function renderCatalyst(){
+  // The Community Catalyst tab is currently a placeholder (see tab-catalyst) —
+  // none of the filter/card/table/grant-review elements below exist yet, so skip.
+  if(!document.getElementById('cat-k-orgs')) return;
   const cats = D.catalyst||[];
 
   // Populate filter dropdowns (once, when options are empty)
   const stSel = document.getElementById('cat-f-state');
-  if(stSel.options.length<=1){
+  if(stSel && stSel.options.length<=1){
     const states = [...new Set(cats.flatMap(r=>ga(r,FCAT.state).map(v=>typeof v==='object'?v.name:v)).filter(Boolean))].sort();
     states.forEach(s=>{const o=document.createElement('option');o.value=o.textContent=s;stSel.appendChild(o);});
   }
   const tySel = document.getElementById('cat-f-type');
-  if(tySel.options.length<=1){
+  if(tySel && tySel.options.length<=1){
     const types = [...new Set(cats.flatMap(r=>ga(r,FCAT.orgType).map(v=>typeof v==='object'?v.name:v)).filter(Boolean))].sort();
     types.forEach(t=>{const o=document.createElement('option');o.value=o.textContent=t;tySel.appendChild(o);});
   }
   const pwSel = document.getElementById('cat-f-pathway');
-  if(pwSel.options.length<=1){
+  if(pwSel && pwSel.options.length<=1){
     const paths = [...new Set(cats.flatMap(r=>ga(r,FCAT.pathway).map(v=>typeof v==='object'?v.name:v)).filter(Boolean))].sort();
     paths.forEach(p=>{const o=document.createElement('option');o.value=o.textContent=p;pwSel.appendChild(o);});
   }
