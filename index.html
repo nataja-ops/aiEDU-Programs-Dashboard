@@ -23,7 +23,7 @@
   --s1:#006464; --s2:#d44a14; --s3:#3a6baf; --s4:#22a878; --s5:#c43535; --s6:#7a8f9a;
   /* Layout */
   --border:#d1d5e0; --shadow:0 2px 12px rgba(26,31,60,.08);
-  --radius:12px; --topbar-h:52px; --statsbar-h:42px;
+  --radius:12px; --topbar-h:52px;
   font-family:'Poppins',system-ui,sans-serif;
 }
 @media(prefers-color-scheme:dark){:root{
@@ -62,15 +62,6 @@ button{cursor:pointer;font-family:inherit;}
 #nav{display:flex;gap:2px;justify-content:center;overflow-x:auto;flex:1;}
 .logo{flex:0 1 160px;}
 .topbar-actions{flex:0 1 160px;display:flex;justify-content:flex-end;align-items:center;gap:8px;}
-/* Workspace bar */
-#ws-bar{
-  position:sticky;top:var(--topbar-h);z-index:99;
-  background:#0a2e2e;border-bottom:1px solid rgba(24,220,220,.15);
-  display:flex;align-items:center;justify-content:center;gap:10px;padding:0 20px;height:38px;
-  cursor:pointer;transition:background .15s;user-select:none;
-}
-#ws-bar:hover{background:#0d3535;}
-#ws-bar.active{background:linear-gradient(90deg,#005858,#007a7a);border-bottom-color:rgba(24,220,220,.3);}
 .nav-tab{
   padding:6px 13px;border-radius:20px;border:none;background:transparent;
   color:rgba(255,255,255,.65);font-size:13px;font-weight:500;
@@ -93,17 +84,6 @@ button{cursor:pointer;font-family:inherit;}
 }
 .lead-btn:hover{border-color:var(--teal-bright);color:var(--teal-bright);}
 .lead-btn.active{background:var(--teal-bright);color:var(--navy);border-color:var(--teal-bright);}
-/* Stats bar */
-#statsbar{
-  height:var(--statsbar-h);background:var(--navy-mid);border-bottom:1px solid rgba(255,255,255,.08);
-  display:flex;align-items:center;padding:0 20px;overflow-x:auto;gap:0;justify-content:space-between;
-}
-.stat-item{display:flex;align-items:baseline;gap:6px;padding:0 12px;border-right:1px solid rgba(255,255,255,.10);flex:1;justify-content:center;}
-.stat-item:first-child{padding-left:12px;}
-.stat-item:last-child{justify-content:center;}
-.stat-item:last-child{border-right:none;}
-.stat-val{font-size:17px;font-weight:700;color:#fff;font-variant-numeric:tabular-nums;}
-.stat-lbl{font-size:11px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;}
 /* Content */
 #content{padding:20px;max-width:1400px;margin:0 auto;}
 .tab-panel{display:none;}
@@ -462,22 +442,6 @@ button{cursor:pointer;font-family:inherit;}
   </div>
 </header>
 <div id="health-banner" style="display:none"></div>
-<div id="ws-bar" style="display:none" onclick="switchTab('workspace')">
-  <span style="font-size:13px;font-weight:600;color:rgba(255,255,255,.9);letter-spacing:.02em">Workspace</span>
-  <span id="ws-member-lbl" style="display:none;font-size:11px;color:rgba(255,255,255,.5)">·</span>
-  <select id="ws-member-sel" style="display:none;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);color:#fff;border-radius:6px;padding:4px 10px;font-size:12px;font-family:inherit;cursor:pointer" onclick="event.stopPropagation()"></select>
-</div>
-
-<div id="statsbar">
-  <div class="stat-item"><span class="stat-val" id="s-partners">—</span><span class="stat-lbl">Partners since 2023</span></div>
-  <div class="stat-item"><span class="stat-val" id="s-active">—</span><span class="stat-lbl">Active</span></div>
-  <div class="stat-item"><span class="stat-val" id="s-fees">—</span><span class="stat-lbl">Fees Awarded</span></div>
-  <div class="stat-item"><span class="stat-val" id="s-events">—</span><span class="stat-lbl">Events</span></div>
-  <div class="stat-item"><span class="stat-val" id="s-parts">—</span><span class="stat-lbl">Participants</span></div>
-  <div class="stat-item"><span class="stat-val" id="s-collab">—</span><span class="stat-lbl">Collaborations</span></div>
-  <div class="stat-item"><span class="stat-val" id="s-nps">—</span><span class="stat-lbl">NPS</span></div>
-  <div class="stat-item"><span class="stat-val" id="s-sat">—</span><span class="stat-lbl">Avg Sat</span></div>
-</div>
 
 <main id="content">
 
@@ -2301,61 +2265,6 @@ function closeDrill(){
 }
 
 // Stat bar drill functions
-function drillAllPartners(){
-  const MOU_STAGES_D = new Set(['MOU Signed','MOU Complete','Collaboration']);
-  const mouAccIds_D = new Set();
-  D.partners.forEach(p=>{ const s=gf(p,FP.start); if(!s||s<'2023-01-01') return; if(!MOU_STAGES_D.has(gf(p,FP.pipeline))) return; ga(p,FP.account).forEach(id=>mouAccIds_D.add(id)); });
-  const r = D.accounts.filter(a=>mouAccIds_D.has(a.id)).sort((a,b)=>(gf(a,FA.name)||'').localeCompare(gf(b,FA.name)||''));
-  showDrill('Partners since 2023 (MOU Signed/Complete/Collaboration)', r.length+' accounts', r, COL_ACCS);
-}
-function drillCollabs(){
-  const r=D.partners.filter(p=>!!gf(p,FP.collab)).sort((a,b)=>(gf(a,FP.name)||'').localeCompare(gf(b,FP.name)||''));
-  showDrill('Active Collaborations (Collaboration? = checked)',r.length+' partnerships',r,COL_PRTS);
-}
-function drillActive(){
-  const ACTIVE_PRT_STAGES_D = new Set(['MOU Signed','Collaboration','Verbal Agreement']);
-  const activeAccIds_D = new Set(D.accounts.filter(a=>(gf(a,FA.status)||'').toLowerCase()==='active').map(a=>a.id));
-  const r = D.partners.filter(p=>ACTIVE_PRT_STAGES_D.has(gf(p,FP.pipeline))&&ga(p,FP.account).some(id=>activeAccIds_D.has(id)))
-    .sort((a,b)=>(gf(a,FP.name)||'').localeCompare(gf(b,FP.name)||''));
-  showDrill('Active Partnerships (MOU Signed / Collaboration / Verbal Agreement)', r.length+' partnerships', r, COL_PRTS);
-}
-function drillFY26Fees(){
-  const r=D.fees.filter(f=>{const s=ga(f,FF.funding).map(v=>(typeof v==='object'?v.name:v)).join(' ').toLowerCase();return s.includes('award');}).sort((a,b)=>(+gf(b,FF.amount)||0)-(+gf(a,FF.amount)||0));
-  showDrill('Fees Awarded (All Years)', f$(r.reduce((s,f)=>s+(+gf(f,FF.amount)||0),0))+' total', r, COL_FEES);
-}
-function drillAllEvents(){
-  const r=D.events.filter(isPLEvent).sort((a,b)=>(gf(b,FE.date)||'').localeCompare(gf(a,FE.date)||''));
-  showDrill('Events (PL, excl. Gov/Private Dinner)', r.length+' events', r, COL_EVTS);
-}
-function drillParticipants(){
-  const evts=D.events.filter(isPLEvent).filter(e=>+gf(e,FE.parts)>0);
-  const byType={};
-  evts.forEach(e=>{
-    const types=ga(e,FE.type).map(v=>typeof v==='object'?v.name:v).filter(Boolean);
-    (types.length?types:['Uncategorized']).forEach(t=>(byType[t]=byType[t]||[]).push(e));
-  });
-  const total=evts.reduce((s,e)=>s+(+gf(e,FE.parts)||0),0);
-  // Open panel then override tbody with grouped rows
-  showDrill('Participants by Event',total.toLocaleString()+' total participants',[],COL_EVTS);
-  let html='';
-  Object.keys(byType).sort().forEach(t=>{
-    const rows=byType[t].sort((a,b)=>(+gf(b,FE.parts)||0)-(+gf(a,FE.parts)||0));
-    const typeTotal=rows.reduce((s,e)=>s+(+gf(e,FE.parts)||0),0);
-    html+=`<tr><td colspan="${COL_EVTS.length}" style="background:var(--teal-light);padding:7px 16px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--teal)">${t} <span style="opacity:.65;font-weight:400">${typeTotal.toLocaleString()} participants</span></td></tr>`;
-    html+=rows.map(r=>`<tr>${COL_EVTS.map(c=>`<td>${c.fn(r)}</td>`).join('')}</tr>`).join('');
-  });
-  document.getElementById('drill-tbody').innerHTML=html||`<tr><td colspan="${COL_EVTS.length}" class="empty-state">No records found</td></tr>`;
-}
-function drillNPS(){
-  const r=D.surveys.filter(s=>{const v=gf(s,FS.npsPoints);return v!=null&&v!==''&&!isNaN(+v);}).sort((a,b)=>(+gf(b,FS.npsPoints)||0)-(+gf(a,FS.npsPoints)||0));
-  showDrill('NPS — Partner Survey', r.length+' responses', r, COL_SURVEYS);
-}
-function drillSat(){
-  showDrill('Satisfaction by Event', 'Sorted highest to lowest',
-    D.events.filter(e=>EVT_SCORES[e.id]?.sat!=null)
-      .sort((a,b)=>((EVT_SCORES[b.id]||{}).sat||0)-((EVT_SCORES[a.id]||{}).sat||0)), COL_EVTS);
-}
-
 // OKR drill functions
 function drillAllActivePartners(){
   const activeAccIds=new Set(D.accounts.filter(a=>(gf(a,FA.status)||'').toLowerCase()==='active').map(a=>a.id));
@@ -2376,7 +2285,6 @@ function drillProposedFees(){
   showDrill('Fees for Service — Proposed (FY26)',f$(r.reduce((s,f)=>s+(+gf(f,FF.amount)||0),0))+' total proposed',r,COL_FEES);
 }
 
-// Wire stat bar + OKR tile clicks (called at boot, elements are static)
 // ── Chart lightbox ────────────────────────────────────────────────────────────
 let LB_CHART = null;
 function openChartLightbox(canvasId, title) {
@@ -2406,15 +2314,6 @@ function addExpandButtons(){
     btn.textContent='⤢';
     btn.onclick=()=>openChartLightbox(canvas.id, title);
     card.appendChild(btn);
-  });
-}
-
-function wireClickTargets(){
-  [['s-partners',drillAllPartners],['s-active',drillActive],['s-collab',drillCollabs],['s-fees',drillFY26Fees],
-   ['s-events',drillAllEvents],['s-parts',drillParticipants],['s-nps',drillNPS],['s-sat',drillSat]]
-  .forEach(([id,fn])=>{
-    const el=document.getElementById(id)?.closest('.stat-item');
-    if(el) el.addEventListener('click',fn);
   });
 }
 
@@ -2560,7 +2459,6 @@ function renderAll() {
   // If a Google sign-in was pending while data loaded, complete it now
   if(PENDING_CREDENTIAL && !LEAD) handleGoogleCredential(PENDING_CREDENTIAL);
   renderLanding();
-  renderStats();
   renderOverview();
   renderAllSectionOps();
   renderSuccessTracker();
@@ -2589,45 +2487,6 @@ function isPLEvent(e){
   const types = ga(e,FE.type).map(v=>(typeof v==='object'?v.name:v).toLowerCase());
   return !types.some(t=>EVT_EXCLUDE_TYPES.has(t));
 }
-function renderStats() {
-  const ACTIVE_PRT_STAGES = new Set(['MOU Signed','Collaboration','Verbal Agreement']);
-  const activeAccIds = new Set(D.accounts.filter(a=>(gf(a,FA.status)||'').toLowerCase()==='active').map(a=>a.id));
-  const active = new Set(D.partners.filter(p=>ACTIVE_PRT_STAGES.has(gf(p,FP.pipeline))&&ga(p,FP.account).some(id=>activeAccIds.has(id))).flatMap(p=>ga(p,FP.account))).size;
-  // All-time fees where funding stage contains "award"
-  const awarded = D.fees.filter(f=>{
-    const s=ga(f,FF.funding).map(v=>(typeof v==='object'?v.name:v)).join(' ').toLowerCase();
-    return s.includes('award');
-  }).reduce((s,f)=>s+(+gf(f,FF.amount)||0),0);
-  // Events excluding Government and Private Dinner
-  const plEvts  = D.events.filter(isPLEvent);
-  // Participants — all events with standard exclusions (Government, Private Dinner)
-  const plParts = D.events.reduce((s,e)=>s+(+gf(e,FE.parts)||0),0);
-  // NPS — average of all non-empty NPS Score (Calculated) rows from NPS by Administration Year
-  const npsYrForStat = D.npsYears.filter(r=>{ const raw=gf(r,FNPS.score); if(raw==null||raw==='') return false; const v=+raw; return !isNaN(v)&&isFinite(v); });
-  const npsScore = npsYrForStat.length ? Math.round(npsYrForStat.reduce((a,b)=>a+(+gf(b,FNPS.score)||0),0)/npsYrForStat.length) : null;
-  // Avg Sat from event feedback (1-5 scale)
-  const satArr  = Object.values(EVT_SCORES).map(s=>s.sat).filter(v=>v!=null);
-  const avgSat  = satArr.length ? satArr.reduce((a,b)=>a+b)/satArr.length : null;
-  const MOU_STAGES = new Set(['MOU Signed','MOU Complete','Collaboration']);
-  const mouAccIds = new Set();
-  D.partners.forEach(p=>{
-    const s=gf(p,FP.start); if(!s||s<'2023-01-01') return;
-    if(!MOU_STAGES.has(gf(p,FP.pipeline))) return;
-    ga(p,FP.account).forEach(id=>mouAccIds.add(id));
-  });
-  const collabCount = D.partners.filter(p=>!!gf(p,FP.collab)).length;
-  document.getElementById('s-partners').textContent = mouAccIds.size;
-  document.getElementById('s-active').textContent   = active;
-  document.getElementById('s-collab').textContent   = collabCount;
-  document.getElementById('s-fees').textContent     = f$(awarded);
-  const today = new Date().toISOString().slice(0,10);
-  const pastEvts = D.events.filter(e=>{ const d=gf(e,FE.date); return d&&d<=today; });
-  document.getElementById('s-events').textContent   = pastEvts.length;
-  document.getElementById('s-parts').textContent    = plParts.toLocaleString();
-  document.getElementById('s-nps').textContent      = npsScore!=null ? npsScore+'%' : '—';
-  document.getElementById('s-sat').textContent      = avgSat!=null ? avgSat.toFixed(1) : '—';
-}
-
 // ── Overview ──────────────────────────────────────────────────────────────────
 function renderStateChart(){
   const svcVal=(document.getElementById('st-f-svc')||{}).value||'';
@@ -6068,7 +5927,7 @@ function handleGoogleCredential(response){
 
   // Show or hide workspace bar
   const wsBar = document.getElementById('ws-bar');
-  wsBar.style.display = hasWorkspace ? '' : 'none';
+  if(wsBar) wsBar.style.display = hasWorkspace ? '' : 'none';
 
   // Admin: show member selector so they can view any workspace
   const wsSel = document.getElementById('ws-member-sel');
@@ -6761,7 +6620,6 @@ window.addEventListener('scroll',()=>{
 },{passive:true});
 
 // ── Boot ──────────────────────────────────────────────────────────────────────
-wireClickTargets();
 loadAll();
 </script>
 </body>
