@@ -3688,8 +3688,8 @@ function openPartnerProfile(id){
       })()}
     </div>
     <div class="form-group" style="margin-bottom:12px">
-      <label class="form-label" for="pf-parttype">Partner Type (comma-separated)</label>
-      <input class="form-input" id="pf-parttype" value="${esc(partType)}" placeholder="District, School…">
+      <label class="form-label" for="pf-parttype">Partner Type <span style="font-weight:400;color:var(--ink3)">(inherited from linked Account — edit there)</span></label>
+      <input class="form-input" id="pf-parttype" value="${esc(partType)}" disabled style="opacity:.65;cursor:not-allowed">
     </div>
     <div class="form-group" style="margin-bottom:12px">
       <label class="form-label" for="pf-proposed">Proposed Fees ($)</label>
@@ -3812,7 +3812,6 @@ async function savePrtProfile(id){
     const cultStart=document.getElementById('pf-cultstart')?.value||'';
     const proposed=document.getElementById('pf-proposed')?.value||'';
     const notes=document.getElementById('pf-notes')?.value||'';
-    const partTypeRaw=document.getElementById('pf-parttype')?.value||'';
 
     const fields={};
     if(name) fields[FP.name]=name;
@@ -3825,8 +3824,6 @@ async function savePrtProfile(id){
     if(proposed) fields[FP.proposed]=parseFloat(proposed);
     const svcs=[...document.querySelectorAll('.pf-svc-cb:checked')].map(c=>c.value);
     fields[FP.services]=svcs.length?svcs:null;
-    const pts=partTypeRaw.split(',').map(s=>s.trim()).filter(Boolean);
-    if(pts.length) fields[FP.partType]=pts;
     // Remove explicit nulls from fields to avoid overwriting with empty strings
     Object.keys(fields).forEach(k=>{if(fields[k]===null)delete fields[k];});
 
