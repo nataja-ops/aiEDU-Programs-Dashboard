@@ -714,6 +714,20 @@ button{cursor:pointer;font-family:inherit;}
 
     <!-- Partnerships sub-view -->
     <div id="prt-partners-view">
+      <!-- Needs Attention: new/expiring/missing-data exceptions for this table -->
+      <div class="card mb-16" style="padding:16px">
+        <div class="section-title mb-4">Needs Attention</div>
+        <div class="section-sub mb-12">New partnerships, missing data, and pipeline flags — the exception list for this table</div>
+        <div id="prt-attention-list"><div class="empty-state">Loading…</div></div>
+      </div>
+
+      <!-- Pipeline Funnel -->
+      <div class="card chart-card mb-16">
+        <div class="section-title mb-4">Pipeline Funnel</div>
+        <div class="section-sub mb-12">How many active partnerships sit at each stage, in stage order</div>
+        <div><canvas id="ch-prt-funnel"></canvas></div>
+      </div>
+
       <!-- Recent Updates strip -->
       <div id="prt-recent-wrap" style="margin-bottom:20px;display:none">
         <div class="section-hd">
@@ -849,6 +863,11 @@ button{cursor:pointer;font-family:inherit;}
           <div class="section-sub mb-12">MOUs expiring within 90 days — prioritize outreach for timely renewal</div>
           <div id="renewals-list"><div class="empty-state">Loading…</div></div>
         </div>
+      </div>
+      <div class="card mb-16" style="padding:16px">
+        <div class="section-title mb-4">Contract Flags</div>
+        <div class="section-sub mb-12">MOUs and fees that need a closer look</div>
+        <div id="contract-flags-list"><div class="empty-state">Loading…</div></div>
       </div>
       <div class="card table-wrap">
         <table class="data-table" id="mou-tbl">
@@ -1305,14 +1324,8 @@ button{cursor:pointer;font-family:inherit;}
       <div id="ao-mou-waiting"><div class="empty-state">Loading…</div></div>
     </div>
 
-    <div class="card mb-24" style="padding:16px">
-      <div class="ops-section-lbl" style="margin-bottom:8px">New Partnerships Added This Week</div>
-      <div id="ao-new-partnerships"><div class="empty-state">Loading…</div></div>
-    </div>
-
-    <div class="card mb-24" style="padding:16px">
-      <div class="ops-section-lbl" style="margin-bottom:8px">Ops Report — Flagged Data</div>
-      <div id="ao-flags"><div class="empty-state">Loading…</div></div>
+    <div class="card mb-24" style="padding:16px;text-align:center">
+      <div style="font-size:12px;color:var(--ink3)">New partnerships and data-quality flags now live under <strong>Partnerships → Partnerships</strong> and <strong>Partnerships → Contracts</strong>, alongside the tables they describe.</div>
     </div>
 
     <div class="grid-2">
@@ -2545,6 +2558,7 @@ function renderAll() {
   renderNewPartnerships('overview-new-prt','overview-new-prt-section');
   renderRecentUpdates();
   renderPartnerships();
+  renderPrtAttention();
   renderContracts();
   renderEventsThisWeek();
   renderEvents();
@@ -3951,6 +3965,60 @@ function renderPartnerships(f={}) {
     }).join('');
 }
 
+// ── Partnerships: Needs Attention + Pipeline Funnel ────────────────────────────
+const ACTIVE_PRT_STAGES_ATTN = new Set(['MOU Sent','MOU Signed','MOU Complete','Collaboration','Verbal Agreement']);
+function renderPrtAttention(){
+  const el = document.getElementById('prt-attention-list'); if(!el) return;
+  const items = [];
+
+  D.partners.forEach(p=>{
+    const name = gf(p,FP.name)||'Unnamed';
+    const created = gf(p,FP.created);
+    const daysOld = created ? daysTo(created) : null;
+    if(daysOld!=null && daysOld<=-14) items.push({id:p.id,label:'New',color:'#3b82f6',name,reason:`Added ${fdt(created)}`});
+  });
+
+  const flaggedMissing = new Set();
+  D.partners.forEach(p=>{
+    const missingInfo = gf(p,FP.missing);
+    if(missingInfo){ items.push({id:p.id,label:'Missing data',color:'#e07b1e',name:gf(p,FP.name)||'Unnamed',reason:'Missing: '+missingInfo}); flaggedMissing.add(p.id); }
+  });
+  D.partners.forEach(p=>{
+    if(flaggedMissing.has(p.id)) return;
+    const stage = gf(p,FP.pipeline)||'';
+    if(!ACTIVE_PRT_STAGES_ATTN.has(stage)) return;
+    const name = gf(p,FP.name)||'Unnamed';
+    if(!(+gf(p,FP.fy26)||0)) items.push({id:p.id,label:'Missing data',color:'#9b5ca5',name,reason:'Missing FY26 fees for service'});
+    if(!gf(p,FP.end))        items.push({id:p.id,label:'Missing data',color:'#c43535',name,reason:'Missing contract end date'});
+  });
+
+  el.innerHTML = items.length ? items.map(it=>`<div class="ops-item" onclick="openPartnerProfile('${it.id}')">
+    <div class="ops-dot" style="background:${it.color}"></div>
+    <div class="ops-item-body">
+      <div class="ops-item-name">${esc(it.name)} <span class="pill" style="background:${it.color}22;color:${it.color}">${esc(it.label)}</span></div>
+      <div class="ops-item-meta">${esc(it.reason)}</div>
+    </div>
+    <span class="ops-item-action">Open →</span>
+  </div>`).join('') : '<div class="empty-state" style="color:var(--good)">Nothing needs attention right now</div>';
+
+  // Funnel chart — active partnerships by stage, in stage order
+  const counts = {};
+  D.partners.forEach(p=>{ const s=gf(p,FP.pipeline); if(s) counts[s]=(counts[s]||0)+1; });
+  const labels = STAGE_ORDER.filter(s=>counts[s]);
+  const data = labels.map(s=>counts[s]);
+  const canvas = document.getElementById('ch-prt-funnel');
+  if(canvas){
+    if(CHARTS['ch-prt-funnel']){ CHARTS['ch-prt-funnel'].destroy(); delete CHARTS['ch-prt-funnel']; }
+    CHARTS['ch-prt-funnel'] = new Chart(canvas, {
+      type:'bar',
+      data:{labels, datasets:[{label:'Partnerships', data, backgroundColor:labels.map(s=>STAGE_COLORS[s]||'#999'), borderRadius:4}]},
+      options:{indexAxis:'y', plugins:{legend:{display:false}}, scales:{x:{beginAtZero:true,ticks:{precision:0}}},
+        onClick:(_e,els)=>{ if(els.length){ const stage=labels[els[0].index]; const rows=D.partners.filter(p=>gf(p,FP.pipeline)===stage); showDrill('Partnerships — '+stage, rows.length+' partnerships', rows, COL_PRTS); } }
+      }
+    });
+  }
+}
+
 // ── Contracts ─────────────────────────────────────────────────────────────────
 function renderContracts(f={}) {
   const stages = [...new Set(D.mous.map(m=>gf(m,FM.pipeline)).filter(Boolean))].sort();
@@ -3980,6 +4048,41 @@ function renderContracts(f={}) {
             ${daysChip(daysTo(gf(m,FM.ends)))}
           </div>
         </div>`).join('');
+
+  // Contract flags — MOU date gaps + fee/fiscal-year mismatches
+  const flagsEl = document.getElementById('contract-flags-list');
+  if(flagsEl){
+    const flags = [];
+    D.mous.forEach(m=>{
+      if(gf(m,FM.signed) && !gf(m,FM.dateSigned)){
+        flags.push({name:pname(m), reason:'MOU signed but no date recorded', color:'#e07b1e'});
+      }
+    });
+    const feesByPartner = {};
+    D.fees.forEach(fee=>{ ga(fee,FF.assocPartnership).forEach(pid=>{ (feesByPartner[pid]=feesByPartner[pid]||[]).push(fee); }); });
+    D.partners.forEach(p=>{
+      const end = gf(p,FP.end); if(!end) return;
+      const fees = feesByPartner[p.id]; if(!fees || fees.length<2) return;
+      const impliedFY = 'FY'+(new Date(end.slice(0,10)+'T00:00:00').getFullYear()%100);
+      const fyValues = fees.map(fee=>gf(fee,FF.fy)).filter(Boolean);
+      if(!fyValues.length || fyValues.includes(impliedFY)) return;
+      const counts2 = {};
+      fyValues.forEach(fy=>counts2[fy]=(counts2[fy]||0)+1);
+      const dup = Object.entries(counts2).filter(([,c])=>c>=2).sort((a,b)=>b[1]-a[1])[0];
+      if(dup){
+        const [dupFY, count] = dup;
+        const total = fees.filter(fee=>gf(fee,FF.fy)===dupFY).reduce((s,fee)=>s+(+gf(fee,FF.amount)||0),0);
+        flags.push({name:gf(p,FP.name)||'Unnamed', reason:`${count} fees tagged ${dupFY} (${f$(total)} total) but partnership runs through ${fdt(end)} — no fee tagged ${impliedFY}`, color:'#9b5ca5'});
+      }
+    });
+    flagsEl.innerHTML = flags.length ? flags.map(fl=>`<div class="ops-item" style="cursor:default">
+      <div class="ops-dot" style="background:${fl.color}"></div>
+      <div class="ops-item-body">
+        <div class="ops-item-name">${esc(fl.name)}</div>
+        <div class="ops-item-meta">${esc(fl.reason)}</div>
+      </div>
+    </div>`).join('') : '<div class="empty-state" style="color:var(--good)">No contract flags</div>';
+  }
 
   // Fee pipeline chart
   const feesFY = (document.querySelector('[data-feesfy].active')||{}).dataset?.feesfy || 'FY26';
@@ -6379,90 +6482,8 @@ function renderAoMouWeekly(){
   }).join('') : '<div class="empty-state" style="color:var(--good)">None waiting</div>';
 }
 
-function renderAoNewPartnerships(){
-  const el = document.getElementById('ao-new-partnerships'); if(!el) return;
-  const items = D.partners.filter(p=>isThisWeek(gf(p,FP.created)))
-    .sort((a,b)=>(gf(b,FP.created)||'').localeCompare(gf(a,FP.created)||''));
-  el.innerHTML = items.length ? items.map(p=>`<div class="ops-item" onclick="openPartnerProfile('${p.id}')">
-    <div class="ops-dot" style="background:var(--teal)"></div>
-    <div class="ops-item-body">
-      <div class="ops-item-name">${esc(gf(p,FP.name)||'Unnamed')}</div>
-      <div class="ops-item-meta">Added ${fdt(gf(p,FP.created))} · ${esc(gf(p,FP.pipeline)||'—')}</div>
-    </div>
-    <span class="ops-item-action">Open →</span>
-  </div>`).join('') : '<div class="empty-state">No new partnerships this week</div>';
-}
-
-function renderAoFlags(){
-  const el = document.getElementById('ao-flags'); if(!el) return;
-  const issues = [];
-
-  D.partners.forEach(p=>{
-    const missingInfo = gf(p,FP.missing);
-    if(missingInfo) issues.push({name:gf(p,FP.name)||'Unnamed', reason:'Missing: '+missingInfo, color:'#e07b1e', id:p.id, type:'partner'});
-  });
-
-  const flaggedIds = new Set(issues.filter(i=>i.type==='partner').map(i=>i.id));
-  const FEE_REQ_STAGES = new Set(['MOU Sent','MOU Signed','MOU Complete']);
-  D.partners.forEach(p=>{
-    if(flaggedIds.has(p.id)) return;
-    const name = gf(p,FP.name)||'Unnamed';
-    const stage = gf(p,FP.pipeline)||'';
-    if(FEE_REQ_STAGES.has(stage)&&!(+gf(p,FP.fy26)||0)) issues.push({name, reason:'Missing FY26 fees for service', color:'#9b5ca5', id:p.id, type:'partner'});
-    if(FEE_REQ_STAGES.has(stage)&&!gf(p,FP.end))        issues.push({name, reason:'Missing contract end date',    color:'#c43535', id:p.id, type:'partner'});
-  });
-
-  D.mous.forEach(m=>{
-    if(gf(m,FM.signed) && !gf(m,FM.dateSigned)){
-      const n = ga(m,FM.partner).join(', ')||'MOU';
-      issues.push({name:n, reason:'MOU signed but no date recorded', color:'#e07b1e', id:null, type:'mou'});
-    }
-  });
-
-  // Fee / Fiscal Year consistency: flag partnerships where fees look "stacked" in an
-  // earlier fiscal year while the partnership's Work End implies a later FY with no fee yet.
-  const feesByPartner = {};
-  D.fees.forEach(f=>{
-    ga(f,FF.assocPartnership).forEach(pid=>{
-      (feesByPartner[pid] = feesByPartner[pid]||[]).push(f);
-    });
-  });
-  D.partners.forEach(p=>{
-    const end = gf(p,FP.end); if(!end) return;
-    const fees = feesByPartner[p.id]; if(!fees || fees.length<2) return;
-    const impliedFY = 'FY'+(new Date(end.slice(0,10)+'T00:00:00').getFullYear()%100);
-    const fyValues = fees.map(f=>gf(f,FF.fy)).filter(Boolean);
-    if(!fyValues.length || fyValues.includes(impliedFY)) return;
-    const counts = {};
-    fyValues.forEach(fy=>counts[fy]=(counts[fy]||0)+1);
-    const dup = Object.entries(counts).filter(([,c])=>c>=2).sort((a,b)=>b[1]-a[1])[0];
-    if(dup){
-      const [dupFY, count] = dup;
-      const total = fees.filter(f=>gf(f,FF.fy)===dupFY).reduce((s,f)=>s+(+gf(f,FF.amount)||0),0);
-      issues.push({
-        name: gf(p,FP.name)||'Unnamed',
-        reason: `${count} fees tagged ${dupFY} (${f$(total)} total) but partnership runs through ${fdt(end)} — no fee tagged ${impliedFY}. Check if one belongs there.`,
-        color:'#9b5ca5', id:p.id, type:'partner'
-      });
-    }
-  });
-
-  el.innerHTML = issues.length===0
-    ? '<div class="empty-state" style="color:var(--good)">✓ All data looks complete</div>'
-    : issues.map(i=>`<div class="ops-item" onclick="${i.type==='partner'?`openPartnerProfile('${i.id}')`:''}" style="${i.type!=='partner'?'cursor:default':''}">
-        <div style="width:14px;height:14px;border:2px solid ${i.color};border-radius:3px;flex-shrink:0;margin-top:2px"></div>
-        <div class="ops-item-body">
-          <div class="ops-item-name">${esc(i.name)}</div>
-          <div class="ops-item-meta">${esc(i.reason)}</div>
-        </div>
-        ${i.type==='partner'?'<span class="ops-item-action">Fix →</span>':''}
-      </div>`).join('');
-}
-
 async function renderAirtableOps(){
   renderAoMouWeekly();
-  renderAoNewPartnerships();
-  renderAoFlags();
 
   const backlogEl = document.getElementById('ao-backlog');
   const logEl = document.getElementById('ao-log');
