@@ -353,6 +353,10 @@ button{cursor:pointer;font-family:inherit;}
 .okr-tile:hover{box-shadow:0 0 0 2px var(--teal);}
 .okr-tile::after{content:'View records →';display:block;font-size:10px;color:var(--teal);opacity:0;transition:opacity .2s;margin-top:6px;}
 .okr-tile:hover::after{opacity:1;}
+.okr-checklist{display:none;}
+.okr-tile:hover .okr-checklist,.okr-tile.expanded .okr-checklist{display:block;}
+.okr-checklist-toggle{cursor:pointer;}
+.okr-checklist-toggle:hover{color:var(--teal);}
 .tracker-row{cursor:pointer;}
 .tracker-row:hover .tracker-bar-fill{filter:brightness(1.1);}
 .tracker-row:hover .tracker-lbl-main{color:var(--teal);}
@@ -422,6 +426,7 @@ button{cursor:pointer;font-family:inherit;}
 <div id="sidebar-nav">
   <div class="sidebar-nav-lbl">Navigation</div>
   <button class="sidebar-nav-btn" data-sidetab="overview" onclick="switchTab('overview')">📊&nbsp; Overview</button>
+  <button class="sidebar-nav-btn" data-sidetab="live-data" onclick="switchTab('live-data')">📈&nbsp; Live Data</button>
   <button class="sidebar-nav-btn" data-sidetab="partnerships" onclick="switchTab('partnerships')">🤝&nbsp; Partnerships</button>
   <button class="sidebar-nav-btn" data-sidetab="events" onclick="switchTab('events')">📅&nbsp; Events</button>
   <button class="sidebar-nav-btn" data-sidetab="catalyst" onclick="switchTab('catalyst')">🌱&nbsp; Community Catalyst</button>
@@ -564,9 +569,6 @@ button{cursor:pointer;font-family:inherit;}
       <a href="#sec-goals" class="jumpnav-link" onclick="scrollToSec('sec-goals')">Goals</a>
       <a href="#sec-charts" class="jumpnav-link" onclick="scrollToSec('sec-charts')">Stage Chart</a>
       <a href="#sec-pipeline" class="jumpnav-link" onclick="scrollToSec('sec-pipeline')">Pipeline</a>
-      <a href="#sec-fees" class="jumpnav-link" onclick="scrollToSec('sec-fees')">Fees</a>
-      <a href="#sec-state" class="jumpnav-link" onclick="scrollToSec('sec-state')">By State</a>
-      <a href="#sec-events" class="jumpnav-link" onclick="scrollToSec('sec-events')">Events</a>
     </div>
 
     <!-- My FY26 Goals section -->
@@ -643,6 +645,10 @@ button{cursor:pointer;font-family:inherit;}
       </div>
     </div>
 
+  </div>
+
+  <!-- LIVE DATA -->
+  <div class="tab-panel" id="tab-live-data">
     <!-- Fees for Service section -->
     <div id="sec-fees"></div>
     <div class="grid-2 mb-16">
@@ -2645,6 +2651,16 @@ function okrTaskStats(projectIds) {
   return { done, total: tasks.length, tasks };
 }
 
+const EXPANDED_OKR_TILES = new Set();
+function toggleOkrChecklist(okrId, labelEl){
+  const tile = labelEl.closest('.okr-tile');
+  const nowExpanded = tile.classList.toggle('expanded');
+  if(nowExpanded) EXPANDED_OKR_TILES.add(okrId); else EXPANDED_OKR_TILES.delete(okrId);
+  const arrow = nowExpanded?'▴':'▾';
+  const verb = nowExpanded?'collapse':'view';
+  labelEl.innerHTML = labelEl.innerHTML.replace(/hover or click to (view|collapse) [▾▴]/,`hover or click to ${verb} ${arrow}`);
+}
+
 async function toggleOkrTask(taskId, checked) {
   try {
     await apiWrite('PATCH', BASE, T.tasks, { id: taskId, fields: { [FTASK.status]: checked ? 'Done' : 'Not Started' } });
@@ -2694,13 +2710,14 @@ function renderMyOkrs() {
         <span style="${isDone?'text-decoration:line-through;color:var(--ink3)':''}">${esc(gf(t,FTASK.name)||'—')}</span>
       </label>`;
     }).join('');
-    return `<div class="okr-tile">
+    const isExpanded = EXPANDED_OKR_TILES.has(okr.id);
+    return `<div class="okr-tile${isExpanded?' expanded':''}">
       <div class="okr-eyebrow">${esc(dateLbl)}</div>
       <div class="okr-current">${Math.round(pct)}%</div>
       <div class="okr-bar-bg"><div class="okr-bar-fill${barColor?' '+barColor:''}" style="width:${pct}%"></div></div>
       <div class="okr-pct" style="margin-bottom:4px">${esc(title)}</div>
-      <div class="okr-pct" style="color:var(--ink3);font-size:10px;margin-bottom:6px">${done} of ${total} tasks done</div>
-      <div>${taskList}</div>
+      <div class="okr-pct okr-checklist-toggle" style="color:var(--ink3);font-size:10px;margin-bottom:6px" onclick="event.stopPropagation();toggleOkrChecklist('${okr.id}',this)">${done} of ${total} tasks done — hover or click to ${isExpanded?'collapse':'view'} ${isExpanded?'▴':'▾'}</div>
+      <div class="okr-checklist">${taskList}</div>
     </div>`;
   }).join('');
 }
